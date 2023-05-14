@@ -1,0 +1,70 @@
+---
+title: "Tutorial de Uso do Pacote Bioma Stats"
+author: "iuri"
+date: "2023-05-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Instalação
+
+```{r}
+#devtools::instal("nome/repo")
+library("biomastats")
+(caminho_pacote <- system.file(package = "biomastats"))
+```
+
+# criando e visualizando o recorte
+
+```{r}
+bf <- make_polygon(lat = -23.62, lon = -48.55, size = 2, shape = "circle")
+library(mapview)
+mapview(bf$polygon)
+```
+
+# carregando rasters
+
+```{r}
+path_to_rasters <- "D:/iuri-external-hd/mapbiomas/colecao-sete"
+list.files(path_to_rasters)
+recortes <- load_rasters(start=1985, end=2021, data_from = "folder", folder_path =  path_to_rasters)
+```
+
+# Calculando areas
+
+```{r}
+results <- get_area(recortes)
+results$aggregate_data
+results$Years
+results$`Occupied area`
+results$time_series
+```
+
+# Visualização do uso e ocupação
+
+```{r}
+land_vis(recortes, year = 1985)
+```
+
+# Distribuição do uso e ocupação
+
+```{r}
+land_dist(results, year = 1985, type = "pie")
+```
+
+```{r}
+land_dist(results, year = 1985, type = "barplot")
+```
+
+
+
+
+
+
+
+
+
+
