@@ -2,7 +2,7 @@ Package: biomastats
 Type: Package
 Title: A package for the analysis of land use and land cover data in Brazilian territory
 Version: 0.1.0
-Author: Iuri Emmanuel de Paula Ferreira [cre], Kaik Octaviano Fontana [aut], Cristiano Augusto de Souza [aut], Mateus Faria Santa [ctb], Ruth Silva Souza [ctb], Paulo Guilherme Molin [ctb]
+Author: Iuri Emmanuel de Paula Ferreira [cre], Kaik Octaviano Fontana [aut], Cristiano Augusto de Souza [aut], Mateus Faria Santa [ctb], Ruth Silva Souza [ctb]
 Maintainer: Iuri Emmanuel de Paula Ferreira <iuri@ufscar.br>
 Description: The biomastat package provides tools for loading, analyzing, and visualizing time series data of land use and coverage in Brazilian territory. The package includes functions for data downloading, preprocessing, visualization, and statistical analysis to gain insights into land use patterns and trends. The data used in this package is sourced from MapBiomas Project - Collection 7 v.1 of the Annual Series of Land Use and Land Cover Maps of Brazil, accessed on march 2023 via the link: https://mapbiomas.org/colecoes-mapbiomas-1. The MapBiomas data is public, open, and freely available under the Creative Commons CC-BY-SA license, with attribution to the data source required (Souza et al., 2020) 
 License: Affero GPL 3.0
