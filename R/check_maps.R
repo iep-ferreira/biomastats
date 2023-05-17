@@ -42,10 +42,16 @@ check_maps <- function(ids, start, end) {
 
   maps <- list()  # Initialize the list of downloaded maps
 
+
   for (year in start:end) {
+
     map_name <- file.path(dir_path, paste0("map-", year, ".tif"))
+    any.change <- FALSE # There are changes in maps
+
 
     if (!file.exists(map_name)) {  # If the map doesn't exist yet
+
+      any.change <- TRUE # There are changes in maps
 
       for (id in ids) {
         file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
@@ -54,25 +60,27 @@ check_maps <- function(ids, start, end) {
           message("Downloading the map fragment!")
           cat(file_name, "\n")
           download_maps(num_year = year, fragment_id = id)
-          current_fig <- raster(file_name)
+          current_fig <- raster::raster(file_name)
           mosaic_ids[[year]] <- c(id)
           saveRDS(mosaic_ids, mosaic_id_file)
         } else {
           message("Downloading the map fragment!")
           cat(file_name, "\n")
           download_maps(num_year = year, fragment_id = id)
-          temp_fig <- raster(file_name)
-          current_fig <- merge(current_fig, temp_fig)
+          temp_fig <- raster::raster(file_name)
+          current_fig <- raster::merge(current_fig, temp_fig)
           mosaic_ids[[year]] <- c(mosaic_ids[[year]], id)
           saveRDS(mosaic_ids, mosaic_id_file)
         }
-      }
+
+      } # end - for
 
     } else {  # If the map already exists
 
-      current_fig <- raster(map_name)
+      current_fig <- raster::raster(map_name)
 
       for (id in ids) {
+
         file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
 
         if (id %in% mosaic_ids[[year]]) {
@@ -82,20 +90,29 @@ check_maps <- function(ids, start, end) {
           message("Downloading the map fragment!")
           cat(file_name, "\n")
           download_maps(num_year = year, fragment_id = id)
-          temp_fig <- raster(file_name)
-          current_fig <- merge(current_fig, temp_fig)
+          temp_fig <- raster::raster(file_name)
+          current_fig <- raster::merge(current_fig, temp_fig)
           mosaic_ids[[year]] <- c(mosaic_ids[[year]], id)
           saveRDS(mosaic_ids, mosaic_id_file)
-        }
-      }
+          any.change <- TRUE # There are changes in maps
+        } # end-else
+      } # end-for
 
-    }
+    } # end-else (if maps already exists!!)
 
-    maps[[year]] <- current_fig
-    writeRaster(maps[[year]], map_name, format = "GTiff", overwrite = TRUE)
-  }
+    if(any.change){
+      cat("Mapas atualizados! /n")
+
+      writeRaster(current_fig, map_name, format = "GTiff", overwrite = TRUE)
+
+    } # end-if
+
+    maps[[year - (start - 1)]] <- current_fig
+
+  } # end-for year
 
   saveRDS(mosaic_ids, mosaic_id_file)
 
   return(maps)
-}
+
+} # end-function

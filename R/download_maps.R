@@ -33,8 +33,10 @@ download_maps <- function(num_year, fragment_id){
   # Construct file name
   file_name <- paste0(dir_path,"/coverage-frag-", fragment_id, "-year-", num_year, ".tif")
 
+
   # Filter for the specific year and fragment
-  link_info <- filter(df, year == num_year & fragment == fragment_id)
+  link_info <- dplyr::filter(df, year == num_year & fragment == fragment_id)
+
 
   # Check if there is a link available for the specified file
   if(is.null(link_info)){

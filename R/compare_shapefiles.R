@@ -23,7 +23,7 @@ compare_shapefiles <- function(shape_path) {
 
   # Read the shapefiles
   s <- sf::st_read(shape_path)
-  brasil_cortado_path <- paste0(sys_path, "/ex_shp/brasil_cortado.shp" )
+  brasil_cortado_path <- paste0(sys_path, "/shp/brasil_cortado.shp" )
   s_brasil <- sf::st_read(brasil_cortado_path)
 
   # Transform the shapefiles to the same coordinate reference system (CRS)

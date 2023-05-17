@@ -48,13 +48,13 @@ make_polygon <- function(lat = NULL, lon = NULL, size = NULL, shape = c("circle"
 
   sys_path <- system.file(package = "biomastats")
 
-  download_path <- file.path(sys_path, "ex_shp/polygon.shp")
+  download_path <- file.path(sys_path, "shp/polygon.shp")
 
   # Export the shapefile
   sf::st_write(sf_object, download_path , delete_layer = TRUE)
 
   message("Shapefile created")
-  message("Shapefile stored in ./ex_shp as polygon.shp")
+  message("Shapefile stored in ./shp as polygon.shp")
   cat("biomastats directory: ", sys_path)
 
   # Return the created buffer

@@ -28,12 +28,12 @@ load_rasters <- function(shape_path = NULL,
 
   if(is.null(shape_path)){
     sys_path <- sys_path <- system.file(package = "biomastats")
-    shape_path <- file.path(sys_path, "ex_shp/polygon.shp")
+    shape_path <- file.path(sys_path, "shp/polygon.shp")
   }
 
   # Load the shapefile
   s <- sf::st_read(shape_path)
-  s <- sf::st_set_crs(s, 4326)
+  s <- sf::st_transform(s, crs=4326)
 
   s_utm <- sf::st_crs(s)$proj4string
 

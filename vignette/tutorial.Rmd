@@ -13,24 +13,47 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 #devtools::instal("nome/repo")
-library("biomastats")
+library(biomastats)
 (caminho_pacote <- system.file(package = "biomastats"))
 ```
 
-# criando e visualizando o recorte
+# Carregamento via download
+
+## Mosaico - inspeção
 
 ```{r}
-bf <- make_polygon(lat = -23.62, lon = -48.55, size = 2, shape = "circle")
+index_fragments <- readRDS(file.path(caminho_pacote, "data/mosaic.rds"))
+index_fragments[[1985]]
+```
+
+## criando e visualizando o recorte
+
+```{r}
+bf <- make_polygon(lat = -23.62, lon = -48.55, size = 4, shape = "square")
 library(mapview)
 mapview(bf$polygon)
 ```
 
-# carregando rasters
+## Fragmentos necessários
 
 ```{r}
-path_to_rasters <- "D:/iuri-external-hd/mapbiomas/colecao-sete"
-list.files(path_to_rasters)
-recortes <- load_rasters(start=1985, end=2021, data_from = "folder", folder_path =  path_to_rasters)
+shape_path <- file.path(caminho_pacote, "./shp/itapetininga.shp")
+compare_shapefiles(shape_path = shape_path)
+```
+
+## Download dos fragmentos necessários
+
+```{r}
+path_shp <- file.path(caminho_pacote, "shp/itapetininga.shp")
+compare_shapefiles(shape_path = path_shp)
+recortes <- load_rasters(shape_path = path_shp, start=1986, end=1988, data_from = "download")
+```
+
+## Mosaico - inspeção
+
+```{r}
+index_fragments <- readRDS(file.path(caminho_pacote, "data/mosaic.rds"))
+index_fragments[[1985]]
 ```
 
 # Calculando areas
@@ -46,7 +69,46 @@ results$time_series
 # Visualização do uso e ocupação
 
 ```{r}
-land_vis(recortes, year = 1985)
+land_vis(recortes, year = 1986)
+```
+
+# Distribuição do uso e ocupação
+
+```{r}
+land_dist(results, year = 1985, type = "pie")
+```
+
+```{r}
+land_dist(results, year = 1985, type = "barplot")
+```
+
+
+
+
+
+
+# carregando rasters
+
+```{r}
+#path_to_rasters <- "D:/iuri-external-hd/mapbiomas/colecao-sete"
+#list.files(path_to_rasters)
+recortes <- load_rasters(shape_path = path_to_shape, start=1985, end=2021, data_from = "download", folder_path =  path_to_rasters)
+```
+
+# Calculando areas
+
+```{r}
+results <- get_area(recortes)
+results$aggregate_data
+results$Years
+results$`Occupied area`
+results$time_series
+```
+
+# Visualização do uso e ocupação
+
+```{r}
+land_vis(recortes, year = 2020)
 ```
 
 # Distribuição do uso e ocupação

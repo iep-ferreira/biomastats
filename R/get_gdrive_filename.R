@@ -22,8 +22,8 @@
 #' }
 #' @importFrom rvest read_html html_nodes html_attr
 get_gdrive_filename <- function(file_link) {
-  webpage <- read_html(file_link)
-  file_name <- html_nodes(webpage, xpath = '//meta[@property="og:title"]') %>% html_attr('content')
+  webpage <- rvest::read_html(file_link)
+  file_name <- rvest::html_nodes(webpage, xpath = '//meta[@property="og:title"]') %>% rvest::html_attr('content')
   return(file_name)
 }
 
