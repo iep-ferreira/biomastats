@@ -74,6 +74,7 @@ recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2020, data_from =
 ```
 ```{r}
 results <- get_area(recortes)
+results$time_series
 ```
 
 ```{r}
@@ -81,126 +82,57 @@ land_vis(recortes, year = 1985)
 ```
 
 
+```{r}
+land_vis(recortes, year = 2000)
+```
 
-
-
+```{r}
+land_vis(recortes, year = 2020)
+```
 
 
 ```{r}
-#folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
-recortes <- load_rasters(shape_path = ita_shp, start=1986, end=1988, data_from = "folder", folder_path = folder_path)
+land_dist(results, year = 2020, type = "barplot")
 ```
 
-<!-- # Carregamento via download -->
-
-<!-- ## Mosaico - inspeção -->
-
-<!-- ```{r} -->
-<!-- index_fragments <- readRDS(file.path(caminho_pacote, "data/mosaic.rds")) -->
-<!-- index_fragments[[1985]] -->
-<!-- ``` -->
-
-<!-- ## criando e visualizando o recorte -->
-
-<!-- ```{r} -->
-<!-- bf <- make_polygon(lat = -23.62, lon = -48.55, size = 4, shape = "square") -->
-<!-- library(mapview) -->
-<!-- mapview(bf$polygon) -->
-<!-- ``` -->
-
-<!-- ## Fragmentos necessários -->
-
-<!-- ```{r} -->
-<!-- shape_path <- file.path(caminho_pacote, "./shp/itapetininga.shp") -->
-<!-- compare_shapefiles(shape_path = shape_path) -->
-<!-- ``` -->
-
-<!-- ## Download dos fragmentos necessários -->
-
-<!-- ```{r} -->
-<!-- path_shp <- file.path(caminho_pacote, "shp/itapetininga.shp") -->
-<!-- compare_shapefiles(shape_path = path_shp) -->
-<!-- recortes <- load_rasters(shape_path = path_shp, start=1986, end=1988, data_from = "download") -->
-<!-- ``` -->
-
-<!-- ## Mosaico - inspeção -->
-
-<!-- ```{r} -->
-<!-- index_fragments <- readRDS(file.path(caminho_pacote, "data/mosaic.rds")) -->
-<!-- index_fragments[[1985]] -->
-<!-- ``` -->
-
-<!-- # Calculando areas -->
-
-<!-- ```{r} -->
-<!-- results <- get_area(recortes) -->
-<!-- results$aggregate_data -->
-<!-- results$Years -->
-<!-- results$`Occupied area` -->
-<!-- results$time_series -->
-<!-- ``` -->
-
-<!-- # Visualização do uso e ocupação -->
-
-<!-- ```{r} -->
-<!-- land_vis(recortes, year = 1986) -->
-<!-- ``` -->
-
-<!-- # Distribuição do uso e ocupação -->
-
-<!-- ```{r} -->
-<!-- land_dist(results, year = 1985, type = "pie") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- land_dist(results, year = 1985, type = "barplot") -->
-<!-- ``` -->
+  + Caso 2: Campus Lagoa do Sino e arredores
 
 
+```{r}
+region <- make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon")
+```
 
 
+```{r}
+shp_path <- file.path(path_package, "shp/polygon.shp")
+library(mapview)
+mapview(sf::read_sf(shp_path))
+```
 
 
-<!-- # carregando rasters -->
+```{r}
+recortes <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example")
+```
+```{r}
+results <- get_area(recortes)
+results$time_series
+```
 
-<!-- ```{r} -->
-<!-- #path_to_rasters <- "D:/iuri-external-hd/mapbiomas/colecao-sete" -->
-<!-- #list.files(path_to_rasters) -->
-<!-- recortes <- load_rasters(shape_path = path_to_shape, start=1985, end=2021, data_from = "download", folder_path =  path_to_rasters) -->
-<!-- ``` -->
-
-<!-- # Calculando areas -->
-
-<!-- ```{r} -->
-<!-- results <- get_area(recortes) -->
-<!-- results$aggregate_data -->
-<!-- results$Years -->
-<!-- results$`Occupied area` -->
-<!-- results$time_series -->
-<!-- ``` -->
-
-<!-- # Visualização do uso e ocupação -->
-
-<!-- ```{r} -->
-<!-- land_vis(recortes, year = 2020) -->
-<!-- ``` -->
-
-<!-- # Distribuição do uso e ocupação -->
-
-<!-- ```{r} -->
-<!-- land_dist(results, year = 1985, type = "pie") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- land_dist(results, year = 1985, type = "barplot") -->
-<!-- ``` -->
+```{r}
+land_vis(recortes, year = 1985)
+```
 
 
+```{r}
+land_vis(recortes, year = 2000)
+```
+
+```{r}
+land_vis(recortes, year = 2020)
+```
 
 
-
-
-
-
-
+```{r}
+land_dist(results, year = 2020, type = "barplot")
+```
 
