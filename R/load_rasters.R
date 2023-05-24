@@ -55,7 +55,7 @@ load_rasters <- function(shape_path = NULL,
   } else if (data_from == "example"){
     
     ex_a <- file.path(sys_path, "maps-library/frag93.tif")
-    ex_b <- file.path(sys_path, "maps-library/frag93.tif")
+    ex_b <- file.path(sys_path, "maps-library/frag94.tif")
     
     map_a <- raster::raster(ex_a)
     map_b <- raster::raster(ex_b)
