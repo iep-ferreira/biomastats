@@ -25,9 +25,9 @@ load_rasters <- function(shape_path = NULL,
                          folder_path = NULL
 ) { # starts function
 
+  sys_path <- system.file(package = "biomastats")
 
   if(is.null(shape_path)){
-    sys_path <- sys_path <- system.file(package = "biomastats")
     shape_path <- file.path(sys_path, "shp/polygon.shp")
   }
 
