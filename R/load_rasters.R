@@ -54,13 +54,21 @@ load_rasters <- function(shape_path = NULL,
 
   } else if (data_from == "example"){
     
+    fnames <- file.path(sys_path, "maps-library/mosaic.tif")
+    
+    if (!file.exists(fnames)){ 
+    
     ex_a <- file.path(sys_path, "maps-library/frag93.tif")
     ex_b <- file.path(sys_path, "maps-library/frag94.tif")
     
-    map_a <- raster::raster(ex_a)
-    map_b <- raster::raster(ex_b)
+    map_a <- terra::rast(ex_a)
+    map_b <- terra::rast(ex_b)
     
-    biome_rasters <- raster::merge(map_a, map_b) 
+    biome_rasters <- terra::merge(map_a, map_b) 
+
+    writeRaster(biome_rasters, fnames)
+    } else{ biome_rasters <- terra::rast(fnames) }
+    
     
   } else {
     stop("Invalid data source specified.")
@@ -84,5 +92,6 @@ load_rasters <- function(shape_path = NULL,
 
   return(list("shape" = s, "time_range" = c(start, end), "raster" = map))
 }
+
 
 

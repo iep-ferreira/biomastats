@@ -70,7 +70,7 @@ mapview(sf::read_sf(ita_shp))
 
 
 ```{r}
-recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2021, data_from = "example")
+recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2020, data_from = "example")
 ```
 
 ```{r}
