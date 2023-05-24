@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 O _Bioma Stats_ é disponibilizado apenas como versão em desenvolvimento e deve ser instalado diretamente de repositório do GitHub (`iep-ferreira/biomastats`).    
 
 ```{r}
+# para remover versões anteriores do pacote
+#remove.packages("biomastats")
 library(devtools)
 devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
@@ -51,9 +53,6 @@ Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou 
 
   + `Biblioteca de mapas`: para recortes já baixados, o carregamento pode ser feito através da biblioteca de mapas (`"./mapbiomas/maps-library"`). Os mosaicos de `downloads` já realizados são compactados em imagens de nome `"map-year.tif"`. 
   
-Além dos três modos de carregamento, o pacote `biomastats` apresenta dados de exemplo, do município de Itapetininga, armazenados na pasta `ex_cover_data`. 
-
-
 ## Fluxo de Trabalho
 
 O programa `biomastats` pode ser inicializado de duas formas, com a importação de um _shapefile_ ou através de um polígino desenhado entorno de coordenadas de referência. 
@@ -69,8 +68,13 @@ library(mapview)
 mapview(sf::read_sf(ita_shp))
 ```
 
+
 ```{r}
-folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
+recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2021, data_from = "example")
+```
+
+```{r}
+#folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
 recortes <- load_rasters(shape_path = ita_shp, start=1986, end=1988, data_from = "folder", folder_path = folder_path)
 ```
 
