@@ -30,9 +30,9 @@ A pasta raiz do pacote apresenta as seguintes sub-pastas:
   + `./shp` : a pasta contém arquivos .shp usados para recortar os rasters de uso e ocupação do solo. 
   + `./maps-library` : a pasta é criada automaticamente quando o usuário realiza downloads de mapas através do programa. A pasta contém o mosaico dos mapas utilizados desde a instalação. 
   + `./shared-links` : a pasta contém links autenticados para a obtenção de mapas fragmentados de uso e ocupação do solo. 
-  + `./ex_cover_data` : a pasta apresenta dados de uso e cobertura para serem usados como exemplo, considerando como recorte o município de Itapetininga - SP. 
-
-
+  
+Na pasta `./maps-library` estão inclusos dados de LULC como exemplo, contendo a região do município de Itapetininga-SP, Brasil.   
+  
 ## Carregamento dos dados de uso e ocupação do solo
 
 Os dados de uso e ocupação do solo podem ser carregados de três formas, durante a aplicação da função de carregamento dos rasters (`load_raster`): 
@@ -69,7 +69,19 @@ library(mapview)
 mapview(sf::read_sf(ita_shp))
 ```
 
+```{r}
+folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
+recortes <- load_rasters(shape_path = ita_shp, start=1986, end=1988, data_from = "folder", folder_path = folder_path)
+```
 
+
+```{r}
+results <- get_area(recortes)
+```
+
+```{r}
+land_vis(recortes, year = 1985)
+```
 
 
 

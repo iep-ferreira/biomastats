@@ -21,7 +21,7 @@
 
 load_rasters <- function(shape_path = NULL,
                          start = 1985, end = 2020,
-                         data_from = c("download", "library", "folder"),
+                         data_from = c("download", "library", "folder", "example"),
                          folder_path = NULL
 ) { # starts function
 
@@ -52,6 +52,16 @@ load_rasters <- function(shape_path = NULL,
     # Identifica mapas para download
     biome_rasters <- check_maps(ids, start, end)
 
+  } else if (data_from == "example"){
+    
+    ex_a <- file.path(sys_path, "map-library/frag93.tif")
+    ex_b <- file.path(sys_path, "map-library/frag93.tif")
+    
+    map_a <- raster::raster(ex_a)
+    map_b <- raster::raster(ex_b)
+    
+    biome_rasters <- raster::merge(map_a, map_b) 
+    
   } else {
     stop("Invalid data source specified.")
   }
