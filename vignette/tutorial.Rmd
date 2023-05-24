@@ -72,13 +72,6 @@ mapview(sf::read_sf(ita_shp))
 ```{r}
 recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2020, data_from = "example")
 ```
-
-```{r}
-#folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
-recortes <- load_rasters(shape_path = ita_shp, start=1986, end=1988, data_from = "folder", folder_path = folder_path)
-```
-
-
 ```{r}
 results <- get_area(recortes)
 ```
@@ -88,6 +81,15 @@ land_vis(recortes, year = 1985)
 ```
 
 
+
+
+
+
+
+```{r}
+#folder_path <- "D:/iuri-external-hd/mapbiomas/colecao-sete/"
+recortes <- load_rasters(shape_path = ita_shp, start=1986, end=1988, data_from = "folder", folder_path = folder_path)
+```
 
 <!-- # Carregamento via download -->
 

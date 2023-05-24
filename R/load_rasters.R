@@ -64,11 +64,15 @@ load_rasters <- function(shape_path = NULL,
     map_a <- terra::rast(ex_a)
     map_b <- terra::rast(ex_b)
     
-    biome_rasters <- terra::merge(map_a, map_b) 
+    aux <- terra::merge(map_a, map_b) 
 
-    writeRaster(biome_rasters, fnames)
-    } else{ biome_rasters <- terra::rast(fnames) }
-    
+    writeRaster(aux, fnames)
+    } else{ aux <- terra::rast(fnames) }
+
+    biome_rasters <- NULL
+    for(i in start:end){
+      biome_rasters[[i - (start - 1)]] <- raster::raster(aux[[i - (start - 1)]])
+    }
     
   } else {
     stop("Invalid data source specified.")
@@ -83,14 +87,15 @@ load_rasters <- function(shape_path = NULL,
 
   maps <- NULL
   map <- NULL
-
+  
   # Crop and mask raster data using the shapefile
   for (i in start:end) {
     maps[[i - (start - 1)]] <- raster::crop(biome_rasters[[i - (start - 1)]], s)
     map[[i - (start - 1)]] <- raster::mask(maps[[i - (start - 1)]], s)
   }
-
+  
   return(list("shape" = s, "time_range" = c(start, end), "raster" = map))
+
 }
 
 
