@@ -2,7 +2,7 @@
 title: "Tutorial de Uso do Pacote Bioma Stats"
 author: "iuri"
 date: "2023-05-13"
-output: pdf_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +17,7 @@ O _Bioma Stats_ é disponibilizado apenas como versão em desenvolvimento e deve
 # para remover versões anteriores do pacote
 #remove.packages("biomastats")
 library(devtools)
-devtools::install_github("iep-ferreira/biomastats")
+#devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
 ```
 
@@ -78,7 +78,7 @@ results$time_series
 ```
 
 ```{r}
-land_vis(recortes, year = 1985)
+land_vis(recortes, year = 2020)
 ```
 
 

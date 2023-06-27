@@ -1,0 +1,97 @@
+---
+title: "Bioma Stats Dashboard - Example"
+author: Mateus Faria Santana, Iuri Emmanuel de Paula Ferreira
+output: html_document
+runtime: shiny
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 14px;
+  }
+td {  /* Table  */
+  font-size: 12px;
+}
+h1.title {
+  font-size: 22px;
+}
+h1 { /* Header 1 */
+  font-size: 16px;
+}
+h2 { /* Header 2 */
+    font-size: 16px;
+}
+h3 { /* Header 3 */
+  font-size: 16px;
+  font-family: "Times New Roman", Times, serif;
+}
+code.r{ /* Code block */
+    font-size: 10px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 10px;
+}
+</style>
+
+
+<div style="text-align: justify"> 
+
+
+```{r echo=FALSE}
+library(shiny)
+library(devtools)
+#devtools::install_github("iep-ferreira/biomastats")
+library(biomastats)
+library(leaflet)
+library(sf)
+library(DT)
+library(kableExtra)
+
+# Define UI
+ui <- fluidPage(
+  
+  inputPanel(
+    selectInput("shape", "Escolha o formato do shp:",list("circle","square","hexagon")), 
+    selectInput("start", "Escolha o inicio:",list(1985, 1990, 2000, 2010)), 
+    selectInput("size", "Escolha o tamanho do recorte:",list(1,2,3,4))
+  ),
+
+  mainPanel(
+    tabsetPanel(type = "tabs", 
+                tabPanel("Resultados", plotOutput("plot2")),
+                tabPanel("Distribuição", plotOutput("plot")), 
+                tabPanel("Resumo", tableOutput("summary"))
+    )
+  )
+)
+
+# Define server 
+server <- function(input, output, session) {
+  
+  recortes <- reactive({
+    cutout <- make_polygon(lat = -23.602, lon = -48.524, size = as.numeric(input$size), shape = input$shape)
+    load_rasters(start=as.numeric(input$start), end=2021, data_from = "example")
+  })
+
+  output$summary <- renderTable({
+    results <- get_area(recortes())
+    DT::datatable(results$aggregate_data)
+  })
+
+  output$plot <- renderPlot({
+    results <- get_area(recortes())
+    results$time_series
+  },height=300,width=600)
+
+  output$plot2 <- renderPlot({
+    land_vis(recortes(), 1999)
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+</div>
