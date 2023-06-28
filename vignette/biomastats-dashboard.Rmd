@@ -9,29 +9,29 @@ runtime: shiny
 <style type="text/css">
 
 body{ /* Normal  */
-      font-size: 14px;
-  }
+font-size: 14px;
+}
 td {  /* Table  */
-  font-size: 12px;
+font-size: 12px;
 }
 h1.title {
-  font-size: 22px;
+font-size: 22px;
 }
 h1 { /* Header 1 */
-  font-size: 16px;
+font-size: 16px;
 }
 h2 { /* Header 2 */
-    font-size: 16px;
+font-size: 16px;
 }
 h3 { /* Header 3 */
-  font-size: 16px;
-  font-family: "Times New Roman", Times, serif;
+font-size: 16px;
+font-family: "Times New Roman", Times, serif;
 }
 code.r{ /* Code block */
-    font-size: 10px;
+font-size: 10px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 10px;
+font-size: 10px;
 }
 </style>
 
@@ -48,21 +48,40 @@ library(leaflet)
 library(sf)
 library(DT)
 library(kableExtra)
+library(ggplot2)
+```
 
+## Próximos passos
+
+  [ ] Conferir se os parâmetros `start` e `end` estão funcionando adequadamente
+  [ ] Adicionar seletor da base de dados
+  [ ] Inserir gráfico interativo da área de estudo + recorte da área em estudo
+  [ ] Permitir carregamento de shp externo
+  [ ] Permitir recortes municipais
+  [ ] Adicionar gráfico de barras
+  [ ] Adicionar gráfico de setores
+  [ ] Adicionar recursos para download
+  [ ] Hospedar app em nuvem
+ 
+
+```{r echo=FALSE}
 # Define UI
 ui <- fluidPage(
   
   inputPanel(
-    selectInput("shape", "Escolha o formato do shp:",list("circle","square","hexagon")), 
-    selectInput("start", "Escolha o inicio:",list(1985, 1990, 2000, 2010)), 
-    selectInput("size", "Escolha o tamanho do recorte:",list(1,2,3,4))
+    selectInput("shape", "Choose the cutout shape:",list("circle","square","hexagon")), 
+    sliderInput("start", "Select the study's start year:", min = 1985, max = 2021, value = 1985, step = 1),
+    sliderInput("size", "Cutout diameter (km)", min = 0.5, max = 5, value = 1, step = 0.1),
+    selectInput("yr", "View Reference Year", choices = seq(1985, 2021, by = 1)),
+    actionButton("playButton", "Play")
   ),
-
+    
   mainPanel(
-    tabsetPanel(type = "tabs", 
-                tabPanel("Resultados", plotOutput("plot2")),
-                tabPanel("Distribuição", plotOutput("plot")), 
-                tabPanel("Resumo", tableOutput("summary"))
+      tabsetPanel(type = "tabs",
+#                  tabPanel("Study Area", verbatimTextOutput("preencher")), 
+                  tabPanel("Time Series", plotOutput("plot")),
+                  tabPanel("Annual Maps", plotOutput("plot2")),
+                  tabPanel("Data Table", tableOutput("summary"))
     )
   )
 )
@@ -70,26 +89,48 @@ ui <- fluidPage(
 # Define server 
 server <- function(input, output, session) {
   
-  recortes <- reactive({
+  recortes <- eventReactive(input$playButton,{
     cutout <- make_polygon(lat = -23.602, lon = -48.524, size = as.numeric(input$size), shape = input$shape)
-    load_rasters(start=as.numeric(input$start), end=2021, data_from = "example")
-  })
-
+    recor <- load_rasters(start=as.numeric(input$start), end = 2021, data_from = "example")
+    return(recor)
+    })
+  
+observeEvent(input$start,{
+    updateSelectInput(session, "yr", "View Reference Year", choices = as.numeric(input$start):2021)
+  })  
+  
+observeEvent(input$playButton, {
   output$summary <- renderTable({
     results <- get_area(recortes())
     DT::datatable(results$aggregate_data)
   })
-
+  
   output$plot <- renderPlot({
     results <- get_area(recortes())
-    results$time_series
-  },height=300,width=600)
+    p <- results$time_series # assuming this returns a ggplot object
+    p <- p + theme(text = element_text(size = 20), # change overall text size
+                   axis.title = element_text(size = 24), # change axis title size
+                   legend.title = element_text(size = 22)) # change legend title size
+    print(p)
+}, height=500 , width=800 ) # end renderPlot
+}) # end observeEvent  
+  
 
+observeEvent(input$yr, {
   output$plot2 <- renderPlot({
-    land_vis(recortes(), 1999)
-  })
-}
+    p <- land_vis(recortes(), as.numeric(input$yr))
+    p <- p + theme(text = element_text(size = 20), # change overall text size
+                   axis.title = element_text(size = 24), # change axis title size
+                   legend.title = element_text(size = 22)) # change legend title size
+    print(p)
+}, height=500 , width=800 ) # end renderPlot
+}) # end observeEvent  
 
+}
+```
+
+
+```{r echo=FALSE}
 # Run the application 
 shinyApp(ui = ui, server = server)
 ```
