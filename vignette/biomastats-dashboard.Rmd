@@ -100,6 +100,7 @@ observeEvent(input$start,{
   })  
   
 observeEvent(input$playButton, {
+  
   output$summary <- renderTable({
     results <- get_area(recortes())
     DT::datatable(results$aggregate_data)

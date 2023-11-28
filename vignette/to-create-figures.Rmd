@@ -31,7 +31,7 @@ figures_path <- "C:/Users/ferre/OneDrive/Área de Trabalho/pesquisa/Artigo-Bioma
 
 ```{r}
 leaflet() %>%
-  addProviderTiles(providers$OpenTopoMap ) %>% setView(lat =  35.24, lng =  24.80, zoom=12)
+  addProviderTiles(providers$OpenTopoMap ) %>% setView(lat =  -23.597323, lng =  -48.532440, zoom=12)
 ```
 
 

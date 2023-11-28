@@ -41,13 +41,11 @@ Os dados de uso e ocupação do solo podem ser carregados de três formas, duran
 
   + `Download prévio`: nessa abordagem, o usuário deve fornecer o caminho para uma pasta com os mapas anuais de uso e cobertura do solo da plataforma MAPBIOMAS <https://mapbiomas.org/>. 
 
- Os mapas devem ser nomeados seguindo o padrão 
- 
- PADRÃO AQUI
+ Os mapas devem ser nomeados seguindo o padrão `"./map-library/filename"`
  
   + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em `"./mapbiomas/maps-library"`. As imagens são guardadas para uso posterior, evitando `downloads` duplicados. 
   
-  O fornecimento dos mapas é realizado por um protocolo `peer-to-peer`, que permite a distribuição de arquivos de forma decentralizada. **A rede colaboradores ainda é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede**  
+O fornecimento dos mapas é realizado por um protocolo `peer-to-peer`, que permite a distribuição de arquivos de forma decentralizada. **A rede colaboradores ainda é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede**  
 
 Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou regiões administrativas).  
 
@@ -99,7 +97,7 @@ land_dist(results, year = 2020, type = "barplot")
 
 
 ```{r}
-region <- make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon")
+region <- make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "circle")
 ```
 
 
@@ -117,6 +115,11 @@ recortes <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from 
 results <- get_area(recortes)
 results$time_series
 ```
+
+```{r}
+head(results$aggregate_data)
+```
+
 
 ```{r}
 land_vis(recortes, year = 1985)

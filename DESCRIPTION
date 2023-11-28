@@ -15,7 +15,6 @@ Config/testthat/edition: 3
 Imports:
     grid,
     ggspatial,
-    rgeos,
     dplyr,
     geosphere,
     ggplot2,
