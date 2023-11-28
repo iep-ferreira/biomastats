@@ -23,7 +23,6 @@ Imports:
     magrittr,
     raster,
     readxl,
-    rgeos,
     rvest,
     sf
 RoxygenNote: 7.2.3
