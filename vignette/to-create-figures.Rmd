@@ -21,6 +21,7 @@ library(devtools)
 library(biomastats)
 library(leaflet)
 library(sf)
+library(raster)
 ```
 
 ```{r results=FALSE}
@@ -33,6 +34,27 @@ figures_path <- "C:/Users/ferre/OneDrive/Área de Trabalho/pesquisa/Artigo-Bioma
 leaflet() %>%
   addProviderTiles(providers$OpenTopoMap ) %>% setView(lat =  -23.597323, lng =  -48.532440, zoom=12)
 ```
+
+## Teste
+
+```{r}
+shp_file <- file.path(path_package, "shp/itapetininga.shp")
+shp_brasil_file <- file.path(path_package,"shp/brasil_cortado.shp")
+shp_ita <- sf::st_transform(sf::read_sf(shp_file), crs = 4326)
+shp_brasil <- sf::st_transform(sf::read_sf(shp_brasil_file), crs = 4326)
+library(mapview)
+mapview(shp_ita) + mapview(shp_brasil)
+```
+
+# Teste recorte e visualização com os fragmentos 93 e 94
+
+```{r}
+recortes <- load_rasters(shape_path = shp_file,  start=1985, end=2021, data_from = "example")
+```
+```{r}
+land_vis(recortes, year = 2013)
+```
+
 
 
 
