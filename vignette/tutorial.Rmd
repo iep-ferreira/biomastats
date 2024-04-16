@@ -55,7 +55,7 @@ Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou 
 
 O programa `biomastats` pode ser inicializado de duas formas, com a importação de um _shapefile_ ou através de um polígino desenhado entorno de coordenadas de referência. 
 
-  + Caso 1: Importação de um _shapefile_
+### Caso 1: Importação de um _shapefile_
 
 Nesta etapa, utilizaremos o shapefile de Itapetininga como exemplo: 
 
@@ -68,8 +68,11 @@ mapview(sf::read_sf(ita_shp))
 
 
 ```{r}
-recortes <- load_rasters(shape_path = ita_shp, start=1985, end=2020, data_from = "example")
+#recortes <- 
+load_rasters(shape_path = ita_shp, start=1985, end=2020, data_from = "example")
 ```
+
+
 ```{r}
 results <- get_area(recortes)
 results$time_series
@@ -78,7 +81,6 @@ results$time_series
 ```{r}
 land_vis(recortes, year = 2020)
 ```
-
 
 ```{r}
 land_vis(recortes, year = 2000)
@@ -93,7 +95,7 @@ land_vis(recortes, year = 2020)
 land_dist(results, year = 2020, type = "barplot")
 ```
 
-  + Caso 2: Campus Lagoa do Sino e arredores
+### Caso 2: Campus Lagoa do Sino e arredores
 
 
 ```{r}
@@ -109,20 +111,21 @@ mapview(sf::read_sf(shp_path))
 
 
 ```{r}
-recortes <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example")
-```
-```{r}
-results <- get_area(recortes)
-results$time_series
+recortes_2 <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example")
 ```
 
 ```{r}
-head(results$aggregate_data)
+results_2 <- get_area(recortes_2)
+results_2$time_series
+```
+
+```{r}
+head(results_2$aggregate_data)
 ```
 
 
 ```{r}
-land_vis(recortes, year = 1985)
+land_vis(recortes_2, year = 1985)
 ```
 
 
@@ -138,4 +141,80 @@ land_vis(recortes, year = 2020)
 ```{r}
 land_dist(results, year = 2020, type = "barplot")
 ```
+
+
+### Caso 3: Visualizando LULC na fazenda Lagoa do Sino
+
+
+```{r}
+shp_path <- file.path(path_package, "shp/UFSCar.shp")
+library(mapview)
+mapview(sf::read_sf(shp_path))
+```
+
+
+```{r}
+recortes_3 <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example")
+```
+
+```{r}
+results_3 <- get_area(recortes_3)
+results_3$time_series
+```
+
+
+```{r}
+land_vis(recortes_3, year = 2020)
+```
+
+
+```{r}
+land_dist(results_3, year = 2020, type = "barplot")
+```
+
+### Caso 4: Fazendo o download de uma nova quadrícula
+
+
+```{r}
+region <- make_polygon(lat = -21.605, lon = -45.529, size = 1.5, shape = "hexagon")
+```
+
+
+```{r}
+shp_path <- file.path(path_package, "shp/polygon.shp")
+library(mapview)
+mapview(sf::read_sf(shp_path))
+```
+
+
+```{r}
+#recortes_4 <- 
+load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "download")
+```
+
+```{r}
+results_4 <- get_area(recortes_4)
+results_4$time_series
+```
+
+
+
+```{r}
+land_vis(recortes_4, year = 1985)
+```
+
+
+```{r}
+land_vis(recortes_4, year = 2000)
+```
+
+```{r}
+land_vis(recortes, year = 2020)
+```
+
+
+```{r}
+land_dist(results, year = 2020, type = "barplot")
+```
+
 
