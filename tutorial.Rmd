@@ -16,6 +16,7 @@ O _Bioma Stats_ é disponibilizado apenas como versão em desenvolvimento e deve
 
 ```{r message=FALSE, warning=FALSE}
 library(devtools)
+# options(timeout = 600)  # 10 minutos de timeout (aumente se necessario)
 #devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
 ```
