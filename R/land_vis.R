@@ -37,7 +37,7 @@ land_vis <- function(data = NULL, year = 1985){
   }
 
   # Retrieve raster data for the specified year
-  raster <- data$raster[[year - 1984]]
+  raster <- data$raster[[year - (data$time_range[1] - 1)]]
   dd <- data.frame(table(raster::getValues(raster)))
   colnames(dd) <- c("class", "area")
 
