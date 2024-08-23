@@ -59,16 +59,27 @@ check_maps <- function(ids, start, end) {
         file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
 
         if (id == ids[1]) {  # Download the first fragment
-          message("Downloading the map fragment!")
-          cat(file_name, "\n")
-          download_maps(num_year = year, fragment_id = id)
+          
+          if(!file.exists(file_name)){
+message("Downloading the map fragment!")
+cat(file_name, "\n")
+download_maps(num_year = year, fragment_id = id)
+} else{
+message("The map fragment is already downloaded.")
+cat(file_name, "\n")
+}
           current_fig <- raster::raster(file_name)
           mosaic_ids[[year]] <- c(id)
           saveRDS(mosaic_ids, mosaic_id_file)
         } else {
-          message("Downloading the map fragment!")
-          cat(file_name, "\n")
-          download_maps(num_year = year, fragment_id = id)
+if(!file.exists(file_name)){
+message("Downloading the map fragment!")
+cat(file_name, "\n")
+download_maps(num_year = year, fragment_id = id)
+} else{
+message("The map fragment is already downloaded.")
+cat(file_name, "\n")
+}
           temp_fig <- raster::raster(file_name)
           current_fig <- raster::merge(current_fig, temp_fig)
           mosaic_ids[[year]] <- c(mosaic_ids[[year]], id)
