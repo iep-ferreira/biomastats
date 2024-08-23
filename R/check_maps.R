@@ -45,12 +45,14 @@ check_maps <- function(ids, start, end) {
 
   for (year in start:end) {
 
-    map_name <- file.path(dir_path, paste0("map-", year, ".tif"))
+    # remover depois o que está comentado
+    #map_name <- file.path(dir_path, paste0("map-", year, ".tif"))
     any.change <- FALSE # There are changes in maps
 
 
-    if (!file.exists(map_name)) {  # If the map doesn't exist yet
-
+   # if (!file.exists(map_name)) {  # If the map doesn't exist yet
+   # Trabalharemos apenas com a condição de que o mapa não exista, pois não queremos manter mapas anuais. 
+   
       any.change <- TRUE # There are changes in maps
 
       for (id in ids) {
@@ -75,37 +77,37 @@ check_maps <- function(ids, start, end) {
 
       } # end - for
 
-    } else {  # If the map already exists
+ #    } else {  # If the map already exists
 
-      current_fig <- raster::raster(map_name)
+   #   current_fig <- raster::raster(map_name)
 
-      for (id in ids) {
+   #   for (id in ids) {
 
-        file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
+   #     file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
 
-        if (id %in% mosaic_ids[[year]]) {
-          message("The map fragment is already downloaded.")
-          cat(file_name, "\n")
-        } else {
-          message("Downloading the map fragment!")
-          cat(file_name, "\n")
-          download_maps(num_year = year, fragment_id = id)
-          temp_fig <- raster::raster(file_name)
-          current_fig <- raster::merge(current_fig, temp_fig)
-          mosaic_ids[[year]] <- c(mosaic_ids[[year]], id)
-          saveRDS(mosaic_ids, mosaic_id_file)
-          any.change <- TRUE # There are changes in maps
-        } # end-else
-      } # end-for
+   #     if (id %in% mosaic_ids[[year]]) {
+   #       message("The map fragment is already downloaded.")
+   #       cat(file_name, "\n")
+   #     } else {
+   #       message("Downloading the map fragment!")
+   #       cat(file_name, "\n")
+   #       download_maps(num_year = year, fragment_id = id)
+   #       temp_fig <- raster::raster(file_name)
+   #       current_fig <- raster::merge(current_fig, temp_fig) # está lento por causa do merge!
+   #       mosaic_ids[[year]] <- c(mosaic_ids[[year]], id)
+   #       saveRDS(mosaic_ids, mosaic_id_file)
+   #       any.change <- TRUE # There are changes in maps
+   #     } # end-else
+   #   } # end-for
 
-    } # end-else (if maps already exists!!)
+ #    } # end-else (if maps already exists!!)
 
-    if(any.change){
-      cat("Mapas atualizados! /n")
+ #   if(any.change){
+ #     cat("Mapas atualizados! /n")
 
-      writeRaster(current_fig, map_name, format = "GTiff", overwrite = TRUE)
+ #     writeRaster(current_fig, map_name, format = "GTiff", overwrite = TRUE)
 
-    } # end-if
+ #   } # end-if
 
     maps[[year - (start - 1)]] <- current_fig
 
