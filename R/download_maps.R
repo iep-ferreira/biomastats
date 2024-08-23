@@ -33,8 +33,6 @@ download_maps <- function(num_year, fragment_id){
   # Construct file name
   file_name <- paste0(dir_path,"/coverage-frag-", fragment_id, "-year-", num_year, ".tif")
 
-  if(!file.exists(file_name)){  
-
   # Filter for the specific year and fragment
   link_info <- dplyr::filter(df, year == num_year & fragment == fragment_id)
 
@@ -50,8 +48,5 @@ download_maps <- function(num_year, fragment_id){
   # Download the file
   download_public_gdrive_file(file_link = link_info$shareable_link[1], local_path = file_name)
   
-  } else{
-  stop("The file had already been stored in your personel library.")  
-  }
 
 }
