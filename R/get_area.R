@@ -19,34 +19,36 @@
 #' data <- ... to specify ....
 #' result <- get_area(data)
 #' }
-get_area <- function(data = NULL) {
+get_area <- function(data = NULL, dec_places = 3) {
 
   # Dictionary
   dic <- dict_build()
 
   # Time span of study
-  time_span <- data$time_range[2] - data$time_range[1]
+  time_span <- (data$time_range[2] - data$time_range[1]) + 1
+  time_start <- data$time_range[1]
+  
 
   areas <- NULL
-  for(yr in (data$time_range[1] - 1984):(time_span + 1)) {
-    areas_y <- raster::area(data$raster[[yr]])
-    v_r <- raster::getValues(data$raster[[yr]])
-    areas[[yr]] <- tapply(areas_y, v_r, sum)
-  }
+  for(pos in 1:time_span) {
+    areas_y <- raster::area(data$raster[[pos]])
+    v_r <- raster::getValues(data$raster[[pos]])
+    areas[[pos]] <- tapply(areas_y, v_r, sum)
+  } # fim for
 
   df <- NULL
-  for(yr in (data$time_range[1] - 1984):(time_span + 1)) {
-    aux <-  data.frame(rep(yr+1984, dim(areas[[yr]])),  round(areas[[yr]],3))
-    df <- rbind(df, cbind(names(areas[[yr]]), aux))
-  }
+  for(pos in 1:time_span) {
+    aux <-  data.frame( rep(pos + time_start - 1, dim(areas[[pos]])) ,  round(areas[[pos]],dec_places))
+    df <- rbind(df, cbind(names(areas[[pos]]), aux))
+  } # fim for
   colnames(df) <- c("land_class", "year", "area")
 
   land_class_name <- NULL
   land_class_color <- NULL
   for(j in 1:length(df$land_class)) {
-    pos <- df$land_class[j] == dic$code
-    land_class_name[j] <- dic$class[pos]
-    land_class_color[j] <- dic$color[pos]
+    aux_2 <- df$land_class[j] == dic$code
+    land_class_name[j] <- dic$class[aux_2]
+    land_class_color[j] <- dic$color[aux_2]
   }
   df$land_class_name <- land_class_name
 
@@ -58,7 +60,7 @@ get_area <- function(data = NULL) {
 
   return(
     list(
-      "Years" = data$time_range[1]:(data$time_range[1] + time_span),
+      "Years" = data$time_range[1]:data$time_range[2],
       "Occupied area" = areas,
       "aggregate_data" = df,
       "time_series" = p
