@@ -1,3 +1,0 @@
-inst/shared-links
-LICENSE - copia
-NAMESPACE - copia
