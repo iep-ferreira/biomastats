@@ -90,7 +90,7 @@ get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot")) {
     ggplot2::scale_fill_manual(values = land_class_color, limits = land_class_name, name = "Land Use") +
     
     # Usar geom_area para criar o gráfico de áreas empilhadas
-    ggplot2::geom_area(alpha = 0.6, size = 0.5, color = "black") +  # Define a transparência e as bordas
+    ggplot2::geom_area(alpha = 0.6, linewidth = 0.5, color = "black") +  # Define a transparência e as bordas
     
     ggplot2::ylab(expression(paste("Area (", km^2, ")"))) +
     ggplot2::xlab("Years") +

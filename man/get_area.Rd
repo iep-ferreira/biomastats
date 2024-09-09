@@ -4,20 +4,33 @@
 \alias{get_area}
 \title{Calculate Land Classes Area}
 \usage{
-get_area(data = NULL)
+get_area(data = NULL, dec_places = 3, plot_type = c("areaplot"))
 }
 \arguments{
-\item{data}{A list containing two elements: 'time_range': a vector of two elements specifying the start and end years, and 'raster': a list of raster objects for each year in the time range.}
+\item{data}{A list containing two elements: 
+\describe{
+  \item{time_range}{A vector of two elements specifying the start and end years.}
+  \item{raster}{A list of raster objects for each year in the time range.}
+}}
+
+\item{dec_places}{An integer indicating the number of decimal places to round the area values.}
+
+\item{plot_type}{A character string indicating the type of plot to generate, either "profile" (default) or "areaplot".}
 }
 \value{
-A list with four elements: 'Years':the vector of years, 'Occupied area': a list with the calculated areas for each land class and year, 'aggregate_data': a data frame with the calculated areas for each land class and year, 'time_series': a ggplot2 object with the time series of areas.
+A list with four elements:
+\describe{
+  \item{Years}{A vector of years covered by the time range.}
+  \item{Occupied area}{A list with the calculated areas for each land class and year.}
+  \item{aggregate_data}{A data frame with the calculated areas for each land class and year.}
+  \item{time_series}{A ggplot2 object with the time series of areas, either a line plot or an area plot.}
+}
 }
 \description{
 This function calculates the area of land classes over a specified time range.
 }
 \examples{
 \dontrun{
-data <- ... to specify ....
-result <- get_area(data)
+result <- get_area(data = biomastats_raster, plot_type = "areaplot")
 }
 }

@@ -8,7 +8,7 @@ load_rasters(
   shape_path = NULL,
   start = 1985,
   end = 2020,
-  data_from = c("download", "library", "folder"),
+  data_from = c("download", "library", "folder", "example"),
   folder_path = NULL
 )
 }
