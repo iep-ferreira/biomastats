@@ -1,10 +1,54 @@
-class_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggregation_index", "fragments_number", 
+#' Calculate Landscape Metrics for Classes Over Time
+#'
+#' This function computes a variety of landscape metrics for a set of raster data over a defined time period. 
+#' It generates visualizations and a table of metrics including aggregation index, fragments number, class area, 
+#' edge density, edge length, and average fragment area for selected classes.
+#'
+#' @param rasters_biomastats A list containing raster data and associated time range.
+#' @param metrics A character vector specifying which metrics to calculate. 
+#'   Available options are: \code{"keep.all"}, \code{"aggregation_index"}, \code{"fragments_number"}, 
+#'   \code{"class_area"}, \code{"edge_density"}, \code{"edge_length"}, and \code{"frag_area"}.
+#'   Default is \code{c("keep.all", "aggregation_index", "fragments_number", "class_area", "edge_density", "edge_length", "frag_area")}.
+#' @param start Numeric value indicating the start year for analysis.
+#' @param end Numeric value indicating the end year for analysis.
+#' @param zone The zone of interest for calculating the metrics.
+#' @param classes A vector of class codes to include in the analysis. If \code{NULL}, all classes are included by default.
+#' @param hemisphere A character string specifying the hemisphere ('north' or 'south').
+#' @param line_color Color of the lines in the generated plots. Default is \code{"blue"}.
+#' @param point_shape Shape of the points in the plots. Default is 16.
+#' @param point_size Size of the points in the plots. Default is 3.
+#'
+#' @return A list containing:
+#'   \item{classes}{The classes considered for the analysis.}
+#'   \item{ai_plot}{A ggplot object for the aggregation index over time.}
+#'   \item{fragments_number}{A ggplot object for the number of fragments over time.}
+#'   \item{area_plot}{A ggplot object for the class area over time.}
+#'   \item{edge_density_plot}{A ggplot object for edge density over time.}
+#'   \item{egde_lenght_plot}{A ggplot object for edge length over time.}
+#'   \item{frag_avg_area}{A ggplot object for the average fragment area over time.}
+#'   \item{metrics}{A character vector of metrics calculated.}
+#'   \item{metrics_table}{A data frame containing the calculated metrics for each year.}
+#'
+#' @details This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
+#'   It checks for valid metric types and generates summary plots for selected metrics.
+#'
+#' @examples
+#' # Example usage:
+#' rasters_data <- list(raster = list_of_rasters, time_range = c(2000, 2020))
+#' class_metrics(rasters_data, start = 2000, end = 2020, zone = "Zone1", hemisphere = "north")
+#'
+#' @import ggplot2
+#' @importFrom raster raster
+#' @importFrom dplyr filter
+#' @importFrom scales pretty_breaks
+#' @export
+
+biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggregation_index", "fragments_number", 
                                                          "class_area", "edge_density", "edge_length", "frag_area"), 
                          start, end, zone, classes = NULL, hemisphere,
                          line_color = "blue", point_shape = 16, 
                          point_size = 3) {
   
-  start <- rasters_biomastats$time_range[1]
   
   # definir as classes
   if( is.null(classes) ){
@@ -65,10 +109,7 @@ class_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggregati
         axis.text.y = ggplot2::element_text(size = 14)   # Tamanho maior para os ticks do eixo Y
       )
     
-  }
-  
-  
-      
+  }    
   
   p_edge_length <- NULL
   if("edge_length" %in% metrics | "keep.all" %in% metrics ){  
