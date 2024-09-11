@@ -51,21 +51,21 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   braster <- raster::projectRaster(biomastats_raster, crs = proj_raster, method="ngb")
   
   ##Selecionando a classe de lulc para análise
-  ##braster_selected <- braster
-  ##braster_selected[!braster_selected %in% classe] <- 0
-  ##if(length(classe) > 1 ){
-  ##  braster_selected[braster_selected %in% classe] <- 1
-  ##}
+  braster_selected <- braster
+  braster_selected[!braster_selected %in% classe] <- 0
+  if(length(classe) > 1 ){
+  braster_selected[braster_selected %in% classe] <- 1
+  }
   
   # Criando uma matriz de reclassificação:
   # Valores que estão nas classes serão 1, outros serão 0
-  reclass_matrix <- matrix(c(-Inf, Inf, 0), ncol=3, byrow=TRUE)
-  reclass_matrix <- do.call(rbind, lapply(classe, function(cl) {
-    c(cl, cl, 1)
-  }))
+  #reclass_matrix <- matrix(c(-Inf, Inf, 0), ncol=3, byrow=TRUE)
+  #reclass_matrix <- do.call(rbind, lapply(classe, function(cl) {
+  #  c(cl, cl, 1)
+  #}))
   
   # Aplicando a reclassificação
-  braster_selected <- raster::reclassify(braster, reclass_matrix)
+  #braster_selected <- raster::reclassify(braster, reclass_matrix)
   
  ##Calculando a área da paisagem
   total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
