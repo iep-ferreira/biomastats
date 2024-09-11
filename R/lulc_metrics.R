@@ -28,8 +28,8 @@
 #'   \item \code{reclassified}: Indica se o raster foi reclassificado para múltiplas classes ("Yes" ou "No").
 #' }
 #'
-#' @importFrom dplyr filter
-#' @importFrom raster projectRaster reclassify
+#' @importFrom dplyr filter mutate
+#' @importFrom raster projectRaster reclassify rasterFromXYZ
 #' @importFrom landscapemetrics lsm_l_ta lsm_p_area lsm_l_te lsm_l_ed lsm_c_ca lsm_c_area_mn lsm_c_area_cv lsm_c_area_sd lsm_c_ai
 #' @examples
 #' \dontrun{
@@ -50,22 +50,16 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   ##Reprojetando o raster para coordenadas métricas
   braster <- raster::projectRaster(biomastats_raster, crs = proj_raster, method="ngb")
   
-  ##Selecionando a classe de lulc para análise
-  braster_selected <- braster
-  braster_selected[!braster_selected %in% classe] <- 0
-  if(length(classe) > 1 ){
-  braster_selected[braster_selected %in% classe] <- 1
-  }
+  # Converter o raster em data.frame para manipulação
+  r_df <- as.data.frame(braster, xy = TRUE)  # Inclui coordenadas x e y
+  colnames(r_df)[3] <- "value"  # Nome da coluna dos valores
   
-  # Criando uma matriz de reclassificação:
-  # Valores que estão nas classes serão 1, outros serão 0
-  #reclass_matrix <- matrix(c(-Inf, Inf, 0), ncol=3, byrow=TRUE)
-  #reclass_matrix <- do.call(rbind, lapply(classe, function(cl) {
-  #  c(cl, cl, 1)
-  #}))
+  # Usar dplyr para mutar os valores
+  r_df <- r_df %>%
+    dplyr::mutate(value = ifelse(value %in% classe, 1, 0))
   
-  # Aplicando a reclassificação
-  #braster_selected <- raster::reclassify(braster, reclass_matrix)
+  # Converter de volta para raster
+  braster_selected <- raster::rasterFromXYZ(r_df)
   
  ##Calculando a área da paisagem
   total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
