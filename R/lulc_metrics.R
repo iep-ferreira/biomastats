@@ -29,7 +29,7 @@
 #' }
 #'
 #' @importFrom dplyr filter
-#' @importFrom raster projectRaster
+#' @importFrom raster projectRaster reclassify
 #' @importFrom landscapemetrics lsm_l_ta lsm_p_area lsm_l_te lsm_l_ed lsm_c_ca lsm_c_area_mn lsm_c_area_cv lsm_c_area_sd lsm_c_ai
 #' @examples
 #' \dontrun{
@@ -43,6 +43,7 @@
 lulc_metrics <- function(biomastats_raster, classe, zone = c("18", "19", "20", "21", "22", "23", "24", "25"), 
 hemisphere = c("south", "north"), export.raster = FALSE)
 {
+  
   ##Definindo a projeção
   proj_raster <- paste0("+proj=utm +zone=", zone, " +", hemisphere, " +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
   
@@ -50,11 +51,21 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   braster <- raster::projectRaster(biomastats_raster, crs = proj_raster, method="ngb")
   
   ##Selecionando a classe de lulc para análise
-  braster_selected <- braster
-  braster_selected[!braster_selected %in% classe] <- 0
-  if(length(classe) > 1 ){
-    braster_selected[braster_selected %in% classe] <- 1
-  }
+  ##braster_selected <- braster
+  ##braster_selected[!braster_selected %in% classe] <- 0
+  ##if(length(classe) > 1 ){
+  ##  braster_selected[braster_selected %in% classe] <- 1
+  ##}
+  
+  # Criando uma matriz de reclassificação:
+  # Valores que estão nas classes serão 1, outros serão 0
+  reclass_matrix <- matrix(c(-Inf, Inf, 0), ncol=3, byrow=TRUE)
+  reclass_matrix <- do.call(rbind, lapply(classe, function(cl) {
+    c(cl, cl, 1)
+  }))
+  
+  # Aplicando a reclassificação
+  braster_selected <- raster::reclassify(braster, reclass_matrix)
   
  ##Calculando a área da paisagem
   total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
