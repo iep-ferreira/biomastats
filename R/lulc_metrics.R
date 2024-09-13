@@ -29,7 +29,7 @@
 #' }
 #'
 #' @importFrom dplyr filter mutate
-#' @importFrom raster projectRaster getValeus setValues
+#' @importFrom raster projectRaster getValues setValues
 #' @importFrom landscapemetrics lsm_l_ta lsm_p_area lsm_l_te lsm_l_ed lsm_c_ca lsm_c_area_mn lsm_c_area_cv lsm_c_area_sd lsm_c_ai
 #' @examples
 #' \dontrun{
