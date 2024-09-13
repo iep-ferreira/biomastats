@@ -29,7 +29,7 @@
 #' }
 #'
 #' @importFrom dplyr filter mutate
-#' @importFrom raster projectRaster reclassify rasterFromXYZ
+#' @importFrom raster projectRaster getValeus setValues
 #' @importFrom landscapemetrics lsm_l_ta lsm_p_area lsm_l_te lsm_l_ed lsm_c_ca lsm_c_area_mn lsm_c_area_cv lsm_c_area_sd lsm_c_ai
 #' @examples
 #' \dontrun{
@@ -50,18 +50,33 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   ##Reprojetando o raster para coordenadas métricas
   braster <- raster::projectRaster(biomastats_raster, crs = proj_raster, method="ngb")
   
+  ##Selecionando a classe de lulc para análise
+  braster_selected <- braster
+  braster_values <- raster::getValues(braster_selected)
+  
+  # Selecionando os valores que estão na classe
+  braster_values[!braster_values %in% classe] <- 0
+  
+  # Se classe tiver mais de um valor, atribui 1 para os que estão em classe
+  if(length(classe) > 1) {
+    braster_values[braster_values %in% classe] <- 1
+  }
+  
+  # Atribuindo os valores de volta ao raster
+  braster_selected <- raster::setValues(braster_selected, braster_values)
+  
   # Converter o raster em data.frame para manipulação
-  r_df <- as.data.frame(braster, xy = TRUE)  # Inclui coordenadas x e y
-  colnames(r_df)[3] <- "value"  # Nome da coluna dos valores
+  #r_df <- as.data.frame(braster, xy = TRUE)  # Inclui coordenadas x e y
+  #colnames(r_df)[3] <- "value"  # Nome da coluna dos valores
   
   # Usar dplyr para mutar os valores
-  r_df <- r_df %>%
-    dplyr::mutate(value = ifelse(value %in% classe, 1, 0))
+  #r_df <- r_df %>%
+  #  dplyr::mutate(value = ifelse(value %in% classe, 1, 0))
   
   # Converter de volta para raster
-  braster_selected <- raster::rasterFromXYZ(r_df)
-  
- ##Calculando a área da paisagem
+  #braster_selected <- raster::rasterFromXYZ(r_df)  
+ 
+  ##Calculando a área da paisagem
   total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
   
   ## Calculando a área total da classificação 3
