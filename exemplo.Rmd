@@ -1,0 +1,209 @@
+---
+title: "Projeto Métricas da Paisagem - Exemplo de uso do Bioma Stats"
+author: "CeMECA - UFSCar"
+date: "28/08/2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,      # Mostra o código no relatório
+  message = FALSE,  # Oculta mensagens geradas durante a execução
+  warning = FALSE,  # Oculta warnings gerados durante a execução
+  error = FALSE     # Oculta erros gerados durante a execução 
+  )
+```
+
+## Rodando o Bioma Stats
+
+```{r}
+library(devtools)
+# Se não tiver instalado, vide tutorial ( https://iep-ferreira.github.io/biomastats/ )
+#remove.packages("biomastats")
+#detach(biomastats)
+#devtools::install_github("iep-ferreira/biomastats")
+library(biomastats)
+library(raster)
+library(landscapemetrics)
+library(mapview)
+library(dplyr)
+library(sf)
+library(raster)
+library(ggplot2)
+library(reshape2)
+#install.packages("corrplot")
+library(corrplot)
+```
+
+## Sub-rotinas
+
+```{r}
+carrega_fonte <-function(){
+source("./source-codes/get_area_mod.R")
+source("./source-codes/raster_index.R")
+source("./source-codes/lulc-metrics.R")
+source("./source-codes/biomastats_metrics.R")
+source("./source-codes/land_vis_to_test.R")
+}
+```
+
+## Criando um polígono 
+
+```{r}
+(path_package <- system.file(package = "biomastats"))
+make_polygon(lat = -22.21199, lon = -49.67772, size = 10, shape = "hexagon")
+```
+
+
+### Criar uma nova área de interesse ou shp 
+
+```{r}
+path_shape <- paste0(path_package, "/shp/UFSCar.shp")
+mapview(sf::read_sf(path_shape))
+```
+
+
+## Minerando dados de uso e ocupação na área
+
+```{r, results='hide'}
+#mapas <- load_rasters(shape_path = path_shape,  start=1985, end=2020, data_from = "download")
+save(mapas, file="raster_exemplo.RData")
+load("./raster_exemplo.RData")
+```
+
+```{r}
+mapas$
+```
+
+
+```{r}
+#carrega_fonte()
+par(mfrow = c(2,2))
+land_vis(mapas, year = 2015)
+land_vis(mapas, year = 2020)
+```
+
+## Progressão do uso e ocupação do solo
+
+- corrigir o range para ano em get_area
+
+```{r}
+#carrega_fonte()
+#resultados <- get_area_mod(mapas, plot_type = "profile")
+resultados <- get_area(mapas, plot_type = "areaplot")
+```
+
+```{r}
+resultados$aggregate_data
+resultados$time_series
+```
+
+```{r}
+source("./source-codes/lulc-metrics.R")
+obj_teste <- lulc_metrics_to_test(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = TRUE)
+```
+
+```{r}
+plot(obj_teste$reclassified_raster)
+```
+
+```{r}
+obj_teste <- lulc_metrics(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = FALSE)
+```
+
+
+```{r}
+#mapas$time_range
+#source("./source-codes/biomastats_metrics.R")
+plot_teste <- biomastats_metrics(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south")
+#plot_teste <- biomastats_metrics_to_test(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south")
+```
+
+```{r}
+plot_teste$metrics_table
+```
+
+
+
+```{r}
+plot_teste <- biomastats_metrics(mapas, start = 1988, end = 2020, zone="20", hemisphere ="south")
+```
+
+### Classes agrupadas como cobertura natural
+
+```{r}
+dicti <- biomastats:::dict_build()
+dicti$class[dicti$code %in% plot_teste$classes]
+```
+### Tabela de métricas
+
+```{r}
+plot_teste$metrics_table
+```
+
+### Gráfico da cobertura natural
+
+```{r}
+plot_teste$area_plot
+```
+
+### Gráfico do tamanho médio dos fragmentos
+
+
+```{r}
+plot_teste$frag_avg_area
+```
+
+### Gráfico da densidade de borda
+
+```{r}
+plot_teste$edge_density_plot
+```
+
+### Gráfico do número de fragmentos
+
+```{r}
+plot_teste$fragments_number
+```
+
+### Correlação das métricas de paisagem
+
+```{r}
+plot_teste$metrics_table
+```
+
+### Correlação dos usos
+
+```{r}
+tab <- plot_teste$metrics_table[-26, -1]  # Removendo a coluna 'Ano'
+corr_matrix <- cor(tab)
+corrplot(corr_matrix, method = "color", tl.col = "black", tl.srt = 45)
+```
+
+<!-- ### Visualizador de raster reclassificado -->
+
+<!-- (Ainda não está funcionando) -->
+
+<!-- ```{r} -->
+<!-- land_vis_rec <- function(raster) -->
+<!-- { -->
+<!--     raster <- projectRaster(raster, crs = "+proj=longlat +datum=WGS84") -->
+<!--     raster <- as(raster, "SpatialPixelsDataFrame") -->
+<!--     dat <- as.data.frame(raster) -->
+<!--     names(dat) <- c("value", "x", "y") -->
+<!--     p <- ggplot2::ggplot(data = dat, ggplot2::aes(x = x, y = y,  -->
+<!--         fill = factor(value))) + ggplot2::geom_tile() + ggplot2::coord_sf(crs = "+proj=longlat +datum=WGS84") +  -->
+<!--         ggspatial::annotation_scale(width_hint = 0.2, style = "bar",  -->
+<!--             location = "br", unit_category = "metric") +  -->
+<!--         ggspatial::annotation_north_arrow(location = "tr",  -->
+<!--             which_north = "true", pad_x = grid::unit(0.1,  -->
+<!--                 "in"), pad_y = grid::unit(0.2, "in"),  -->
+<!--             style = ggspatial::north_arrow_fancy_orienteering) +  -->
+<!--         ggplot2::xlab("Longitude") + ggplot2::ylab("Latitude")  -->
+<!--     return(p) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- land_vis_rec(result_metrics$reclassified_raster) -->
+<!-- ``` -->
+

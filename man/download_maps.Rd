@@ -4,7 +4,7 @@
 \alias{download_maps}
 \title{Download Maps}
 \usage{
-download_maps(num_year, fragment_id)
+download_maps(num_year, fragment_id, file_name)
 }
 \arguments{
 \item{num_year}{Year number of the map to be downloaded.}
@@ -19,6 +19,6 @@ This function downloads maps using a list of links.
 }
 \examples{
 \dontrun{
-  download_maps(num_year = 2022, fragment_id = 1)
+  download_maps(num_year = 2022, fragment_id = 1, file_name)
 }
 }

@@ -8,7 +8,7 @@
 #' @param adj_size Adjustment size for the circle. This will affect the radius of the circle. Default is 'adj_size'.
 #'
 #' @return A Polygon object representing the circle.
-#' @export
+
 #' @examples
 #' \dontrun{
 #' circle_coords(lat = 40.7128, lon = -74.0060, adj_size = 1)

@@ -22,7 +22,7 @@
 #' # Exemplo de uso:
 #' raster_index(raster_type = "lulc", collection = 7, language = "English")
 #' }
-#' @export
+
 
 raster_index <- function(raster_type = "lulc", collection = 7, language = "English") {
   

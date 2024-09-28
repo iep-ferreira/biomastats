@@ -8,7 +8,7 @@
 #' @param adj_size Adjustment size for the square. This will affect the size of the square. Default is 'adj_size'.
 #'
 #' @return A Polygon object representing the square.
-#' @export
+
 #' @examples
 #' \dontrun{
 #' square_coords(lat = 40.7128, lon = -74.0060, adj_size = 1)

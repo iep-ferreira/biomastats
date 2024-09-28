@@ -6,7 +6,6 @@
 #' @return The filename of the Google Drive file.
 #' @importFrom rvest read_html html_nodes html_attr
 #' @importFrom magrittr %>%
-#' @export
 #'
 #' @examples
 #' \dontrun{

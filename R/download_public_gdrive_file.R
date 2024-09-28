@@ -8,7 +8,7 @@
 #' @importFrom httr GET
 #' @importFrom httr write_disk
 #' @importFrom httr status_code
-#' @export
+
 #'
 #' @examples
 #' \dontrun{

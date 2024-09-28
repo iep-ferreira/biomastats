@@ -8,8 +8,7 @@ load_rasters(
   shape_path = NULL,
   start = 1985,
   end = 2020,
-  data_from = c("download", "library", "folder", "example"),
-  folder_path = NULL
+  export_folder_path = NULL
 )
 }
 \arguments{
@@ -19,7 +18,7 @@ load_rasters(
 
 \item{end}{A numeric value indicating the end year for raster data.}
 
-\item{data_from}{A character vector specifying the source of raster data. Can be "download", "library", or "folder".}
+\item{data_from}{A character vector specifying the source of raster data. Can be "download" or "folder".}
 
 \item{folder_path}{A character string specifying the path to the folder containing raster files. Required if data_from = "folder".}
 }
@@ -32,6 +31,6 @@ It then crops and masks the raster data using a provided shapefile.
 }
 \examples{
 \dontrun{
-load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, data_from = "library")
+load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, export_folder_path = "./maps-personal-library/")
 }
 }
