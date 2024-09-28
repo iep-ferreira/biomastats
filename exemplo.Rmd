@@ -21,29 +21,18 @@ library(devtools)
 remove.packages("biomastats")
 remove.packages("biomasync")
 #detach(biomastats)
-devtools::install_github("iep-ferreira/biomastats")
+#devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
 library(mapview)
 library(corrplot)
 ```
 
-## Sub-rotinas
-
-```{r}
-carrega_fonte <-function(){
-source("./source-codes/get_area_mod.R")
-source("./source-codes/raster_index.R")
-source("./source-codes/lulc-metrics.R")
-source("./source-codes/biomastats_metrics.R")
-source("./source-codes/land_vis_to_test.R")
-}
-```
 
 ## Criando um polígono 
 
 ```{r}
 (path_package <- system.file(package = "biomastats"))
-make_polygon(lat = -22.21199, lon = -49.67772, size = 10, shape = "hexagon")
+make_polygon(lat = -22.21199, lon = -49.67772, size = 20, shape = "hexagon")
 ```
 
 
@@ -58,9 +47,9 @@ mapview(sf::read_sf(path_shape))
 ## Minerando dados de uso e ocupação na área
 
 ```{r, results='hide'}
-#mapas <- load_rasters(shape_path = path_shape,  start=1985, end=2020, data_from = "download")
-save(mapas, file="raster_exemplo.RData")
-load("./raster_exemplo.RData")
+mapas <- load_rasters(start=1985, end=2020, export_folder_path = "./meus-mapas")
+#save(mapas, file="raster_exemplo.RData")
+#load("./raster_exemplo.RData")
 ```
 
 ```{r}
