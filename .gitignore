@@ -1,3 +1,6 @@
 inst/shared-links
 sync-sources/
 meus-mapas/
+shp-exemplos/
+.Rdata
+*.Rdata

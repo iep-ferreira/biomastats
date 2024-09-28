@@ -18,9 +18,13 @@ knitr::opts_chunk$set(echo = TRUE,      # Mostra o código no relatório
 ```{r}
 library(devtools)
 # Se não tiver instalado, vide tutorial ( https://iep-ferreira.github.io/biomastats/ )
-remove.packages("biomastats")
+#remove.packages("biomastats")
 #detach(biomastats)
 #devtools::install_github("iep-ferreira/biomastats")
+```
+
+
+```{r}
 library(biomastats)
 library(mapview)
 library(corrplot)
@@ -38,7 +42,7 @@ make_polygon(lat = -22.21199, lon = -49.67772, size = 20, shape = "hexagon")
 ### Criar uma nova área de interesse ou shp 
 
 ```{r}
-path_shape <- paste0(path_package, "/shp/UFSCar.shp")
+path_shape <- "./shp-exemplos/itapetininga.shp"
 mapview(sf::read_sf(path_shape))
 ```
 
@@ -46,19 +50,16 @@ mapview(sf::read_sf(path_shape))
 ## Minerando dados de uso e ocupação na área
 
 ```{r, results='hide'}
-mapas <- load_rasters(start=1985, end=2020, export_folder_path = "./meus-mapas")
+itapetininga <- load_rasters(shape_path = path_shape, start=2018, end=2020, export_folder_path = "./meus-mapas")
 #save(mapas, file="raster_exemplo.RData")
 #load("./raster_exemplo.RData")
 ```
 
 ```{r}
-mapas$
+land_vis(itapetininga, year = 2020)
 ```
 
-
 ```{r}
-#carrega_fonte()
-par(mfrow = c(2,2))
 land_vis(mapas, year = 2015)
 land_vis(mapas, year = 2020)
 ```
@@ -79,31 +80,17 @@ resultados$time_series
 ```
 
 ```{r}
-source("./source-codes/lulc-metrics.R")
-obj_teste <- lulc_metrics_to_test(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = TRUE)
+obj_teste <- lulc_metrics(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = TRUE)
+```
 ```
 
 ```{r}
-plot(obj_teste$reclassified_raster)
-```
-
-```{r}
-obj_teste <- lulc_metrics(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = FALSE)
-```
-
-
-```{r}
-#mapas$time_range
-#source("./source-codes/biomastats_metrics.R")
 plot_teste <- biomastats_metrics(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south")
-#plot_teste <- biomastats_metrics_to_test(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south")
 ```
 
 ```{r}
 plot_teste$metrics_table
 ```
-
-
 
 ```{r}
 plot_teste <- biomastats_metrics(mapas, start = 1988, end = 2020, zone="20", hemisphere ="south")
@@ -114,11 +101,6 @@ plot_teste <- biomastats_metrics(mapas, start = 1988, end = 2020, zone="20", hem
 ```{r}
 dicti <- biomastats:::dict_build()
 dicti$class[dicti$code %in% plot_teste$classes]
-```
-### Tabela de métricas
-
-```{r}
-plot_teste$metrics_table
 ```
 
 ### Gráfico da cobertura natural
@@ -150,14 +132,6 @@ plot_teste$fragments_number
 
 ```{r}
 plot_teste$metrics_table
-```
-
-### Correlação dos usos
-
-```{r}
-tab <- plot_teste$metrics_table[-26, -1]  # Removendo a coluna 'Ano'
-corr_matrix <- cor(tab)
-corrplot(corr_matrix, method = "color", tl.col = "black", tl.srt = 45)
 ```
 
 <!-- ### Visualizador de raster reclassificado -->
