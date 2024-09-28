@@ -8,6 +8,7 @@
 #' @param adj_size Adjustment size for the hexagon. This will affect the size of the hexagon. Default is 'adj_size'.
 #'
 #' @return A Polygon object representing the hexagon.
+#' @export
 
 #' @examples
 #' \dontrun{

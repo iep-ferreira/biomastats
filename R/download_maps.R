@@ -7,6 +7,7 @@
 #' @return No return value, called for side effects.
 #' @importFrom readxl read_excel
 #' @importFrom dplyr filter
+#' @export
 
 #'
 #' @examples

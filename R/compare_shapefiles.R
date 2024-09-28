@@ -14,6 +14,7 @@
 #' \dontrun{
 #' compare_shapefiles(shape_path = "path/to/your/shapefile.shp")
 #' }
+#' @export
 
 compare_shapefiles <- function(shape_path) {
 

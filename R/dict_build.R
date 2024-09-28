@@ -5,6 +5,7 @@
 #' and English, a numerical "code", and a "color" associated with each class.
 #'
 #' @return A dataframe that serves as a dictionary for a classification scheme.
+#' @export
 
 dict_build <- function(){
 

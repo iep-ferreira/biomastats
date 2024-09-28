@@ -6,6 +6,7 @@
 #' @param json_string A character string representing the JSON data to be parsed.
 #' @return A list containing the extracted values if successful, or an error message if the parsing fails.
 #' @importFrom jsonlite fromJSON
+#' @export
 
 #'
 #' @examples

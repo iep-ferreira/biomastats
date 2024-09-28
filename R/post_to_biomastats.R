@@ -9,6 +9,8 @@
 #' @return The content of the API response in JSON format as a character string, or an error message if the request fails.
 #' @importFrom httr POST add_headers content status_code
 #' @importFrom jsonlite fromJSON
+#' @export
+
 
 #'
 #' @examples

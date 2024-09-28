@@ -19,7 +19,6 @@ knitr::opts_chunk$set(echo = TRUE,      # Mostra o código no relatório
 library(devtools)
 # Se não tiver instalado, vide tutorial ( https://iep-ferreira.github.io/biomastats/ )
 remove.packages("biomastats")
-remove.packages("biomasync")
 #detach(biomastats)
 #devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
