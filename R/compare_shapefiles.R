@@ -15,7 +15,7 @@
 #' compare_shapefiles(shape_path = "path/to/your/shapefile.shp")
 #' }
 
-compare_shapefiles_sync <- function(shape_path) {
+compare_shapefiles <- function(shape_path) {
 
   sys_path <- system.file(package = "biomastats")
 

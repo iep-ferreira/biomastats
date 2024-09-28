@@ -18,19 +18,12 @@ knitr::opts_chunk$set(echo = TRUE,      # Mostra o código no relatório
 ```{r}
 library(devtools)
 # Se não tiver instalado, vide tutorial ( https://iep-ferreira.github.io/biomastats/ )
-#remove.packages("biomastats")
+remove.packages("biomastats")
+remove.packages("biomasync")
 #detach(biomastats)
-#devtools::install_github("iep-ferreira/biomastats")
+devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
-library(raster)
-library(landscapemetrics)
 library(mapview)
-library(dplyr)
-library(sf)
-library(raster)
-library(ggplot2)
-library(reshape2)
-#install.packages("corrplot")
 library(corrplot)
 ```
 
