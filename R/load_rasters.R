@@ -16,15 +16,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, export_folder_path = "./maps-personal-library/")
+#' load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, method = "download", export_folder_path = "./maps-personal-library/")
 #' }
 
 load_rasters <- function(shape_path = NULL,
                          start = 1985, end = 2020,
-                         export_folder_path = NULL
+                         method = c("download"),
+                         export_folder_path = NULL, 
+                         import_folder_path = NULL
 ) { # starts function
-
-  if(is.null(export_folder_path)){ stop("Error! Path for personal maps library undefined.") }
 
   sys_path <- system.file(package = "biomastats")
 
@@ -42,7 +42,13 @@ load_rasters <- function(shape_path = NULL,
     ids <- compare_shapefiles(shape_path)
 
     # Identifica mapas para download
+  if(method == "download"){    
+    if(is.null(export_folder_path)){ stop("Error! Path for the export maps library is undefined.") }
     biome_rasters <- check_maps(ids, start, end, export_folder_path)
+  } else if (method == "library") {
+    if(is.null(import_folder_path)){ stop("Error! Path for the import maps library is undefined.") }
+  biome_rasters <- load_rasters_from_folder(start, end, import_folder_path)
+  }
 
     biome_utm <- sf::st_crs(biome_rasters[[1]])$proj4string
 

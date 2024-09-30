@@ -15,7 +15,8 @@ biomastats_metrics(
   hemisphere,
   line_color = "blue",
   point_shape = 16,
-  point_size = 3
+  point_size = 3,
+  export.raster = TRUE
 )
 }
 \arguments{

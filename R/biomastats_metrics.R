@@ -47,9 +47,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
                                                          "class_area", "edge_density", "edge_length", "frag_area"), 
                          start, end, zone, classes = NULL, hemisphere,
                          line_color = "blue", point_shape = 16, 
-                         point_size = 3) {
-  
-  
+                         point_size = 3, export.raster = TRUE) {
+   
   # definir as classes
   if( is.null(classes) ){
     selector_classes <- raster_index()
@@ -70,9 +69,11 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
   table_m <- data.frame( c(start:end) )
   colnames(table_m) <- "Year"
   
+  rec_map <- NULL
   for(i in 1:(end - (start-1))) {
-    t[[i]] <- lulc_metrics(rasters_biomastats$raster[[i]], zone = zone, classe = classes, hemisphere = hemisphere)
-  }  
+    t[[i]] <- lulc_metrics(rasters_biomastats$raster[[i]], zone = zone, classe = classes, hemisphere = hemisphere, export.raster = export.raster)
+    rec_map[[i]] <- t[[i]]$reclassified_raster 
+    }  
   
   #result_metrics$average_area[2,6]
   
@@ -87,6 +88,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Avg_frag_area = frag_area.vector)
     table_m <- cbind(table_m, frag_area.vector)
+    colnames(table_m)[ncol(table_m)] <- "Frag. Avg. Area (ha)"
     
     p_frag_avg_area <- ggplot2::ggplot(data, aes(x = Year, y = Avg_frag_area)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
@@ -109,7 +111,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
         axis.text.y = ggplot2::element_text(size = 14)   # Tamanho maior para os ticks do eixo Y
       )
     
-  }    
+  }
   
   p_edge_length <- NULL
   if("edge_length" %in% metrics | "keep.all" %in% metrics ){  
@@ -122,7 +124,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Edge_length = ed_length.vector)
     table_m <- cbind(table_m, ed_length.vector)
-    
+    colnames(table_m)[ncol(table_m)] <- "Edge Length (m)"
+   
     p_edge_length <- ggplot2::ggplot(data, aes(x = Year, y = Edge_length))  +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
       labs(title = "", x = "Year", y = "Edge length (m)") +
@@ -156,10 +159,11 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Edge_density = ed.vector)
     table_m <- cbind(table_m, ed.vector)
+    colnames(table_m)[ncol(table_m)] <- "Edge Density (m/ha)"
     
     p_edge_density <- ggplot2::ggplot(data, aes(x = Year, y = Edge_density)) + 
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Edge density (units)") +
+      labs(title = "", x = "Year", y = "Edge density (m/ha)") +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -191,10 +195,11 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Class_area = area.vector)
     table_m <- cbind(table_m, area.vector)
+    colnames(table_m)[ncol(table_m)] <- "Total Reclassified Area (ha)"
     
     p_area <- ggplot2::ggplot(data, aes(x = Year, y = Class_area)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Class area (ha)") +
+      labs(title = "", x = "Year", y = "Total Reclassified Area (ha)") +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -226,6 +231,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Aggregation_Index = ia.vector)
     table_m <- cbind(table_m, ia.vector)
+    colnames(table_m)[ncol(table_m)] <- "Aggregation Index (%)"
     
     p_ia <- ggplot2::ggplot(data, aes(x = Year, y = Aggregation_Index)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
@@ -262,6 +268,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     years <- start:end
     data <- data.frame(Year = years, Number_of_fragments = frag_number.vector)
     table_m <- cbind(table_m, frag_number.vector)
+    colnames(table_m)[ncol(table_m)] <- "Number of Fragments"
     
     p_number <- ggplot2::ggplot(data, aes(x = Year, y = Number_of_fragments)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
@@ -286,9 +293,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
   } 
   
-  
   return( list("classes" = classes, "ai_plot" = p_ia, "fragments_number" = p_number, "area_plot" = p_area,
                "edge_density_plot" = p_edge_density, "egde_lenght_plot" = p_edge_length,
                "frag_avg_area" = p_frag_avg_area, 
-               "metrics" = metrics, "metrics_table" = table_m) )
+               "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end) )
 }

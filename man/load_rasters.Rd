@@ -8,7 +8,9 @@ load_rasters(
   shape_path = NULL,
   start = 1985,
   end = 2020,
-  export_folder_path = NULL
+  method = c("download"),
+  export_folder_path = NULL,
+  import_folder_path = NULL
 )
 }
 \arguments{
@@ -31,6 +33,6 @@ It then crops and masks the raster data using a provided shapefile.
 }
 \examples{
 \dontrun{
-load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, export_folder_path = "./maps-personal-library/")
+load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, method = "download", export_folder_path = "./maps-personal-library/")
 }
 }

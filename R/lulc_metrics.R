@@ -39,7 +39,6 @@
 #' }
 #' @export
 
-
 lulc_metrics <- function(biomastats_raster, classe, zone = c("18", "19", "20", "21", "22", "23", "24", "25"), 
 hemisphere = c("south", "north"), export.raster = FALSE)
 {
@@ -47,15 +46,12 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   ##Definindo a projeção
   proj_raster <- paste0("+proj=utm +zone=", zone, " +", hemisphere, " +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
   
-  ##Reprojetando o raster para coordenadas métricas
-  braster <- raster::projectRaster(biomastats_raster, crs = proj_raster, method="ngb")
-  
   ##Selecionando a classe de lulc para análise
-  braster_selected <- braster
+  braster_selected <- biomastats_raster
   braster_values <- raster::getValues(braster_selected)
   
   # Selecionando os valores que estão na classe
-  braster_values[!braster_values %in% classe] <- 0
+  braster_values[(!braster_values %in% classe) & !is.na(braster_values)] <- 0
   
   # Se classe tiver mais de um valor, atribui 1 para os que estão em classe
   if(length(classe) > 1) {
@@ -63,25 +59,15 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   }
   
   # Atribuindo os valores de volta ao raster
-  braster_selected <- raster::setValues(braster_selected, braster_values)
+  braster_selected <- aux_raster <- raster::setValues(braster_selected, braster_values)
   
-  # Converter o raster em data.frame para manipulação
-  #r_df <- as.data.frame(braster, xy = TRUE)  # Inclui coordenadas x e y
-  #colnames(r_df)[3] <- "value"  # Nome da coluna dos valores
+  braster_selected  <- raster::projectRaster(braster_selected, crs = proj_raster, method="ngb")
   
-  # Usar dplyr para mutar os valores
-  #r_df <- r_df %>%
-  #  dplyr::mutate(value = ifelse(value %in% classe, 1, 0))
-  
-  # Converter de volta para raster
-  #braster_selected <- raster::rasterFromXYZ(r_df)  
- 
   ##Calculando a área da paisagem
   total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
   
   ## Calculando a área total da classificação 3
   area_frag <- landscapemetrics::lsm_p_area(braster_selected, directions=8)
-  
   
   ## Calculando a área de borda
   
@@ -113,7 +99,7 @@ hemisphere = c("south", "north"), export.raster = FALSE)
   ai <- landscapemetrics::lsm_c_ai (braster_selected)
   
   rec_raster <- NULL
-  if(export.raster == TRUE & length(classe) >1){rec_raster <- braster_selected}
+  if(export.raster == TRUE){rec_raster <- aux_raster}
   
   return( list(classe = classe, 
                proj=proj_raster, 
