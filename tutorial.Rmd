@@ -1,7 +1,7 @@
 ---
 title: "Tutorial de Uso do Pacote Bioma Stats"
 author: "Prof. Dr. Iuri E. P. Ferreira"
-date: "26/04/2024"
+date: "26/04/2024. Atualizado em 30/09/2024."
 output: html_document
 ---
 
@@ -10,177 +10,235 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,  fig.show =
 fig.width=7, fig.height=5, out.width='100%', fig.align='center')
 ```
 
+## Sobre o Bioma Stats
+
 ## Instalação
 
-O _Bioma Stats_ é disponibilizado apenas como versão em desenvolvimento e deve ser instalado diretamente de repositório do GitHub (`iep-ferreira/biomastats`).    
+O _Bioma Stats_ é disponibilizado apenas na versão de teste e deve ser instalado diretamente de repositório do GitHub (`iep-ferreira/biomastats`).  
+
+Para quem já instalou versões anteriores do programa, recomenda-se a remoção do pacote e a reinicialização da sessão do R. 
+
+```{r eval = FALSE}
+remove.packages("biomastats")
+```
+
+O pacote `devtools` é requerido para a instalção do programa. Para instalar e carregar o pacote `devtools`, use os comandos a seguir: 
+
+```{r eval = FALSE}
+#install.packages("devtools") # deixar comentado se houver instalação prévia
+library(devtools)
+```
+
+Após carregar o `devtools`, o usuário deverá instalar e carregar o pacote `biomastats`. 
+
+  + Instalação
+
+```{r eval = FALSE, message=FALSE, warning=FALSE}
+devtools::install_github("iep-ferreira/biomastats")
+```
+
+  + Carregamento
 
 ```{r message=FALSE, warning=FALSE}
-library(devtools)
-# options(timeout = 600)  # 10 minutos de timeout (aumente se necessario)
-#devtools::install_github("iep-ferreira/biomastats")
 library(biomastats)
 ```
 
-O caminho para o pacote pode ser verificado com o código a seguir: 
+## Definição do recorte
+
+No programa Bioma Stats, o usuário pode importar um recorte via polígono em `.shp` ou definir uma área a partir de coordenadas centrais e da forma do recorte. 
+
+### Importação de um recorte
+
+O usuário tem a opção de indicar o caminho do `shapefile` a ser carregado. O próprio Bioma Stats contém alguns exemplos de arquivos `.shp` alocados na subpasta `./biomastats/shp/`, a qual é encontrada na biblioteca pessoal do R após a instalação do programa.  Para acessar o seu caminho, utilize o comando `system.file` como ilustrado a seguir:    
 
 ```{r results=FALSE}
 (path_package <- system.file(package = "biomastats"))
 ```
-
-O programa instala automaticamente documentos na biblioteca pessoal do R, como mapas e shapefiles e podem gerar incompatibilidades em sistemas R executados em nuvem.   
-
-A pasta raiz do pacote apresenta as seguintes sub-pastas: 
-
-  + `./shp` : a pasta contém arquivos .shp usados para recortar os rasters de uso e ocupação do solo. 
-  + `./maps-library` : a pasta é criada automaticamente quando o usuário realiza downloads de mapas através do programa. A pasta contém o mosaico dos mapas utilizados desde a instalação. 
-  + `./shared-links` : a pasta contém links autenticados para a obtenção de mapas fragmentados de uso e ocupação do solo. 
-  
-Na pasta `./maps-library` estão inclusos dados de LULC como exemplo, contendo a região do município de Buri-SP, Brasil, onde está localizado o campus da UFSCar Lagoa do Sino.   
-  
-## Carregamento dos dados de uso e ocupação do solo
-
-Os dados de uso e ocupação do solo podem ser carregados de três formas, durante a aplicação da função de carregamento dos rasters (`load_raster`): 
-
-  + `Download prévio`: nessa abordagem, o usuário deve fornecer o caminho para uma pasta com os mapas anuais de uso e cobertura do solo da plataforma MAPBIOMAS <https://mapbiomas.org/>. 
-
- Os mapas devem ser nomeados seguindo o padrão `"./map-library/filename"`
- 
-  + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em `"./mapbiomas/maps-library"`. As imagens são guardadas para uso posterior, evitando `downloads` duplicados. 
-  
-O fornecimento dos mapas é realizado por um protocolo `peer-to-peer`, que permite a distribuição de arquivos de forma decentralizada. **A rede colaboradores ainda é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede**  
-
-Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou regiões administrativas).  
-
-  + `Biblioteca de mapas`: para recortes já baixados, o carregamento pode ser feito através da biblioteca de mapas (`"./mapbiomas/maps-library"`). Os mosaicos de `downloads` já realizados são compactados em imagens de nome `"map-year.tif"`. 
-  
-## Fluxo de Trabalho
-
-O programa `biomastats` pode ser inicializado de duas formas, com a importação de um _shapefile_ ou através de um polígino desenhado entorno de coordenadas de referência. 
-
-### Caso 1: Importação de um _shapefile_
-
-Nesta etapa, utilizaremos o shapefile do campus da UFSCar Lagoa do Sino como exemplo. Este `.shp` é fornecido como exemplo no pacote, sendo desnecessário o seu download.  
-
-  - Definição do caminho do arquivo
+O recorte pode ser visualizado, antes da análise, com auxílio dos pacotes `sf` e `mapview`. No código a seguir, o arquivo `.shp` com as delimitações da UFSCar Lagoa do Sino é carregado e visualizado. 
 
 ```{r}
 ufscar_shp <- file.path(path_package, "shp/UFSCar.shp")
 ```
 
-  - Visualização do recorte especificado com o `mapview` 
-
 ```{r}
+# install.packages("sf")
+# install.packages("mapview")
+library(sf)
 library(mapview)
 mapview(sf::read_sf(ufscar_shp))
 ```
 
-  - Carregamento dos dados de uso e ocupação do solo
+### Criação de um recorte
 
-Observe que é necessário indicar o caminho do `.shp` para carregar o recorte desejado. Os dados de uso e ocupação da região de Buri-SP são enviados aos usuários do pacote como exemplo e, por este motivo, para este recorte é escolhida a opção `data_from = example`.
+Outra forma de definir o recorte é a partir dr coordenadas centrais. Com as coordenadas centrais, a forma e o tamanho do recorte desejados pelo pesquisador, a função `make_polygon` do programa Bioma Stats é capaz de criar o `.shp` automaticamente. Neste caso, o usuário deve informar a latitude (`lat`), a longitude (`lon`), o diâmetro (`size`, em km) e a forma desejada (`shape` = `circle`, `hexagon` ou `square`), como demonstrado a seguir: 
 
-```{r}
-recortes <- load_rasters(shape_path = ufscar_shp, start=1985, end=2020, data_from = "example")
+```{r message=FALSE, warning=FALSE, results='hide'}
+make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon")
 ```
 
-Após o carregamento dos dados, atribuídos aqui ao objeto `recorte`, faz-se necessário o cálculo de estatísticas de área por classe da paisagem com o comando `get_area`.  
-
-```{r}
-results <- get_area(recortes)
-```
-
-O comando `get_area` calcula e retorna as estatísticas em forma de tabela estruturada, facilitando o trabalho do pesquisador. 
-
-```{r}
-head(results$aggregate_data, 12)
-```
-
-O atributo `time` do resultado fornece ao usuário o gráfico de séries temporais para todas as classes de uso e ocupação do solo existentes na paisagem. 
-
-```{r}
-results$time
-```
-Adicionalmente, comando `land_vis` permite ao usuário visualizar o mapa de uso e ocupação da área para o ano de sua escolha. 
-
-```{r}
-land_vis(recortes, year = 2020)
-```
-
-Já o comando `land_dist` apresenta a distribuição de classes, em termos de área total, para o ano de referência. As opções são gráfico de colunas (`type = "barplot"`) e de pizza (`type = "pie"`). 
-
-```{r}
-land_dist(results, year = 2020, type = "barplot")
-land_dist(results, year = 2020, type = "pie")
-```
-
-### Caso 2: Recorte a partir de coordenadas centrais
-
-Uma área pode ser estudada mesmo se o pesquisador não tiver um `.shp` como referência. Com coordenadas centrais, o pesquisador pode definir uma área ou polígono para a delimitação dos recortes. Para tanto, basta o usuário inserir a latitude (`lat`), a longitude (`lon`), o diâmetro (`size`, em km) e a forma desejada (`shape` = `circle`, `hexagon` ou `square`). 
-
-```{r}
-region <- make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon")
-```
-
-Neste exemplo, criou-se uma região hexagonal de $1,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`. 
+Neste exemplo, criou-se uma região hexagonal de $1,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`.
 
 ```{r}
 shp_path <- file.path(path_package, "shp/polygon.shp")
-library(mapview)
 mapview(sf::read_sf(shp_path))
 ```
 
-Uma vez que esta área encontra-se nas quadrículas de exemplo, o download não é necessário. O recorte é carregado de forma similar a do primeiro exemplo, apenas alterando-se o `.shp` de referência. 
+## Carregamento dos dados
 
-```{r}
-recortes_2 <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example")
-```
+Os dados de uso e ocupação do solo são carregados e pré-processados pela função `load_rasters`. Há duas formas de carregar os dados: (i) download automático e (ii) importação de arquivo pessoal.  
 
-Nesta etapa, realiza-se o cálculo das áreas e a curva de progressão temporal. 
+  + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em um diretório local selecionado pelo usuário ( `"./meus-mapas/"` , por exemplo) As imagens são guardadas para uso posterior, evitando `downloads` duplicados.
 
-```{r}
-results_2 <- get_area(recortes_2)
-results_2$time_series
-```
-
-E, nos gráficos a seguir, é possível conferir o mapa e a distribuição de uso e ocupação do solo no ano de 1995. 
-
-```{r}
-land_vis(recortes_2, year = 1985)
-land_dist(results_2, year = 1985, type = "barplot")
-```
-
-### Caso 3: Fazendo o download de uma nova quadrícula
-
-Neste exemplo, a região delimitada não é fornecida na base de dados de exemplo do `biomastats`
-
-```{r}
-region <- make_polygon(lat = -21.59, lon = -48.52, size = 1.5, shape = "hexagon")
+```{r message=FALSE, warning=FALSE, results='hide'}
+mapas_1 <- load_rasters(shape_path =  shp_path, start = 1985, end = 2020, method = "download", 
+                        export_folder_path = "./meus-mapas/")
 ```
 
 ```{r}
-shp_path <- file.path(path_package, "shp/polygon.shp")
+land_vis(mapas_1, year = 2020)
 ```
 
-Observe que ao tentarmos carregá-la com a opção `example`, surge uma mensagem de erro: 
 
-`Error in .local(x, y, ...) : extents do not overlap`
+<!--   + `Download prévio`: nessa abordagem, o usuário deve fornecer o caminho para uma pasta com os mapas anuais de uso e cobertura do solo da plataforma MAPBIOMAS <https://mapbiomas.org/>.  -->
 
-```{r eval = FALSE}
-recortes_3 <- load_rasters(shape_path = shp_path, start=1985, end=2020, data_from = "example")
-```
+<!--  Os mapas devem ser nomeados seguindo o padrão `"./map-library/filename"` -->
 
-Desta forma, torna-se necessário realizar o download configurando a opção `data_from = "download"` 
+<!--     -->
 
-```{r message=FALSE, warning=FALSE, results= FALSE}
-recortes_3 <- load_rasters(start=1985, end=2020, data_from = "download")
-```
+<!-- O fornecimento dos mapas é realizado por um protocolo `peer-to-peer`, que permite a distribuição de arquivos de forma decentralizada. **A rede colaboradores ainda é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede**   -->
 
-Uma vez que os mapas foram baixados, os arquivos serão mantidos em biblioteca pessoal para uso futuro. 
+<!-- Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou regiões administrativas).   -->
 
-O fluxo de trabalho analítico é sempre o mesmo, independente do recorte usado como referência.  
+<!--   + `Biblioteca de mapas`: para recortes já baixados, o carregamento pode ser feito através da biblioteca de mapas (`"./mapbiomas/maps-library"`). Os mosaicos de `downloads` já realizados são compactados em imagens de nome `"map-year.tif"`.  -->
 
-```{r}
-results_3 <- get_area(recortes_3)
-results_3$time_series
-```
+<!-- ## Fluxo de Trabalho -->
+
+<!-- O programa `biomastats` pode ser inicializado de duas formas, com a importação de um _shapefile_ ou através de um polígino desenhado entorno de coordenadas de referência.  -->
+
+<!-- ### Caso 1: Importação de um _shapefile_ -->
+
+<!-- Nesta etapa, utilizaremos o shapefile do campus da UFSCar Lagoa do Sino como exemplo. Este `.shp` é fornecido como exemplo no pacote, sendo desnecessário o seu download.   -->
+
+<!--   - Definição do caminho do arquivo -->
+
+<!-- ```{r} -->
+<!-- ufscar_shp <- file.path(path_package, "shp/UFSCar.shp") -->
+<!-- ``` -->
+
+<!--   - Visualização do recorte especificado com o `mapview`  -->
+
+<!-- ```{r} -->
+<!-- library(mapview) -->
+<!-- mapview(sf::read_sf(ufscar_shp)) -->
+<!-- ``` -->
+
+<!--   - Carregamento dos dados de uso e ocupação do solo -->
+
+<!-- Observe que é necessário indicar o caminho do `.shp` para carregar o recorte desejado. Os dados de uso e ocupação da região de Buri-SP são enviados aos usuários do pacote como exemplo e, por este motivo, para este recorte é escolhida a opção `data_from = example`. -->
+
+<!-- ```{r} -->
+<!-- recortes <- load_rasters(shape_path = ufscar_shp, start=1985, end=2020, data_from = "example") -->
+<!-- ``` -->
+
+<!-- Após o carregamento dos dados, atribuídos aqui ao objeto `recorte`, faz-se necessário o cálculo de estatísticas de área por classe da paisagem com o comando `get_area`.   -->
+
+<!-- ```{r} -->
+<!-- results <- get_area(recortes) -->
+<!-- ``` -->
+
+<!-- O comando `get_area` calcula e retorna as estatísticas em forma de tabela estruturada, facilitando o trabalho do pesquisador.  -->
+
+<!-- ```{r} -->
+<!-- head(results$aggregate_data, 12) -->
+<!-- ``` -->
+
+<!-- O atributo `time` do resultado fornece ao usuário o gráfico de séries temporais para todas as classes de uso e ocupação do solo existentes na paisagem.  -->
+
+<!-- ```{r} -->
+<!-- results$time -->
+<!-- ``` -->
+<!-- Adicionalmente, comando `land_vis` permite ao usuário visualizar o mapa de uso e ocupação da área para o ano de sua escolha.  -->
+
+<!-- ```{r} -->
+<!-- land_vis(recortes, year = 2020) -->
+<!-- ``` -->
+
+<!-- Já o comando `land_dist` apresenta a distribuição de classes, em termos de área total, para o ano de referência. As opções são gráfico de colunas (`type = "barplot"`) e de pizza (`type = "pie"`).  -->
+
+<!-- ```{r} -->
+<!-- land_dist(results, year = 2020, type = "barplot") -->
+<!-- land_dist(results, year = 2020, type = "pie") -->
+<!-- ``` -->
+
+<!-- ### Caso 2: Recorte a partir de coordenadas centrais -->
+
+<!-- Uma área pode ser estudada mesmo se o pesquisador não tiver um `.shp` como referência. Com coordenadas centrais, o pesquisador pode definir uma área ou polígono para a delimitação dos recortes. Para tanto, basta o usuário inserir a latitude (`lat`), a longitude (`lon`), o diâmetro (`size`, em km) e a forma desejada (`shape` = `circle`, `hexagon` ou `square`).  -->
+
+<!-- ```{r} -->
+<!-- region <- make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon") -->
+<!-- ``` -->
+
+<!-- Neste exemplo, criou-se uma região hexagonal de $1,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`.  -->
+
+<!-- ```{r} -->
+<!-- shp_path <- file.path(path_package, "shp/polygon.shp") -->
+<!-- library(mapview) -->
+<!-- mapview(sf::read_sf(shp_path)) -->
+<!-- ``` -->
+
+<!-- Uma vez que esta área encontra-se nas quadrículas de exemplo, o download não é necessário. O recorte é carregado de forma similar a do primeiro exemplo, apenas alterando-se o `.shp` de referência.  -->
+
+<!-- ```{r} -->
+<!-- recortes_2 <- load_rasters(shape_path = shp_path, start=1985, end=2021, data_from = "example") -->
+<!-- ``` -->
+
+<!-- Nesta etapa, realiza-se o cálculo das áreas e a curva de progressão temporal.  -->
+
+<!-- ```{r} -->
+<!-- results_2 <- get_area(recortes_2) -->
+<!-- results_2$time_series -->
+<!-- ``` -->
+
+<!-- E, nos gráficos a seguir, é possível conferir o mapa e a distribuição de uso e ocupação do solo no ano de 1995.  -->
+
+<!-- ```{r} -->
+<!-- land_vis(recortes_2, year = 1985) -->
+<!-- land_dist(results_2, year = 1985, type = "barplot") -->
+<!-- ``` -->
+
+<!-- ### Caso 3: Fazendo o download de uma nova quadrícula -->
+
+<!-- Neste exemplo, a região delimitada não é fornecida na base de dados de exemplo do `biomastats` -->
+
+<!-- ```{r} -->
+<!-- region <- make_polygon(lat = -21.59, lon = -48.52, size = 1.5, shape = "hexagon") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- shp_path <- file.path(path_package, "shp/polygon.shp") -->
+<!-- ``` -->
+
+<!-- Observe que ao tentarmos carregá-la com a opção `example`, surge uma mensagem de erro:  -->
+
+<!-- `Error in .local(x, y, ...) : extents do not overlap` -->
+
+<!-- ```{r eval = FALSE} -->
+<!-- recortes_3 <- load_rasters(shape_path = shp_path, start=1985, end=2020, data_from = "example") -->
+<!-- ``` -->
+
+<!-- Desta forma, torna-se necessário realizar o download configurando a opção `data_from = "download"`  -->
+
+<!-- ```{r message=FALSE, warning=FALSE, results= FALSE} -->
+<!-- recortes_3 <- load_rasters(start=1985, end=2020, data_from = "download") -->
+<!-- ``` -->
+
+<!-- Uma vez que os mapas foram baixados, os arquivos serão mantidos em biblioteca pessoal para uso futuro.  -->
+
+<!-- O fluxo de trabalho analítico é sempre o mesmo, independente do recorte usado como referência.   -->
+
+<!-- ```{r} -->
+<!-- results_3 <- get_area(recortes_3) -->
+<!-- results_3$time_series -->
+<!-- ``` -->
 
 

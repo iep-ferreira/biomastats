@@ -42,26 +42,33 @@ make_polygon(lat = -22.21199, lon = -49.67772, size = 20, shape = "hexagon")
 ### Criar uma nova área de interesse ou shp 
 
 ```{r}
-path_shape <- "./shp-exemplos/itapetininga.shp"
+path_shape <- "./shp-exemplos/UFSCar.shp"
 mapview(sf::read_sf(path_shape))
 ```
 
-
-## Minerando dados de uso e ocupação na área
+## usando pasta local com os mapas
 
 ```{r, results='hide'}
-itapetininga <- load_rasters(shape_path = path_shape, start=2018, end=2020, export_folder_path = "./meus-mapas")
+ufscar_teste_1 <- load_rasters(shape_path = path_shape, start=1985, end=2020,
+                               method = "library", import_folder_path = "D:/iuri-external-hd/mapbiomas/colecao-sete")
 #save(mapas, file="raster_exemplo.RData")
 #load("./raster_exemplo.RData")
 ```
 
 ```{r}
-land_vis(itapetininga, year = 2020)
+land_vis(ufscar_teste_1, year = 2020)
 ```
 
+```{r, results='hide'}
+ufscar_teste_2 <- load_rasters(shape_path = path_shape, start=1985, end=2020,
+                               method = "download", export_folder_path = "./meus-mapas")
+#save(mapas, file="raster_exemplo.RData")
+#load("./raster_exemplo.RData")
+```
+
+
 ```{r}
-land_vis(mapas, year = 2015)
-land_vis(mapas, year = 2020)
+land_vis(ufscar_teste_2, year = 2010)
 ```
 
 ## Progressão do uso e ocupação do solo
@@ -71,7 +78,7 @@ land_vis(mapas, year = 2020)
 ```{r}
 #carrega_fonte()
 #resultados <- get_area_mod(mapas, plot_type = "profile")
-resultados <- get_area(mapas, plot_type = "areaplot")
+resultados <- get_area(ufscar_teste_1, plot_type = "profile")
 ```
 
 ```{r}
@@ -80,12 +87,11 @@ resultados$time_series
 ```
 
 ```{r}
-obj_teste <- lulc_metrics(mapas$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = TRUE)
-```
+obj_teste <- lulc_metrics(ufscar_teste_1$raster[[1]], classe = c(3,4,5,6,7), zone = "20", hemisphere = "south", export.raster = TRUE)
 ```
 
 ```{r}
-plot_teste <- biomastats_metrics(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south")
+plot_teste <- biomastats_metrics(ufscar_teste_1,  start = 1985, end = 2020, zone="20", hemisphere ="south")
 ```
 
 ```{r}
@@ -94,6 +100,10 @@ plot_teste$metrics_table
 
 ```{r}
 plot_teste <- biomastats_metrics(mapas, start = 1988, end = 2020, zone="20", hemisphere ="south")
+```
+
+```{r}
+reclass_map(obj = plot_teste, year = 1985)
 ```
 
 ### Classes agrupadas como cobertura natural
@@ -128,37 +138,4 @@ plot_teste$edge_density_plot
 plot_teste$fragments_number
 ```
 
-### Correlação das métricas de paisagem
-
-```{r}
-plot_teste$metrics_table
-```
-
-<!-- ### Visualizador de raster reclassificado -->
-
-<!-- (Ainda não está funcionando) -->
-
-<!-- ```{r} -->
-<!-- land_vis_rec <- function(raster) -->
-<!-- { -->
-<!--     raster <- projectRaster(raster, crs = "+proj=longlat +datum=WGS84") -->
-<!--     raster <- as(raster, "SpatialPixelsDataFrame") -->
-<!--     dat <- as.data.frame(raster) -->
-<!--     names(dat) <- c("value", "x", "y") -->
-<!--     p <- ggplot2::ggplot(data = dat, ggplot2::aes(x = x, y = y,  -->
-<!--         fill = factor(value))) + ggplot2::geom_tile() + ggplot2::coord_sf(crs = "+proj=longlat +datum=WGS84") +  -->
-<!--         ggspatial::annotation_scale(width_hint = 0.2, style = "bar",  -->
-<!--             location = "br", unit_category = "metric") +  -->
-<!--         ggspatial::annotation_north_arrow(location = "tr",  -->
-<!--             which_north = "true", pad_x = grid::unit(0.1,  -->
-<!--                 "in"), pad_y = grid::unit(0.2, "in"),  -->
-<!--             style = ggspatial::north_arrow_fancy_orienteering) +  -->
-<!--         ggplot2::xlab("Longitude") + ggplot2::ylab("Latitude")  -->
-<!--     return(p) -->
-<!-- } -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- land_vis_rec(result_metrics$reclassified_raster) -->
-<!-- ``` -->
 
