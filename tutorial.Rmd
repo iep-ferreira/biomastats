@@ -90,7 +90,7 @@ Os dados de uso e ocupação do solo são carregados e pré-processados pela fun
   + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em um diretório local selecionado pelo usuário ( `"./meus-mapas/"` , por exemplo). As imagens são guardadas para uso posterior, evitando `downloads` duplicados.
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
-mapas <- load_rasters(shape_path =  shp_path, start = 1985, end = 2021, method = "download", 
+mapas <- load_rasters(shape_path =  ufscar_shp, start = 1985, end = 2021, method = "download", 
                         export_folder_path = "./meus-mapas/")
 ```
 
@@ -111,9 +111,25 @@ O `download automático` é ideal quando a área de estudo é limitada a poucos 
 
 Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (`Rdata`). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras.  
 
-```{r}
-save(mapas, file =  "./mapa_exemplo.Rdata")
+```{r eval=FALSE}
+save(mapas, file =  "./meus-recortes/biomastats_ufscar_exemplo.Rdata")
 ```
+
+Todas as informações relevantes são recuperadas quando o usuário carrega o arquivo `.Rdata`. O pacote Bioma Stats contém dois arquivos já recortados, para serem usados como exemplos, disponíveis na subpasta `examples` do diretório do pacote, na biblioteca pessoal do R. 
+
+```{r}
+exp_path <- file.path(path_package, "examples/biomastats_ufscar_exemplo.Rdata")
+load(exp_path)
+```
+
+
+
+
+Para o usuário que recebe o arquivo, todos os passos anteriores são desnecessários, e basta carregar o arquivo `.Rdata`
+
+
+
+
 
 
 <!-- ## Fluxo de Trabalho -->
