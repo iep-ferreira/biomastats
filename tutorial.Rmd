@@ -73,10 +73,10 @@ mapview(sf::read_sf(ufscar_shp))
 Outra forma de definir o recorte é a partir dr coordenadas centrais. Com as coordenadas centrais, a forma e o tamanho do recorte desejados pelo pesquisador, a função `make_polygon` do programa Bioma Stats é capaz de criar o `.shp` automaticamente. Neste caso, o usuário deve informar a latitude (`lat`), a longitude (`lon`), o diâmetro (`size`, em km) e a forma desejada (`shape` = `circle`, `hexagon` ou `square`), como demonstrado a seguir: 
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
-make_polygon(lat = -23.605, lon = -48.529, size = 1.5, shape = "hexagon")
+make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 ```
 
-Neste exemplo, criou-se uma região hexagonal de $1,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`.
+Neste exemplo, criou-se uma região hexagonal de $2,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`.
 
 ```{r}
 shp_path <- file.path(path_package, "shp/polygon.shp")
@@ -87,29 +87,34 @@ mapview(sf::read_sf(shp_path))
 
 Os dados de uso e ocupação do solo são carregados e pré-processados pela função `load_rasters`. Há duas formas de carregar os dados: (i) download automático e (ii) importação de arquivo pessoal.  
 
-  + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em um diretório local selecionado pelo usuário ( `"./meus-mapas/"` , por exemplo) As imagens são guardadas para uso posterior, evitando `downloads` duplicados.
+  + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em um diretório local selecionado pelo usuário ( `"./meus-mapas/"` , por exemplo). As imagens são guardadas para uso posterior, evitando `downloads` duplicados.
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
-mapas_1 <- load_rasters(shape_path =  shp_path, start = 1985, end = 2020, method = "download", 
+mapas <- load_rasters(shape_path =  shp_path, start = 1985, end = 2021, method = "download", 
                         export_folder_path = "./meus-mapas/")
 ```
 
-```{r}
-land_vis(mapas_1, year = 2020)
+O fornecimento dos mapas é realizado por um protocolo de armazenamento e distribuição colaborativo, a partir de links compartilháveis armazenados de arquivos públicos armazenados em links de colaboradores do projeto. Observe que a rede de compartilhamento é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede. 
+
+  + `Importação de arquivo pessoal`: nessa abordagem, o usuário deve ter realizado o download prévio das coleções de uso e ocupação do solo da Plataforma MapBiomas <https://mapbiomas.org/>. Para carregar as imagens, basta que o usuário forneça o caminho da pasta onde se encontra a coleção desejada e escolha, como método, a opção "library".    
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'}
+mapas <- load_rasters(shape_path = shp_path, start = 1985, end = 2021, method = "library", 
+                        import_folder_path = "./minha-colecao/")
 ```
 
+Observe que, em ambos os casos, o usuário deve também especificar os anos de início (`start`) e fim (`end`) do estudo. O Bioma Stats mapas anuais de uso e ocupação do solo e a sétima coleção do MapBiomas, usanda neste trabalho, contém dados de 1985 a 2021. 
 
-<!--   + `Download prévio`: nessa abordagem, o usuário deve fornecer o caminho para uma pasta com os mapas anuais de uso e cobertura do solo da plataforma MAPBIOMAS <https://mapbiomas.org/>.  -->
+O `download automático` é ideal quando a área de estudo é limitada a poucos milhares de $km^2$ e o usuário não deseja gastar tempo com o download de toda a coleção do MapBiomas. No entanto, o tempo gasto no pré-processamento é excessivo para recortes maiores, como estados inteiros e biomas, sendo preferível o segundo método de carregamento para situações como essas.   
 
-<!--  Os mapas devem ser nomeados seguindo o padrão `"./map-library/filename"` -->
+## Exportação e leitura de objetos do Bioma Stats
 
-<!--     -->
+Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (`Rdata`). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras.  
 
-<!-- O fornecimento dos mapas é realizado por um protocolo `peer-to-peer`, que permite a distribuição de arquivos de forma decentralizada. **A rede colaboradores ainda é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede**   -->
+```{r}
+save(mapas, file =  "./mapa_exemplo.Rdata")
+```
 
-<!-- Recomenda-se o `download automático` apenas para recortes pequenos (cidades ou regiões administrativas).   -->
-
-<!--   + `Biblioteca de mapas`: para recortes já baixados, o carregamento pode ser feito através da biblioteca de mapas (`"./mapbiomas/maps-library"`). Os mosaicos de `downloads` já realizados são compactados em imagens de nome `"map-year.tif"`.  -->
 
 <!-- ## Fluxo de Trabalho -->
 
