@@ -122,12 +122,12 @@ exp_path <- file.path(path_package, "examples/biomastats_ufscar_exemplo.Rdata")
 load(exp_path)
 ```
 
-
-
-
 Para o usuário que recebe o arquivo, todos os passos anteriores são desnecessários, e basta carregar o arquivo `.Rdata`
 
 
+```{r}
+land_vis(mapas, year = 2020)
+```
 
 
 
