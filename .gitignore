@@ -2,3 +2,6 @@ inst/shared-links
 sync-sources/
 meus-mapas/
 shp-exemplos/
+objetos-tutorial/
+*.css
+*.log
