@@ -3,5 +3,7 @@ sync-sources/
 meus-mapas/
 shp-exemplos/
 objetos-tutorial/
+vignette/
 *.css
 *.log
+*.Rhistory
