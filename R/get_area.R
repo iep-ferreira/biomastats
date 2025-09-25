@@ -123,9 +123,10 @@ get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot")) {
       "Occupied area" = areas,
       "aggregate_data" = df,
       "time_series" = p, 
-      "collection" = data$collection, 
+      "collection" = data$collection
     )
   )
 
 }
+
 
