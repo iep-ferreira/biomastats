@@ -8,6 +8,7 @@
 #' @param end A numeric value indicating the end year for raster data.
 #' @param data_from A character vector specifying the source of raster data. Can be "download" or "folder".
 #' @param folder_path A character string specifying the path to the folder containing raster files. Required if data_from = "folder".
+#' @param collection The collection version.  
 #'
 #' @return A list containing the shapefile, time range, and masked raster data.
 #' @importFrom sf st_read st_crs
@@ -23,7 +24,8 @@ load_rasters <- function(shape_path = NULL,
                          start = 1985, end = 2020,
                          method = c("download"),
                          export_folder_path = NULL, 
-                         import_folder_path = NULL
+                         import_folder_path = NULL, 
+                         collection = 10
 ) { # starts function
 
   sys_path <- system.file(package = "biomastats")
@@ -66,8 +68,9 @@ load_rasters <- function(shape_path = NULL,
     map[[i - (start - 1)]] <- raster::mask(maps[[i - (start - 1)]], s)
   }
   
-  return(list("shape" = s, "time_range" = c(start, end), "raster" = map))
+  return(list("shape" = s, "time_range" = c(start, end), "raster" = map, "collection" = collection))
 }
+
 
 
 
