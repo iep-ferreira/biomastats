@@ -22,7 +22,7 @@
 land_vis <- function(data = NULL, year = 1985){
 
   #Dictionary
-  dic <- dict_build()
+  dic <- dict_build(data$collection)
 
   # Check if data is NULL
   if(is.null(data)) {
@@ -76,3 +76,4 @@ land_vis <- function(data = NULL, year = 1985){
 
   return(p)
 }
+
