@@ -30,7 +30,7 @@
 land_dist <- function(data = NULL, year = NULL, type = "barplot" ){
 
   # Dictionary
-  dic <- dict_build()
+  dic <- dict_build(data$collection)
 
   #
   aux <- year
@@ -90,3 +90,4 @@ land_dist <- function(data = NULL, year = NULL, type = "barplot" ){
   plot(p)
 
 } # end-function
+
