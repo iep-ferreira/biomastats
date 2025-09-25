@@ -96,7 +96,12 @@ if(!collection %in% c(7, 10)){ stop("This collection isn't available") }
 ))
 
   # auxiliar object
-  dict <- ifelse(collection == 7, dict_7, dict_10)
+if (collection == 7) {
+    dict <- dict_7
+  } else {
+    dict <- dict_10
+  }
+
   
   colnames(dict) <- c("grupo", "group", "classe", "class", "code", "color")
 
@@ -106,6 +111,7 @@ if(!collection %in% c(7, 10)){ stop("This collection isn't available") }
 
   return(dict)
 }
+
 
 
 
