@@ -35,7 +35,7 @@ raster_index <- function(raster_type = "lulc", collection = 7, language = "Engli
   
   # no futuro, o dicionário será escolhido de acordo com o 
   # tipo de mapa e coleção
-  dict <- biomastats:::dict_build()
+  dict <- biomastats:::dict_build(collection)
   dict <- dict_sorted <- dict[order(dict$code), ]
   dict <- dplyr::filter(dict, !code  %in% c(1, 10, 14, 22, 26) )
   
