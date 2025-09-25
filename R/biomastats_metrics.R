@@ -51,7 +51,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
    
   # definir as classes
   if( is.null(classes) ){
-    selector_classes <- raster_index()
+    selector_classes <- raster_index(rasters_biomastats$collection)
     classes <- selector_classes$codes
   }
   
