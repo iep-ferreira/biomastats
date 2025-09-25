@@ -8,7 +8,6 @@
 #'   \item{raster}{A list of raster objects for each year in the time range.}
 #' }
 #' @param dec_places An integer indicating the number of decimal places to round the area values.
-#' @param collection map collection 
 #' @param plot_type A character string indicating the type of plot to generate, either "profile" (default) or "areaplot".
 #'
 #' @return A list with four elements:
@@ -29,10 +28,10 @@
 #' result <- get_area(data = biomastats_raster, plot_type = "areaplot")
 #' }
 
-get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot"), collection = 7) {
+get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot")) {
 
   # Dictionary
-  dic <- dict_build(collection)
+  dic <- dict_build(data$collection)
 
   # Time span of study
   time_span <- (data$time_range[2] - data$time_range[1]) + 1
@@ -124,8 +123,9 @@ get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot"), col
       "Occupied area" = areas,
       "aggregate_data" = df,
       "time_series" = p, 
-      "collection" = collection, 
+      "collection" = data$collection, 
     )
   )
 
 }
+
