@@ -4,12 +4,15 @@
 #' The dictionary includes six fields: "group" in Portuguese and English, "class" in Portuguese
 #' and English, a numerical "code", and a "color" associated with each class.
 #'
+#' @param The collection version 
 #' @return A dataframe that serves as a dictionary for a classification scheme.
 #' @export
 
-dict_build <- function(){
+dict_build <- function(collection){
 
-  dict <- data.frame(rbind(
+if(!collection %in% c(7, 10)){ stop("This collection isn't available") }
+# Sub-titles for collection 7  
+  dict_7 <- data.frame(rbind(
     c("Nao Catalogada", "Non Cataloged", "Nao Catalogada", "Not cataloged", 0, "#FFFFFF"),
     c("Floresta", "Forest", "Floresta", "Forest", 1, "#129912"),
     c("Floresta", "Forest","Formacao Florestal", "Forest Formation", 3, "#006400"),
@@ -48,8 +51,51 @@ dict_build <- function(){
     c("Formacao Natural Nao Florestal", "Non Forest Natural Formation", "Restinga Herbacea", "Herbaceous Sandbank Vegetation", 50, "#66ffcc"),
     c("Agropecuaria", "Farming", "Algodao", "Cotton", 62, "#660066")
     ))
+# Sub-titles for collection 10  
+  dict_10 <- data.frame(rbind(
+    c("Floresta", "Forest", "Floresta", "Forest", 1, "#1f8d49"),
+    c("Floresta", "Forest", "Forma\u00e7\u00e3o Florestal", "Forest Formation", 3, "#1f8d49"),
+    c("Floresta", "Forest", "Forma\u00e7\u00e3o Sav\u00e2nica", "Savanna Formation", 4, "#7dc975"),
+    c("Floresta", "Forest", "Mangue", "Mangrove", 5, "#04f8fd"),
+    c("Floresta", "Forest", "Floresta Alag\u00e1vel", "Floodable Forest", 6, "#007785"),
+    c("Floresta", "Forest", "Restinga Arb\u00f3rea", "Wooded Sandbank Vegetation", 49, "#02d659"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", 10, "#d6bc74"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Campo Alagado e \u00c1rea Pantanosa", "Wetland", 11, "#519799"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Forma\u00e7\u00e3o Campestre", "Grassland", 12, "#d6bc74"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Apicum", "Hypersaline Tidal Flat", 32, "#fc8114"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Afloramento Rochoso", "Rocky Outcrop", 29, "#ffaa5f"),
+    c("Vegeta\u00e7\u00e3o Herb\u00e1cea e Arbustiva", "Herbaceous and Shrubby Vegetation", "Restinga Herb\u00e1cea", "Herbaceous Sandbank Vegetation", 50, "#ad5100"),
+    c("Agropecu\u00e1ria", "Farming", "Agropecu\u00e1ria", "Farming", 14, "#ffefc3"),
+    c("Agropecu\u00e1ria", "Farming", "Pastagem", "Pasture", 15, "#edde8e"),
+    c("Agropecu\u00e1ria", "Farming", "Agricultura", "Agriculture", 18, "#F974ED"),
+    c("Agropecu\u00e1ria", "Farming", "Lavoura Tempor\u00e1ria", "Temporary Crop", 19, "#C27BA0"),
+    c("Agropecu\u00e1ria", "Farming", "Soja", "Soybean", 39, "#f5b3c8"),
+    c("Agropecu\u00e1ria", "Farming", "Cana", "Sugar cane", 20, "#db7093"),
+    c("Agropecu\u00e1ria", "Farming", "Arroz", "Rice", 40, "#c71585"),
+    c("Agropecu\u00e1ria", "Farming", "Algod\u00e3o", "Cotton", 62, "#ff69b4"),
+    c("Agropecu\u00e1ria", "Farming", "Outras Lavouras Tempor\u00e1rias", "Other Temporary Crops", 41, "#f54ca9"),
+    c("Agropecu\u00e1ria", "Farming", "Lavoura Perene", "Perennial Crop", 36, "#d082de"),
+    c("Agropecu\u00e1ria", "Farming", "Caf\u00e9", "Coffee", 46, "#d68fe2"),
+    c("Agropecu\u00e1ria", "Farming", "Citrus", "Citrus", 47, "#9932cc"),
+    c("Agropecu\u00e1ria", "Farming", "Dend\u00ea", "Palm Oil", 35, "#9065d0"),
+    c("Agropecu\u00e1ria", "Farming", "Outras Lavouras Perenes", "Other Perennial Crops", 48, "#e6ccff"),
+    c("Agropecu\u00e1ria", "Farming", "Silvicultura", "Forest Plantation", 9, "#7a5900"),
+    c("Agropecu\u00e1ria", "Farming", "Mosaico de Usos", "Mosaic of Uses", 21, "#ffefc3"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "\u00c1rea n\u00e3o Vegetada", "Non vegetated area", 22, "#d4271e"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "Praia, Duna e Areal", "Beach, Dune and Sand Spot", 23, "#ffa07a"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "\u00c1rea Urbanizada", "Urban Area", 24, "#d4271e"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "Minera\u00e7\u00e3o", "Mining", 30, "#9c0027"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "Usina Fotovoltaica", "Photovoltaic Power Plant", 75, "#c12100"),
+    c("\u00c1rea n\u00e3o Vegetada", "Non vegetated area", "Outras \u00c1reas n\u00e3o Vegetadas", "Other non Vegetated Areas", 25, "#db4644"),
+    c("Corpo D'\u00e1gua", "Water", "Corpo D'\u00e1gua", "Water", 26, "#2532e4"),
+    c("Corpo D'\u00e1gua", "Water", "Rio, Lago e Oceano", "River, Lake and Ocean", 33, "#2532e4"),
+    c("Corpo D'\u00e1gua", "Water", "Aquicultura", "Aquaculture", 31, "#091077"),
+    c("N\u00e3o observado", "Not Observed", "N\u00e3o observado", "Not Observed", 27, "#ffffff")
+))
 
-
+  # auxiliar object
+  dict <- ifelse(collection == 7, dict_7, dict_10)
+  
   colnames(dict) <- c("grupo", "group", "classe", "class", "code", "color")
 
   dict$code <- as.numeric(dict$code)
@@ -58,4 +104,5 @@ dict_build <- function(){
 
   return(dict)
 }
+
 
