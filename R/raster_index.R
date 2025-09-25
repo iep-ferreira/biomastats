@@ -25,11 +25,9 @@
 #' @export
 
 
-raster_index <- function(raster_type = "lulc", collection = 7, language = "English") {
+raster_index <- function(raster_type = "lulc", collection = 10, language = "English") {
   
   if(raster_type != "lulc"){stop("Only 'lulc' data is avalaible in this version.")} 
-  
-  if(collection != 7){stop("Only the collection 7 is avalaible in this version.")} 
   
   if(!language %in% c("Portuguese", "English")){stop("Only 'Portuguese' or 'English' are valid options.")}
   
