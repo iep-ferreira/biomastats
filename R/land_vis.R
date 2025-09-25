@@ -31,7 +31,7 @@ land_vis <- function(data = NULL, year = 1985){
   }
 
   # Check if year is within allowed range
-  if(year < 1985 || year > 2021){
+  if(year < 1985 || year > 2024){
     print("Year out of bounds!")
     return(NULL)
   }
@@ -76,4 +76,5 @@ land_vis <- function(data = NULL, year = 1985){
 
   return(p)
 }
+
 
