@@ -151,12 +151,7 @@ ufscar_shp <- file.path(path_package, "shp/UFSCar.shp")
 # install.packages("mapview")
 library(sf)
 library(mapview)
-recorte_ufscar <- sf::read_sf(ufscar_shp)
-mapview::mapview(
-  sf::st_transform(recorte_ufscar, 4326),
-  layer.name = "UFSCar Lagoa do Sino",
-  map.types = "CartoDB.Positron"
-)
+mapview(sf::read_sf(ufscar_shp))
 ```
 
 ```{r echo=FALSE, results='asis'}
@@ -172,12 +167,7 @@ make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 `r b('Neste exemplo, criou-se uma região hexagonal de $2{,}5$ km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o <code>.shp</code> foi automaticamente salvo como <code>polygon.shp</code> no diretório <code>shp</code> da biblioteca pessoal do R <code>biomastats</code>.', 'In this example, a hexagonal region $2.5$ km in diameter was created, centered on the Lagoa do Sino campus location. Note that the <code>.shp</code> was automatically saved as <code>polygon.shp</code> in the <code>shp</code> directory of the personal R library <code>biomastats</code>.')`
 
 ```{r, out.width='100%'}
-recorte_hexagonal <- sf::read_sf(file.path(path_package, "shp/polygon.shp"))
-mapview::mapview(
-  sf::st_transform(recorte_hexagonal, 4326),
-  layer.name = "Recorte hexagonal",
-  map.types = "CartoDB.Positron"
-)
+mapview(sf::read_sf(file.path(path_package, "shp/polygon.shp")))
 ```
 
 ```{r echo=FALSE, results='asis'}

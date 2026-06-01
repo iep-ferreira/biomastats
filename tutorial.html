@@ -5708,7 +5708,6 @@ src: url(data:font/ttf;base64,AAEAAAAQAQAABAAAR0RFRmToZOQAAAJEAAABckdQT1OZKpVmAA
 * { box-sizing: border-box; }
 html {
 scroll-behavior: smooth;
-
 zoom: var(--reading-scale);
 }
 body,
@@ -5716,7 +5715,6 @@ html {
 overflow-x: hidden;
 }
 @supports not (zoom: 1) {
-
 html {
 zoom: unset;
 font-size: calc(100% * var(--reading-scale));
@@ -5732,8 +5730,8 @@ font-size: 12pt !important;
 text-rendering: optimizeLegibility;
 }
 
-.main-container > :not(#reactive-toc) p,
-.main-container > :not(#reactive-toc) li,
+.tutorial-content p,
+.tutorial-content li,
 .feature-card p.feature-desc {
 text-align: justify;
 hyphens: auto;
@@ -5743,44 +5741,26 @@ hyphens: auto;
 .container-fluid.main-container {
 max-width: 100% !important;
 margin: 0 auto !important;
-padding: 2rem 1.5rem 4rem !important;
+padding: 1.25rem 1.5rem 4rem !important;
 width: 100%;
-display: grid;
-grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
-gap: 0 2rem;
-align-items: start;
+display: flex;
+flex-direction: row;
+flex-wrap: nowrap;
+align-items: flex-start;
+gap: 2.5rem;
 position: relative;
+background: transparent;
 }
-
-.main-container::after {
-content: "";
-grid-column: 2;
-grid-row: 1 / -1;
-width: var(--book-width);
-max-width: none;
-justify-self: center;
-align-self: stretch;
-background: var(--page-bg);
-border: 1px solid #d8d2c6;
-box-shadow:
-0 1px 2px rgba(0, 0, 0, 0.04),
-0 12px 48px rgba(0, 0, 0, 0.1);
-border-radius: 2px;
-z-index: 0;
-pointer-events: none;
-}
-.main-container > :not(#reactive-toc) {
-grid-column: 2;
+.tutorial-content {
+flex: 1 1 auto;
 min-width: 0;
 width: var(--book-width);
-max-width: none;
-margin-left: auto !important;
-margin-right: auto !important;
-position: relative;
-z-index: 1;
-padding-left: 2.75rem;
-padding-right: 2.75rem;
+max-width: 100%;
+padding-right: 0.5rem;
 box-sizing: border-box;
+}
+.tutorial-content > h1:first-child {
+margin-top: 0 !important;
 }
 #biomastats-topbar,
 #biomastats-hero {
@@ -5837,9 +5817,9 @@ margin-top: 0.05rem;
 }
 #biomastats-hero {
 padding: 2.5rem 0 2rem;
-margin-bottom: 2rem;
-border-bottom: 1px solid #d8d2c6;
-background: none;
+margin-bottom: 1.25rem;
+border-bottom: 1px solid #d0cbc0;
+background: transparent;
 box-shadow: none;
 text-align: center;
 }
@@ -5923,18 +5903,20 @@ em { color: var(--text-dark); font-style: italic; }
 strong { font-weight: 600; }
 
 #reactive-toc {
-grid-column: 1;
-grid-row: 1 / -1;
+flex: 0 0 260px;
+width: 260px;
+max-width: 36vw;
 position: sticky;
 top: 5.25rem;
-align-self: start;
+align-self: flex-start;
 max-height: calc(100vh - 6.5rem);
 overflow-y: auto;
 background: transparent;
 border: none;
 border-radius: 0;
 box-shadow: none;
-padding: 0.5rem 0.75rem 1.5rem 0;
+padding: 0 0.75rem 1.5rem 0;
+margin-top: 0;
 }
 #reactive-toc .toc-title {
 font-size: 0.75rem;
@@ -6240,26 +6222,22 @@ body:not(.lang-en):not(.lang-pt) .lang-en { display: none !important; }
 
 @media (max-width: 991px) {
 .main-container, .container-fluid.main-container {
-display: block;
-}
-.main-container::after {
-width: 100%;
-max-width: none;
-left: 0;
-right: 0;
-}
-.main-container > :not(#reactive-toc) {
-grid-column: auto;
-width: 100%;
-max-width: none;
-padding-left: 1.5rem;
-padding-right: 1.5rem;
+flex-direction: column;
+gap: 1.5rem;
 }
 #reactive-toc {
+flex: none;
+width: 100%;
+max-width: none;
 position: static;
-grid-row: auto;
 max-height: 280px;
-margin-bottom: 2rem;
+padding-right: 0;
+}
+.tutorial-content {
+width: 100%;
+max-width: none;
+padding-left: 0.5rem;
+padding-right: 0.5rem;
 }
 }
 @media print {
@@ -6334,10 +6312,12 @@ pre { font-size: 0.9rem !important; }
 })();
 </script>
 <script>
-/* Sumário lateral reativo — insere aside no início do container
-   SEM mover os nós de conteúdo (preserva widgets Leaflet/mapview). */
+/* Sumário lateral + coluna de conteúdo (flex: lado a lado, sem sobrepor widgets). */
 (function () {
   document.addEventListener("DOMContentLoaded", function () {
+    var hdr = document.getElementById("header");
+    if (hdr) hdr.remove();
+
     var mc = document.querySelector(".main-container");
     if (!mc || document.getElementById("reactive-toc")) return;
 
@@ -6384,6 +6364,14 @@ pre { font-size: 0.9rem !important; }
     });
 
     mc.insertBefore(aside, mc.firstChild);
+
+    var wrap = document.createElement("div");
+    wrap.className = "tutorial-content";
+    wrap.id = "tutorial-content";
+    Array.prototype.slice.call(mc.children).forEach(function (el) {
+      if (el.id !== "reactive-toc") wrap.appendChild(el);
+    });
+    mc.appendChild(wrap);
 
     function onScroll() {
       var y = window.scrollY + 120;
@@ -6809,14 +6797,9 @@ is loaded and visualized.</span></p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># install.packages(&quot;mapview&quot;)</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">library</span>(mapview)</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>recorte_ufscar <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(ufscar_shp)</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>mapview<span class="sc">::</span><span class="fu">mapview</span>(</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  sf<span class="sc">::</span><span class="fu">st_transform</span>(recorte_ufscar, <span class="dv">4326</span>),</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">layer.name =</span> <span class="st">&quot;UFSCar Lagoa do Sino&quot;</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">map.types =</span> <span class="st">&quot;CartoDB.Positron&quot;</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>)</span></code></pre></div>
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-ac5df827e2099964ee14" style="width:100%;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-ac5df827e2099964ee14">{"x":{"options":{"minZoom":1,"maxZoom":52,"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"preferCanvas":false,"bounceAtZoomLimits":false,"maxBounds":[[[-90,-370]],[[90,370]]]},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron","CartoDB.Positron","CartoDB.Positron",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"createMapPane","args":["polygon",420]},{"method":"addPolygons","args":[[[[{"lng":[-48.55428049411106,-48.55429425035301,-48.55428150694312,-48.55428049411106],"lat":[-23.61604568421384,-23.61603945354384,-23.61603804276112,-23.61604568421384]}]],[[{"lng":[-48.5194265099298,-48.51093992492158,-48.5071494136768,-48.50458132120045,-48.50093959792179,-48.49948296265077,-48.49817213317776,-48.49849670851059,-48.50157699260459,-48.50219012023054,-48.50255514357589,-48.50280586987083,-48.50361084758838,-48.50393164559092,-48.50569503457984,-48.50718423166642,-48.50794787747101,-48.50869672323772,-48.50944558754544,-48.51071675848609,-48.51336140532705,-48.51531185920309,-48.51659040402667,-48.51811867778752,-48.52206386536439,-48.52190644974817,-48.52535686509179,-48.52921424726512,-48.52955970027883,-48.53018688463226,-48.53096735305697,-48.53202538466203,-48.53293790974665,-48.53510665377105,-48.54055671645614,-48.54389784623084,-48.55431015709797,-48.55538615495233,-48.54562742283508,-48.54057617111111,-48.53916257327275,-48.5381695782952,-48.53503708746963,-48.53288748693041,-48.53100442108109,-48.52747901712109,-48.5253442032886,-48.52115273638383,-48.5194265099298],"lat":[-23.59342939355136,-23.59509613238653,-23.59456754571663,-23.59420683810162,-23.59366908651313,-23.59345168126313,-23.59353890983943,-23.59387615596405,-23.59555832947087,-23.59570510075967,-23.59595401059565,-23.59561557138029,-23.59552571107248,-23.59550693426069,-23.59554985044498,-23.5960154352835,-23.59721223625245,-23.59875949112285,-23.6003067436217,-23.60254347527345,-23.60528667342382,-23.60853129012127,-23.60997374640134,-23.61076388703126,-23.6108817660536,-23.6050270865732,-23.60421284239937,-23.60280155708128,-23.60402629165115,-23.60500983150192,-23.60564424522131,-23.60594392574848,-23.60725713463008,-23.61078488427569,-23.61471294154756,-23.61509737587614,-23.61625044502765,-23.60813175387034,-23.60234728701503,-23.59943859711375,-23.5984169492083,-23.5980403419238,-23.59673564603749,-23.59583442050231,-23.59524544292985,-23.5944363433737,-23.59407146895457,-23.59313752180796,-23.59342939355136]}]]],null,"UFSCar Lagoa do Sino",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"polygon","stroke":true,"color":"#333333","weight":0.5,"opacity":[0.9,0.9],"fill":true,"fillColor":"#6666FF","fillOpacity":[0.6,0.6],"smoothFactor":1,"noClip":false},["<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>Id&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>2&emsp;<\/td><\/tr><tr><td>1<\/td><th>Id&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>"],{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},["0","0"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"stroke":true,"weight":1,"opacity":0.9,"fillOpacity":0.84,"bringToFront":false,"sendToBack":false}]},{"method":"addScaleBar","args":[{"maxWidth":100,"metric":true,"imperial":true,"updateWhenIdle":true,"position":"bottomleft"}]},{"method":"addHomeButton","args":[-48.55538615495233,-23.61625044502765,-48.49817213317776,-23.59313752180796,true,"UFSCar_Lagoa_do_Sino","Zoom to UFSCar_Lagoa_do_Sino","<strong> UFSCar_Lagoa_do_Sino <\/strong>","bottomright"]},{"method":"addLayersControl","args":["CartoDB.Positron","UFSCar Lagoa do Sino",{"collapsed":true,"autoZIndex":true,"position":"topleft"}]},{"method":"addLegend","args":[{"colors":["#6666FF"],"labels":["0"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"","extra":null,"layerId":null,"className":"info legend","group":"UFSCar Lagoa do Sino"}]}],"limits":{"lat":[-23.61625044502765,-23.59313752180796],"lng":[-48.55538615495233,-48.49817213317776]},"fitBounds":[-23.61625044502765,-48.55538615495233,-23.59313752180796,-48.49817213317776,[]]},"evals":[],"jsHooks":{"render":[{"code":"function(el, x, data) {\n  return (\n      function(el, x, data) {\n      // get the leaflet map\n      var map = this; //HTMLWidgets.find('#' + el.id);\n      // we need a new div element because we have to handle\n      // the mouseover output separately\n      // debugger;\n      function addElement () {\n      // generate new div Element\n      var newDiv = $(document.createElement('div'));\n      // append at end of leaflet htmlwidget container\n      $(el).append(newDiv);\n      //provide ID and style\n      newDiv.addClass('lnlt');\n      newDiv.css({\"position\":\"relative\",\"bottomleft\":\"0px\",\"background-color\":\"rgba(255, 255, 255, 0.7)\",\"box-shadow\":\"0 0 2px #bbb\",\"background-clip\":\"padding-box\",\"margin\":\"0\",\"padding-left\":\"5px\",\"padding-right\":\"5px\",\"color\":\"#333\",\"font-size\":\"9px\",\"font-family\":\"\\\"Helvetica Neue\\\", Arial, Helvetica, sans-serif\",\"text-align\":\"left\",\"z-index\":\"700\"});\n      return newDiv;\n      }\n\n\n      // check for already existing lnlt class to not duplicate\n      var lnlt = $(el).find('.lnlt');\n\n      if(!lnlt.length) {\n      lnlt = addElement();\n\n      // grab the special div we generated in the beginning\n      // and put the mousmove output there\n\n      map.on('mousemove', function (e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                           ' lon: ' + (e.latlng.lng).toFixed(5) +\n                           ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                           ' | zoom: ' + map.getZoom() +\n                           ' | x: ' + L.CRS.EPSG3857.project(e.latlng).x.toFixed(0) +\n                           ' | y: ' + L.CRS.EPSG3857.project(e.latlng).y.toFixed(0) +\n                           ' | epsg: 3857 ' +\n                           ' | proj4: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs ');\n      } else {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      }\n      });\n\n      // remove the lnlt div when mouse leaves map\n      map.on('mouseout', function (e) {\n      var strip = document.querySelector('.lnlt');\n      if( strip !==null) strip.remove();\n      });\n\n      };\n\n      //$(el).keypress(67, function(e) {\n      map.on('preclick', function(e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      var txt = document.querySelector('.lnlt').textContent;\n      console.log(txt);\n      //txt.innerText.focus();\n      //txt.select();\n      setClipboardText('\"' + txt + '\"');\n      }\n      });\n\n      }\n      ).call(this.getMap(), el, x, data);\n}","data":null},{"code":"function(el, x, data) {\n  return (function(el,x,data){\n           var map = this;\n\n           map.on('keypress', function(e) {\n               console.log(e.originalEvent.code);\n               var key = e.originalEvent.code;\n               if (key === 'KeyE') {\n                   var bb = this.getBounds();\n                   var txt = JSON.stringify(bb);\n                   console.log(txt);\n\n                   setClipboardText('\\'' + txt + '\\'');\n               }\n           })\n        }).call(this.getMap(), el, x, data);\n}","data":null}]}}</script>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">mapview</span>(sf<span class="sc">::</span><span class="fu">read_sf</span>(ufscar_shp))</span></code></pre></div>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-a79ccd99abed2acfef21" style="width:100%;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-a79ccd99abed2acfef21">{"x":{"options":{"minZoom":1,"maxZoom":52,"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"preferCanvas":false,"bounceAtZoomLimits":false,"maxBounds":[[[-90,-370]],[[90,370]]]},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron","CartoDB.Positron","CartoDB.Positron",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["CartoDB.DarkMatter","CartoDB.DarkMatter","CartoDB.DarkMatter",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenStreetMap","OpenStreetMap","OpenStreetMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["Esri.WorldImagery","Esri.WorldImagery","Esri.WorldImagery",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenTopoMap","OpenTopoMap","OpenTopoMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"createMapPane","args":["polygon",420]},{"method":"addPolygons","args":[[[[{"lng":[-48.55428049411106,-48.55429425035301,-48.55428150694312,-48.55428049411106],"lat":[-23.61604568421384,-23.61603945354384,-23.61603804276112,-23.61604568421384]}]],[[{"lng":[-48.5194265099298,-48.51093992492158,-48.5071494136768,-48.50458132120045,-48.50093959792179,-48.49948296265077,-48.49817213317776,-48.49849670851059,-48.50157699260459,-48.50219012023054,-48.50255514357589,-48.50280586987083,-48.50361084758838,-48.50393164559092,-48.50569503457984,-48.50718423166642,-48.50794787747101,-48.50869672323772,-48.50944558754544,-48.51071675848609,-48.51336140532705,-48.51531185920309,-48.51659040402667,-48.51811867778752,-48.52206386536439,-48.52190644974817,-48.52535686509179,-48.52921424726512,-48.52955970027883,-48.53018688463226,-48.53096735305697,-48.53202538466203,-48.53293790974665,-48.53510665377105,-48.54055671645614,-48.54389784623084,-48.55431015709797,-48.55538615495233,-48.54562742283508,-48.54057617111111,-48.53916257327275,-48.5381695782952,-48.53503708746963,-48.53288748693041,-48.53100442108109,-48.52747901712109,-48.5253442032886,-48.52115273638383,-48.5194265099298],"lat":[-23.59342939355136,-23.59509613238653,-23.59456754571663,-23.59420683810162,-23.59366908651313,-23.59345168126313,-23.59353890983943,-23.59387615596405,-23.59555832947087,-23.59570510075967,-23.59595401059565,-23.59561557138029,-23.59552571107248,-23.59550693426069,-23.59554985044498,-23.5960154352835,-23.59721223625245,-23.59875949112285,-23.6003067436217,-23.60254347527345,-23.60528667342382,-23.60853129012127,-23.60997374640134,-23.61076388703126,-23.6108817660536,-23.6050270865732,-23.60421284239937,-23.60280155708128,-23.60402629165115,-23.60500983150192,-23.60564424522131,-23.60594392574848,-23.60725713463008,-23.61078488427569,-23.61471294154756,-23.61509737587614,-23.61625044502765,-23.60813175387034,-23.60234728701503,-23.59943859711375,-23.5984169492083,-23.5980403419238,-23.59673564603749,-23.59583442050231,-23.59524544292985,-23.5944363433737,-23.59407146895457,-23.59313752180796,-23.59342939355136]}]]],null,"sf::read_sf(ufscar_shp)",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"polygon","stroke":true,"color":"#333333","weight":0.5,"opacity":[0.9,0.9],"fill":true,"fillColor":"#6666FF","fillOpacity":[0.6,0.6],"smoothFactor":1,"noClip":false},["<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>Id&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>2&emsp;<\/td><\/tr><tr><td>1<\/td><th>Id&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>"],{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},["0","0"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"stroke":true,"weight":1,"opacity":0.9,"fillOpacity":0.84,"bringToFront":false,"sendToBack":false}]},{"method":"addScaleBar","args":[{"maxWidth":100,"metric":true,"imperial":true,"updateWhenIdle":true,"position":"bottomleft"}]},{"method":"addHomeButton","args":[-48.55538615495233,-23.61625044502765,-48.49817213317776,-23.59313752180796,true,"sf__read_sf_ufscar_shp_","Zoom to sf__read_sf_ufscar_shp_","<strong> sf__read_sf_ufscar_shp_ <\/strong>","bottomright"]},{"method":"addLayersControl","args":[["CartoDB.Positron","CartoDB.DarkMatter","OpenStreetMap","Esri.WorldImagery","OpenTopoMap"],"sf::read_sf(ufscar_shp)",{"collapsed":true,"autoZIndex":true,"position":"topleft"}]},{"method":"addLegend","args":[{"colors":["#6666FF"],"labels":["0"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"","extra":null,"layerId":null,"className":"info legend","group":"sf::read_sf(ufscar_shp)"}]}],"limits":{"lat":[-23.61625044502765,-23.59313752180796],"lng":[-48.55538615495233,-48.49817213317776]},"fitBounds":[-23.61625044502765,-48.55538615495233,-23.59313752180796,-48.49817213317776,[]]},"evals":[],"jsHooks":{"render":[{"code":"function(el, x, data) {\n  return (\n      function(el, x, data) {\n      // get the leaflet map\n      var map = this; //HTMLWidgets.find('#' + el.id);\n      // we need a new div element because we have to handle\n      // the mouseover output separately\n      // debugger;\n      function addElement () {\n      // generate new div Element\n      var newDiv = $(document.createElement('div'));\n      // append at end of leaflet htmlwidget container\n      $(el).append(newDiv);\n      //provide ID and style\n      newDiv.addClass('lnlt');\n      newDiv.css({\"position\":\"relative\",\"bottomleft\":\"0px\",\"background-color\":\"rgba(255, 255, 255, 0.7)\",\"box-shadow\":\"0 0 2px #bbb\",\"background-clip\":\"padding-box\",\"margin\":\"0\",\"padding-left\":\"5px\",\"padding-right\":\"5px\",\"color\":\"#333\",\"font-size\":\"9px\",\"font-family\":\"\\\"Helvetica Neue\\\", Arial, Helvetica, sans-serif\",\"text-align\":\"left\",\"z-index\":\"700\"});\n      return newDiv;\n      }\n\n\n      // check for already existing lnlt class to not duplicate\n      var lnlt = $(el).find('.lnlt');\n\n      if(!lnlt.length) {\n      lnlt = addElement();\n\n      // grab the special div we generated in the beginning\n      // and put the mousmove output there\n\n      map.on('mousemove', function (e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                           ' lon: ' + (e.latlng.lng).toFixed(5) +\n                           ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                           ' | zoom: ' + map.getZoom() +\n                           ' | x: ' + L.CRS.EPSG3857.project(e.latlng).x.toFixed(0) +\n                           ' | y: ' + L.CRS.EPSG3857.project(e.latlng).y.toFixed(0) +\n                           ' | epsg: 3857 ' +\n                           ' | proj4: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs ');\n      } else {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      }\n      });\n\n      // remove the lnlt div when mouse leaves map\n      map.on('mouseout', function (e) {\n      var strip = document.querySelector('.lnlt');\n      if( strip !==null) strip.remove();\n      });\n\n      };\n\n      //$(el).keypress(67, function(e) {\n      map.on('preclick', function(e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      var txt = document.querySelector('.lnlt').textContent;\n      console.log(txt);\n      //txt.innerText.focus();\n      //txt.select();\n      setClipboardText('\"' + txt + '\"');\n      }\n      });\n\n      }\n      ).call(this.getMap(), el, x, data);\n}","data":null},{"code":"function(el, x, data) {\n  return (function(el,x,data){\n           var map = this;\n\n           map.on('keypress', function(e) {\n               console.log(e.originalEvent.code);\n               var key = e.originalEvent.code;\n               if (key === 'KeyE') {\n                   var bb = this.getBounds();\n                   var txt = JSON.stringify(bb);\n                   console.log(txt);\n\n                   setClipboardText('\\'' + txt + '\\'');\n               }\n           })\n        }).call(this.getMap(), el, x, data);\n}","data":null}]}}</script>
 <h2 id="creating-a-study-area">
 <span class="lang-pt">Criação de um recorte</span><span class="lang-en">Creating a study area</span>
 </h2>
@@ -6849,14 +6832,9 @@ was created, centered on the Lagoa do Sino campus location. Note that
 the <code>.shp</code> was automatically saved as
 <code>polygon.shp</code> in the <code>shp</code> directory of the
 personal R library <code>biomastats</code>.</span></p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>recorte_hexagonal <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">read_sf</span>(<span class="fu">file.path</span>(path_package, <span class="st">&quot;shp/polygon.shp&quot;</span>))</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>mapview<span class="sc">::</span><span class="fu">mapview</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  sf<span class="sc">::</span><span class="fu">st_transform</span>(recorte_hexagonal, <span class="dv">4326</span>),</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">layer.name =</span> <span class="st">&quot;Recorte hexagonal&quot;</span>,</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">map.types =</span> <span class="st">&quot;CartoDB.Positron&quot;</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span></code></pre></div>
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-ba7346f050e28bba197f" style="width:100%;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-ba7346f050e28bba197f">{"x":{"options":{"minZoom":1,"maxZoom":52,"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"preferCanvas":false,"bounceAtZoomLimits":false,"maxBounds":[[[-90,-370]],[[90,370]]]},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron","CartoDB.Positron","CartoDB.Positron",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"createMapPane","args":["polygon",420]},{"method":"addPolygons","args":[[[[{"lng":[-48.50842140683241,-48.51871070341621,-48.5392892965838,-48.5495785931676,-48.5392892965838,-48.51871070341621,-48.50842140683241],"lat":[-23.605,-23.62282158445728,-23.62282158445728,-23.605,-23.58717841554272,-23.58717841554272,-23.605]}]]],null,"Recorte hexagonal",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"polygon","stroke":true,"color":"#333333","weight":0.5,"opacity":0.9,"fill":true,"fillColor":"#6666FF","fillOpacity":0.6,"smoothFactor":1,"noClip":false},"<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>FID&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>",{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},"0",{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"stroke":true,"weight":1,"opacity":0.9,"fillOpacity":0.84,"bringToFront":false,"sendToBack":false}]},{"method":"addScaleBar","args":[{"maxWidth":100,"metric":true,"imperial":true,"updateWhenIdle":true,"position":"bottomleft"}]},{"method":"addHomeButton","args":[-48.5495785931676,-23.62282158445728,-48.50842140683241,-23.58717841554272,true,"Recorte_hexagonal","Zoom to Recorte_hexagonal","<strong> Recorte_hexagonal <\/strong>","bottomright"]},{"method":"addLayersControl","args":["CartoDB.Positron","Recorte hexagonal",{"collapsed":true,"autoZIndex":true,"position":"topleft"}]},{"method":"addLegend","args":[{"colors":["#6666FF"],"labels":["0"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"","extra":null,"layerId":null,"className":"info legend","group":"Recorte hexagonal"}]}],"limits":{"lat":[-23.62282158445728,-23.58717841554272],"lng":[-48.5495785931676,-48.50842140683241]},"fitBounds":[-23.62282158445728,-48.5495785931676,-23.58717841554272,-48.50842140683241,[]]},"evals":[],"jsHooks":{"render":[{"code":"function(el, x, data) {\n  return (\n      function(el, x, data) {\n      // get the leaflet map\n      var map = this; //HTMLWidgets.find('#' + el.id);\n      // we need a new div element because we have to handle\n      // the mouseover output separately\n      // debugger;\n      function addElement () {\n      // generate new div Element\n      var newDiv = $(document.createElement('div'));\n      // append at end of leaflet htmlwidget container\n      $(el).append(newDiv);\n      //provide ID and style\n      newDiv.addClass('lnlt');\n      newDiv.css({\"position\":\"relative\",\"bottomleft\":\"0px\",\"background-color\":\"rgba(255, 255, 255, 0.7)\",\"box-shadow\":\"0 0 2px #bbb\",\"background-clip\":\"padding-box\",\"margin\":\"0\",\"padding-left\":\"5px\",\"padding-right\":\"5px\",\"color\":\"#333\",\"font-size\":\"9px\",\"font-family\":\"\\\"Helvetica Neue\\\", Arial, Helvetica, sans-serif\",\"text-align\":\"left\",\"z-index\":\"700\"});\n      return newDiv;\n      }\n\n\n      // check for already existing lnlt class to not duplicate\n      var lnlt = $(el).find('.lnlt');\n\n      if(!lnlt.length) {\n      lnlt = addElement();\n\n      // grab the special div we generated in the beginning\n      // and put the mousmove output there\n\n      map.on('mousemove', function (e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                           ' lon: ' + (e.latlng.lng).toFixed(5) +\n                           ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                           ' | zoom: ' + map.getZoom() +\n                           ' | x: ' + L.CRS.EPSG3857.project(e.latlng).x.toFixed(0) +\n                           ' | y: ' + L.CRS.EPSG3857.project(e.latlng).y.toFixed(0) +\n                           ' | epsg: 3857 ' +\n                           ' | proj4: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs ');\n      } else {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      }\n      });\n\n      // remove the lnlt div when mouse leaves map\n      map.on('mouseout', function (e) {\n      var strip = document.querySelector('.lnlt');\n      if( strip !==null) strip.remove();\n      });\n\n      };\n\n      //$(el).keypress(67, function(e) {\n      map.on('preclick', function(e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      var txt = document.querySelector('.lnlt').textContent;\n      console.log(txt);\n      //txt.innerText.focus();\n      //txt.select();\n      setClipboardText('\"' + txt + '\"');\n      }\n      });\n\n      }\n      ).call(this.getMap(), el, x, data);\n}","data":null},{"code":"function(el, x, data) {\n  return (function(el,x,data){\n           var map = this;\n\n           map.on('keypress', function(e) {\n               console.log(e.originalEvent.code);\n               var key = e.originalEvent.code;\n               if (key === 'KeyE') {\n                   var bb = this.getBounds();\n                   var txt = JSON.stringify(bb);\n                   console.log(txt);\n\n                   setClipboardText('\\'' + txt + '\\'');\n               }\n           })\n        }).call(this.getMap(), el, x, data);\n}","data":null}]}}</script>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">mapview</span>(sf<span class="sc">::</span><span class="fu">read_sf</span>(<span class="fu">file.path</span>(path_package, <span class="st">&quot;shp/polygon.shp&quot;</span>)))</span></code></pre></div>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-3f1909c03d03344ce29e" style="width:100%;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-3f1909c03d03344ce29e">{"x":{"options":{"minZoom":1,"maxZoom":52,"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"preferCanvas":false,"bounceAtZoomLimits":false,"maxBounds":[[[-90,-370]],[[90,370]]]},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron","CartoDB.Positron","CartoDB.Positron",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["CartoDB.DarkMatter","CartoDB.DarkMatter","CartoDB.DarkMatter",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenStreetMap","OpenStreetMap","OpenStreetMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["Esri.WorldImagery","Esri.WorldImagery","Esri.WorldImagery",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenTopoMap","OpenTopoMap","OpenTopoMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"createMapPane","args":["polygon",420]},{"method":"addPolygons","args":[[[[{"lng":[-48.50842140683241,-48.51871070341621,-48.5392892965838,-48.5495785931676,-48.5392892965838,-48.51871070341621,-48.50842140683241],"lat":[-23.605,-23.62282158445728,-23.62282158445728,-23.605,-23.58717841554272,-23.58717841554272,-23.605]}]]],null,"sf::read_sf(file.path(path_package, \"shp/polyg....",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"polygon","stroke":true,"color":"#333333","weight":0.5,"opacity":0.9,"fill":true,"fillColor":"#6666FF","fillOpacity":0.6,"smoothFactor":1,"noClip":false},"<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>FID&emsp;<\/th><td>0&emsp;<\/td><\/tr><tr><td>2<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><\/table><\/div>",{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},"0",{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"stroke":true,"weight":1,"opacity":0.9,"fillOpacity":0.84,"bringToFront":false,"sendToBack":false}]},{"method":"addScaleBar","args":[{"maxWidth":100,"metric":true,"imperial":true,"updateWhenIdle":true,"position":"bottomleft"}]},{"method":"addHomeButton","args":[-48.5495785931676,-23.62282158445728,-48.50842140683241,-23.58717841554272,true,"sf__read_sf_file_path_path_package___shp_polyg____","Zoom to sf__read_sf_file_path_path_package___shp_polyg____","<strong> sf__read_sf_file_path_path_package___shp_polyg____ <\/strong>","bottomright"]},{"method":"addLayersControl","args":[["CartoDB.Positron","CartoDB.DarkMatter","OpenStreetMap","Esri.WorldImagery","OpenTopoMap"],"sf::read_sf(file.path(path_package, \"shp/polyg....",{"collapsed":true,"autoZIndex":true,"position":"topleft"}]},{"method":"addLegend","args":[{"colors":["#6666FF"],"labels":["0"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"","extra":null,"layerId":null,"className":"info legend","group":"sf::read_sf(file.path(path_package, \"shp/polyg...."}]}],"limits":{"lat":[-23.62282158445728,-23.58717841554272],"lng":[-48.5495785931676,-48.50842140683241]},"fitBounds":[-23.62282158445728,-48.5495785931676,-23.58717841554272,-48.50842140683241,[]]},"evals":[],"jsHooks":{"render":[{"code":"function(el, x, data) {\n  return (\n      function(el, x, data) {\n      // get the leaflet map\n      var map = this; //HTMLWidgets.find('#' + el.id);\n      // we need a new div element because we have to handle\n      // the mouseover output separately\n      // debugger;\n      function addElement () {\n      // generate new div Element\n      var newDiv = $(document.createElement('div'));\n      // append at end of leaflet htmlwidget container\n      $(el).append(newDiv);\n      //provide ID and style\n      newDiv.addClass('lnlt');\n      newDiv.css({\"position\":\"relative\",\"bottomleft\":\"0px\",\"background-color\":\"rgba(255, 255, 255, 0.7)\",\"box-shadow\":\"0 0 2px #bbb\",\"background-clip\":\"padding-box\",\"margin\":\"0\",\"padding-left\":\"5px\",\"padding-right\":\"5px\",\"color\":\"#333\",\"font-size\":\"9px\",\"font-family\":\"\\\"Helvetica Neue\\\", Arial, Helvetica, sans-serif\",\"text-align\":\"left\",\"z-index\":\"700\"});\n      return newDiv;\n      }\n\n\n      // check for already existing lnlt class to not duplicate\n      var lnlt = $(el).find('.lnlt');\n\n      if(!lnlt.length) {\n      lnlt = addElement();\n\n      // grab the special div we generated in the beginning\n      // and put the mousmove output there\n\n      map.on('mousemove', function (e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                           ' lon: ' + (e.latlng.lng).toFixed(5) +\n                           ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                           ' | zoom: ' + map.getZoom() +\n                           ' | x: ' + L.CRS.EPSG3857.project(e.latlng).x.toFixed(0) +\n                           ' | y: ' + L.CRS.EPSG3857.project(e.latlng).y.toFixed(0) +\n                           ' | epsg: 3857 ' +\n                           ' | proj4: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs ');\n      } else {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      }\n      });\n\n      // remove the lnlt div when mouse leaves map\n      map.on('mouseout', function (e) {\n      var strip = document.querySelector('.lnlt');\n      if( strip !==null) strip.remove();\n      });\n\n      };\n\n      //$(el).keypress(67, function(e) {\n      map.on('preclick', function(e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      var txt = document.querySelector('.lnlt').textContent;\n      console.log(txt);\n      //txt.innerText.focus();\n      //txt.select();\n      setClipboardText('\"' + txt + '\"');\n      }\n      });\n\n      }\n      ).call(this.getMap(), el, x, data);\n}","data":null},{"code":"function(el, x, data) {\n  return (function(el,x,data){\n           var map = this;\n\n           map.on('keypress', function(e) {\n               console.log(e.originalEvent.code);\n               var key = e.originalEvent.code;\n               if (key === 'KeyE') {\n                   var bb = this.getBounds();\n                   var txt = JSON.stringify(bb);\n                   console.log(txt);\n\n                   setClipboardText('\\'' + txt + '\\'');\n               }\n           })\n        }).call(this.getMap(), el, x, data);\n}","data":null}]}}</script>
 <h1 id="data-loading">
 <span class="lang-pt">Carregamento dos dados</span><span class="lang-en">Data loading</span>
 </h1>

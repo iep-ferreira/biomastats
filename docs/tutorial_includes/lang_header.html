@@ -58,10 +58,12 @@
 })();
 </script>
 <script>
-/* Sumário lateral reativo — insere aside no início do container
-   SEM mover os nós de conteúdo (preserva widgets Leaflet/mapview). */
+/* Sumário lateral + coluna de conteúdo (flex: lado a lado, sem sobrepor widgets). */
 (function () {
   document.addEventListener("DOMContentLoaded", function () {
+    var hdr = document.getElementById("header");
+    if (hdr) hdr.remove();
+
     var mc = document.querySelector(".main-container");
     if (!mc || document.getElementById("reactive-toc")) return;
 
@@ -108,6 +110,14 @@
     });
 
     mc.insertBefore(aside, mc.firstChild);
+
+    var wrap = document.createElement("div");
+    wrap.className = "tutorial-content";
+    wrap.id = "tutorial-content";
+    Array.prototype.slice.call(mc.children).forEach(function (el) {
+      if (el.id !== "reactive-toc") wrap.appendChild(el);
+    });
+    mc.appendChild(wrap);
 
     function onScroll() {
       var y = window.scrollY + 120;
