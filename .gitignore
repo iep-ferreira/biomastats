@@ -3,6 +3,7 @@ sync-sources/
 meus-mapas/
 shp-exemplos/
 objetos-tutorial/
+ignorados/
 vignette/
 *.css
 *.log

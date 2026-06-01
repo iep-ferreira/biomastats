@@ -34,10 +34,8 @@ O _Bioma Stats_ é um pacote em R criado para facilitar o processamento e a aná
 3. **Visualização de resultados**:
    - Permite visualizar mapas LULC e realizar análises customizadas em áreas de interesse, que podem ser definidas por shapefiles ou polígonos desenhados pelo usuário.
 
-4. **Distribuição colaborativa de dados**:
-   - Utiliza uma rede colaborativa (peer-to-peer) para armazenar e distribuir fragmentos de mapas, reduzindo o tempo de download e a necessidade de um servidor central.
-   
-   ![Rede colaborativa para o armazenamento e a distribuição de dados georreferenciados do Brasil. Fonte: Projeto _Bioma Stats_, 2024](objetos-tutorial/rede.jpg)
+4. **Aquisição flexível dos dados**:
+   - Permite baixar a coleção completa de uso e cobertura da terra diretamente do repositório público do MapBiomas (`download_mapbiomas`) ou utilizar coleções já armazenadas localmente pelo usuário, sem depender de servidores intermediários.
 
 Com o _Bioma Stats_, o usuário pode automatizar várias etapas da análise ambiental, tornando o processo mais eficiente e menos suscetível a erros. O pacote é recomendado para pesquisadores de diversas áreas interessados em realizar análises ambientais com dados georreferenciados de maneira prática e intuitiva.
 
@@ -116,41 +114,53 @@ mapview(sf::read_sf(shp_path))
 
 # Carregamento dos dados
 
-Os dados de uso e ocupação do solo são carregados e pré-processados pela função `load_rasters`. Há duas formas de carregar os dados: (i) download automático e (ii) importação de arquivo pessoal.  
+Os dados de uso e ocupação do solo são carregados e pré-processados pela função `load_rasters`. O fluxo padrão tem duas etapas: (i) baixar a coleção completa do MapBiomas para um diretório local e (ii) carregar, a partir desse diretório, apenas o recorte de interesse. Como a coleção já se encontra baixada neste computador, somente a segunda etapa é executada aqui.
 
-  + `Download automático`: ao especificar um recorte, o programa realiza automaticamente o download dos mapas e os armazena em um diretório local selecionado pelo usuário ( `"./meus-mapas/"` , por exemplo). As imagens são guardadas para uso posterior, evitando `downloads` duplicados.
+## Download da coleção completa
+
+O download dos mapas anuais é feito uma única vez com a função `download_mapbiomas`, que obtém os arquivos diretamente do repositório público do MapBiomas e os salva no diretório indicado em `dest_dir`. Anos já presentes no diretório são ignorados, evitando `downloads` duplicados. Recomenda-se definir o caminho da coleção em uma variável, para reutilizá-lo nas etapas seguintes.
+
+```{r message=FALSE, warning=FALSE}
+path_collection_10 <- "C:/Users/Pichau/Documents/collection_10"
+```
+
+Como a coleção já está disponível localmente, o comando de download a seguir é apenas ilustrativo e **não** precisa ser executado novamente.
+
+```{r eval=FALSE, message=FALSE, warning=FALSE}
+download_mapbiomas(dest_dir = path_collection_10, data_type = "cover", 
+                   collection = 10, time_range = c(1985, 2024))
+```
+
+## Carregamento local do recorte
+
+Com a coleção armazenada localmente, o recorte é carregado com `load_rasters` usando `method = "library"`. O usuário informa o caminho do `shapefile` (`shape_path`), o intervalo de anos (`start` e `end`), o caminho da pasta onde a coleção foi salva (`import_folder_path`) e a coleção utilizada (`collection`).
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
-mapas <- load_rasters(shape_path =  ufscar_shp, start = 1985, end = 2021, method = "download", 
-                        export_folder_path = "./meus-mapas/")
+mapas <- load_rasters(
+  shape_path = ufscar_shp,
+  start = 1985, end = 2024,
+  method = "library",
+  import_folder_path = path_collection_10,
+  collection = 10
+)
 ```
 
-O fornecimento dos mapas é realizado por um protocolo de armazenamento e distribuição colaborativo, a partir de links compartilháveis armazenados de arquivos públicos armazenados em links de colaboradores do projeto. Observe que a rede de compartilhamento é pequena e, portanto, o fornecimento de mapas pode ser suscetível a instabilidades da rede. 
+Observe que o usuário deve sempre especificar os anos de início (`start`) e fim (`end`) do estudo. A Coleção 10 do MapBiomas, utilizada neste material, contém mapas anuais de uso e ocupação do solo de 1985 a 2024.
 
-  + `Importação de arquivo pessoal`: nessa abordagem, o usuário deve ter realizado o download prévio das coleções de uso e ocupação do solo da Plataforma MapBiomas <https://mapbiomas.org/>. Para carregar as imagens, basta que o usuário forneça o caminho da pasta onde se encontra a coleção desejada e escolha, como método, a opção "library".    
-
-```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'}
-mapas <- load_rasters(shape_path = shp_path, start = 1985, end = 2021, method = "library", 
-                        import_folder_path = "./minha-colecao/")
-```
-
-Observe que, em ambos os casos, o usuário deve também especificar os anos de início (`start`) e fim (`end`) do estudo. O Bioma Stats mapas anuais de uso e ocupação do solo e a sétima coleção do MapBiomas, usanda neste trabalho, contém dados de 1985 a 2021. 
-
-O `download automático` é ideal quando a área de estudo é limitada a poucos milhares de $km^2$ e o usuário não deseja gastar tempo com o download de toda a coleção do MapBiomas. No entanto, o tempo gasto no pré-processamento é excessivo para recortes maiores, como estados inteiros e biomas, sendo preferível o segundo método de carregamento para situações como essas.   
+Como `load_rasters` apenas recorta a janela de interesse a partir dos arquivos nacionais, qualquer número de recortes pode ser carregado localmente de forma rápida e sem novas transferências pela internet.
 
 # Exportação e leitura de objetos do Bioma Stats
 
-Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (`Rdata`). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras.  
+Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (`Rdata`). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras, evitando refazer o recorte da coleção.
 
 ```{r eval=FALSE}
-save(mapas, file =  "./meus-recortes/biomastats_ufscar_exemplo.Rdata")
+save(mapas, file = "./meu_recorte_ufscar.Rdata")
 ```
 
-Todas as informações relevantes são recuperadas quando o usuário carrega o arquivo `.Rdata`. O pacote Bioma Stats contém dois arquivos já recortados, para serem usados como exemplos, disponíveis na subpasta `examples` do diretório do pacote, na biblioteca pessoal do R. Com o código a seguir, carregamos o objeto `mapas`, que contém os dados de uso e ocupação do solo previamente recortados para a fazenda Lagoa do Sino, da UFSCar de Buri - SP. 
+Todas as informações relevantes são recuperadas quando o usuário carrega o arquivo `.Rdata`, recuperando o objeto `mapas` com todos os seus atributos: 
 
-```{r}
-exp_path <- file.path(path_package, "examples/biomastats_ufscar_exemplo.Rdata")
-load(exp_path)
+```{r eval=FALSE}
+load("./meu_recorte_ufscar.Rdata")
 ```
 
 Os objetos do Bioma Stats possuem atributos como horizonte de tempo (`time_range`), delimitações do recorte (`shape`) e rasters recortados e reprojetados para WSG84 (`rasters`). Eles podem ser acessados diretamente, usando o comando \$. 
@@ -184,10 +194,10 @@ Adicionalmente, comando `land_vis` permite ao usuário visualizar o mapa de uso 
 land_vis(mapas, year = 1990)
 ```
 
-## Mapa da UFSCar Lagoa do Sino, ano de 2020
+## Mapa da UFSCar Lagoa do Sino, ano de 2024
 
 ```{r}
-land_vis(mapas, year = 2020)
+land_vis(mapas, year = 2024)
 ```
 
 # Distribuição de classes
@@ -197,13 +207,13 @@ O comando `land_dist` apresenta a distribuição de classes, em termos de área 
 ## Gráfico de colunas 
 
 ```{r}
-land_dist(results, year = 2020, type = "barplot")
+land_dist(results, year = 2024, type = "barplot")
 ```
 
 ## Gráfico de setores
 
 ```{r}
-land_dist(results, year = 2020, type = "pie")
+land_dist(results, year = 2024, type = "pie")
 ```
 
 # Métricas da paisagem
@@ -213,20 +223,12 @@ O Bioma Stats também apresenta um módulo para a reclassificação e métricas 
 ). Ao fazer `metrics = "keep.all"`, todas as métricas existentes no programa serão calculadas. 
 
 
-Automaticamente, o programa abrirá uma janela seletora para a escolhas de classes de uso e ocupação do solo. 
+Por padrão (`classes = NULL`), o programa abre uma janela seletora para a escolha interativa das classes de uso e ocupação do solo. Para tornar a análise reprodutível, os códigos das classes também podem ser informados diretamente no argumento `classes`. No exemplo a seguir, selecionamos as classes florestais Formação Florestal (código 3) e Formação Savânica (código 4).
 
-```{r eval=FALSE}
-plot_teste <- biomastats_metrics(mapas,  start = 1985, end = 2020, zone="20", hemisphere ="south", metrics =  "keep.all")
-```
-
-![Janela seletora de classes. Fonte: Projeto _Bioma Stats_, 2024](objetos-tutorial/figure-plot-teste.jpg)
-
-```{r echo=FALSE, eval = FALSE}
-save(plot_teste, file = "./objetos-tutorial/plot_teste.Rdata")
-```
-
-```{r eval = TRUE, echo = FALSE}
-load("./objetos-tutorial/plot_teste.Rdata")
+```{r message=FALSE, warning=FALSE, results='hide'}
+plot_teste <- biomastats_metrics(mapas, start = 1985, end = 2024, zone = "22",
+                                 hemisphere = "south", classes = c(3, 4),
+                                 metrics = "keep.all")
 ```
 
 As métricas são exportadas na forma de tabela, como retorno da função `biomastats_metrics`: 
@@ -285,10 +287,10 @@ O _Bioma Stats_ também apresenta recurso para visualizar os mapas após a recla
 reclass_map(obj = plot_teste, year = 1985)
 ```
 
-## Mapa da Lagoa do Sino reclassificado em 1985
+## Mapa da Lagoa do Sino reclassificado em 2024
 
 ```{r}
-reclass_map(obj = plot_teste, year = 2020)
+reclass_map(obj = plot_teste, year = 2024)
 ```
 
 # Contribua com o projeto
