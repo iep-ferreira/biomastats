@@ -1,0 +1,135 @@
+<link rel="stylesheet" href="tutorial_includes/site_theme.css">
+<header id="biomastats-topbar" role="navigation">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true"></div>
+    <div>
+      <div class="brand-text">Bioma Stats</div>
+      <span class="brand-sub">
+        <span class="lang-pt">Tutorial · MapBiomas · Brasil</span>
+        <span class="lang-en">Tutorial · MapBiomas · Brazil</span>
+      </span>
+    </div>
+  </div>
+  <div id="lang-toggle-bar" role="group" aria-label="Language / Idioma">
+    <button type="button" id="btn-lang-pt" class="active" onclick="setTutorialLang('pt')">PT</button>
+    <button type="button" id="btn-lang-en" onclick="setTutorialLang('en')">EN</button>
+  </div>
+</header>
+<header id="biomastats-hero" role="banner">
+  <div class="hero-inner">
+    <span class="hero-badge">
+      <span class="lang-pt">Documentação do pacote</span>
+      <span class="lang-en">Package documentation</span>
+    </span>
+    <h1 class="hero-title">
+      <span class="lang-pt">Tutorial de Uso do Pacote Bioma Stats</span>
+      <span class="lang-en">Bioma Stats Package User Tutorial</span>
+    </h1>
+    <p class="hero-meta">
+      <span class="lang-pt">Prof. Dr. Iuri E. P. Ferreira · Atualizado em 01/06/2026</span>
+      <span class="lang-en">Prof. Dr. Iuri E. P. Ferreira · Updated June 1, 2026</span>
+    </p>
+  </div>
+</header>
+<script>
+(function () {
+  function setTutorialLang(lang) {
+    document.body.classList.remove("lang-pt", "lang-en");
+    document.body.classList.add("lang-" + lang);
+    var pt = document.getElementById("btn-lang-pt");
+    var en = document.getElementById("btn-lang-en");
+    if (pt && en) {
+      pt.classList.toggle("active", lang === "pt");
+      en.classList.toggle("active", lang === "en");
+    }
+    try { localStorage.setItem("biomastats-tutorial-lang", lang); } catch (e) {}
+    var titles = {
+      pt: "Tutorial de Uso do Pacote Bioma Stats",
+      en: "Bioma Stats Package User Tutorial"
+    };
+    document.title = titles[lang] || document.title;
+  }
+  window.setTutorialLang = setTutorialLang;
+  document.addEventListener("DOMContentLoaded", function () {
+    var saved = null;
+    try { saved = localStorage.getItem("biomastats-tutorial-lang"); } catch (e) {}
+    setTutorialLang(saved === "en" ? "en" : "pt");
+  });
+})();
+</script>
+<script>
+/* Sumário lateral reativo — insere aside no início do container
+   SEM mover os nós de conteúdo (preserva widgets Leaflet/mapview). */
+(function () {
+  document.addEventListener("DOMContentLoaded", function () {
+    var mc = document.querySelector(".main-container");
+    if (!mc || document.getElementById("reactive-toc")) return;
+
+    var heads = Array.prototype.slice
+      .call(mc.querySelectorAll("h1, h2, h3"))
+      .filter(function (h) {
+        if (h.id === "reactive-toc") return false;
+        if (h.classList.contains("title") || h.classList.contains("toc-ignore")) return false;
+        if (h.closest && h.closest(".feature-card")) return false;
+        if (h.closest && h.closest("#reactive-toc")) return false;
+        return true;
+      });
+
+    var aside = document.createElement("aside");
+    aside.id = "reactive-toc";
+    var titleEl = document.createElement("div");
+    titleEl.className = "toc-title";
+    titleEl.innerHTML = '<span class="lang-pt">Nesta página</span><span class="lang-en">On this page</span>';
+    aside.appendChild(titleEl);
+
+    var nav = document.createElement("nav");
+    var ul = document.createElement("ul");
+    nav.appendChild(ul);
+    aside.appendChild(nav);
+
+    var links = [];
+    heads.forEach(function (h, i) {
+      if (!h.id) { h.id = "sec-" + (i + 1); }
+      var li = document.createElement("li");
+      li.className = "toc-" + h.tagName.toLowerCase();
+      var a = document.createElement("a");
+      a.href = "#" + h.id;
+      a.innerHTML = h.innerHTML;
+      li.appendChild(a);
+      ul.appendChild(li);
+      links.push({ a: a, h: h });
+
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var y = h.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: "smooth" });
+        if (history.replaceState) history.replaceState(null, "", "#" + h.id);
+      });
+    });
+
+    mc.insertBefore(aside, mc.firstChild);
+
+    function onScroll() {
+      var y = window.scrollY + 120;
+      var current = null;
+      for (var i = 0; i < links.length; i++) {
+        var top = links[i].h.getBoundingClientRect().top + window.scrollY;
+        if (top <= y) current = links[i]; else break;
+      }
+      links.forEach(function (item) {
+        item.a.classList.toggle("active", item === current);
+      });
+    }
+
+    var ticking = false;
+    window.addEventListener("scroll", function () {
+      if (!ticking) {
+        window.requestAnimationFrame(function () { onScroll(); ticking = false; });
+        ticking = true;
+      }
+    }, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    onScroll();
+  });
+})();
+</script>

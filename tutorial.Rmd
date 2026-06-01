@@ -1,139 +1,213 @@
 ---
 title: "Tutorial de Uso do Pacote Bioma Stats"
 author: "Prof. Dr. Iuri E. P. Ferreira"
-date: "26/04/2024. Atualizado em 02/10/2024."
+date: "01/06/2026. Atualizado em 01/06/2026."
 output: 
   html_document:
-#   pdf_document:
-    toc: true
-    toc_depth: 3
-    number_sections: true
-    theme: readable
     highlight: tango
-    css: custom_styles.css
-fontsize: 14pt
+    includes:
+      in_header: tutorial_includes/lang_header.html
+fontsize: 12pt
+lang: pt-BR
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,  fig.show = 'asis', 
-fig.width=7, fig.height=5, out.width='100%', fig.align='center')
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.show = "asis",
+                      fig.width = 7, fig.height = 5, out.width = "70%", fig.align = "center")
+
+bh <- function(level, pt, en) {
+  id <- gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(en)))
+  sprintf("<h%d id=\"%s\"><span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span></h%d>\n\n",
+          level, id, pt, en, level)
+}
+b <- function(pt, en) {
+  sprintf("<span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span>", pt, en)
+}
+bli <- function(pt, en) {
+  sprintf("<li><span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span></li>\n", pt, en)
+}
+feature_card <- function(icon, pt_title, pt_desc, en_title, en_desc) {
+  sprintf(
+    paste0(
+      "<div class=\"feature-card\">",
+      "<div class=\"feature-icon\">%s</div>",
+      "<h3 class=\"feature-title\"><span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span></h3>",
+      "<p class=\"feature-desc\"><span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span></p>",
+      "</div>"
+    ),
+    icon, pt_title, en_title, pt_desc, en_desc
+  )
+}
 ```
 
-# Sobre o Bioma Stats
+```{r echo=FALSE, results='asis'}
+cat(bh(1,
+  "Sobre o Bioma Stats",
+  "About Bioma Stats"))
+```
 
-O _Bioma Stats_ é um pacote em R criado para facilitar o processamento e a análise de dados geoespaciais, com foco em uso e cobertura da terra (Land Use and Land Cover - LULC) no território brasileiro. O pacote foi desenvolvido para automatizar fluxos de trabalho complexos em análises ambientais, desde o download dos dados até a visualização dos resultados, sendo uma ferramenta acessível até para usuários iniciantes no R.
+`r b('O _Bioma Stats_ é um pacote em R criado para facilitar o processamento e a análise de dados geoespaciais, com foco em uso e cobertura da terra (Land Use and Land Cover - LULC) no território brasileiro. O pacote foi desenvolvido para automatizar fluxos de trabalho complexos em análises ambientais, desde o download dos dados até a visualização dos resultados, sendo uma ferramenta acessível até para usuários iniciantes no R.', 'The _Bioma Stats_ is an R package created to facilitate the processing and analysis of geospatial data, with a focus on land use and land cover (LULC) across Brazilian territory. The package was developed to automate complex workflows in environmental analyses, from data download to results visualization, making it an accessible tool even for beginners in R.')`
 
-## Funcionalidades Principais
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Funcionalidades Principais", "Main Features"))
+cat("<div class=\"features-grid\">\n")
+cat(feature_card(
+  "",
+  "Importação de dados geoespaciais",
+  "Integra dados de fontes como o projeto MapBiomas e o OpenStreetMap, permitindo análises detalhadas de atributos espaciais como proximidade a rodovias e corpos d&rsquo;água.",
+  "Geospatial data import",
+  "Integrates data from sources such as the MapBiomas project and OpenStreetMap, enabling detailed analyses of spatial attributes such as proximity to roads and water bodies."
+))
+cat(feature_card(
+  "",
+  "Métricas de paisagem",
+  "Cálculo de métricas como fragmentação, densidade de borda e evolução temporal do uso do solo, essenciais para estudos de conservação e planejamento ambiental.",
+  "Landscape metrics",
+  "Calculation of metrics such as fragmentation, edge density, and temporal evolution of land use, essential for conservation studies and environmental planning."
+))
+cat(feature_card(
+  "",
+  "Visualização de resultados",
+  "Visualização de mapas LULC e análises customizadas em áreas de interesse, definidas por shapefiles ou polígonos desenhados pelo usuário.",
+  "Results visualization",
+  "Visualization of LULC maps and customized analyses in areas of interest, defined by shapefiles or user-drawn polygons."
+))
+cat(feature_card(
+  "",
+  "Exportação pronta para análise",
+  "Exporta mapas recortados, tabelas de áreas, métricas de paisagem e objetos <code>.Rdata</code> no padrão Bioma Stats, prontos para uso imediato em R ou compartilhamento entre pesquisadores.",
+  "Analysis-ready export",
+  "Exports clipped maps, area tables, landscape metrics, and <code>.Rdata</code> objects in the Bioma Stats standard, ready for immediate use in R or sharing among researchers."
+))
+cat(feature_card(
+  "",
+  "Aquisição flexível dos dados",
+  "Download da coleção completa via <code>download_mapbiomas</code> ou uso de coleções locais, sem servidores intermediários.",
+  "Flexible data acquisition",
+  "Download of the full collection via <code>download_mapbiomas</code> or use of local collections, without intermediate servers."
+))
+cat("</div>\n")
+```
 
-1. **Importação de dados geoespaciais**:
-   - Integra dados de fontes como o projeto MapBiomas e o OpenStreetMap, permitindo análises detalhadas de atributos espaciais como proximidade a rodovias e corpos d'água.
+`r b('Com o _Bioma Stats_, o usuário pode automatizar várias etapas da análise ambiental, tornando o processo mais eficiente e menos suscetível a erros. O pacote é recomendado para pesquisadores de diversas áreas interessados em realizar análises ambientais com dados georreferenciados de maneira prática e intuitiva.', 'With _Bioma Stats_, users can automate several steps of environmental analysis, making the process more efficient and less error-prone. The package is recommended for researchers from diverse fields interested in conducting environmental analyses with georeferenced data in a practical and intuitive way.')`
 
-2. **Análises de métricas de paisagem**:
-   - Cálculo de métricas como fragmentação, densidade de borda e evolução temporal do uso do solo, essenciais para estudos de conservação e planejamento ambiental.
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Instalação", "Installation"))
+```
 
-3. **Visualização de resultados**:
-   - Permite visualizar mapas LULC e realizar análises customizadas em áreas de interesse, que podem ser definidas por shapefiles ou polígonos desenhados pelo usuário.
+`r b('O _Bioma Stats_ é disponibilizado apenas na versão de teste e deve ser instalado diretamente do repositório do GitHub (<code>iep-ferreira/biomastats</code>).', 'The _Bioma Stats_ is available only as a test version and must be installed directly from the GitHub repository (<code>iep-ferreira/biomastats</code>).')`
 
-4. **Aquisição flexível dos dados**:
-   - Permite baixar a coleção completa de uso e cobertura da terra diretamente do repositório público do MapBiomas (`download_mapbiomas`) ou utilizar coleções já armazenadas localmente pelo usuário, sem depender de servidores intermediários.
-
-Com o _Bioma Stats_, o usuário pode automatizar várias etapas da análise ambiental, tornando o processo mais eficiente e menos suscetível a erros. O pacote é recomendado para pesquisadores de diversas áreas interessados em realizar análises ambientais com dados georreferenciados de maneira prática e intuitiva.
-
-
-
-# Instalação
-
-O _Bioma Stats_ é disponibilizado apenas na versão de teste e deve ser instalado diretamente de repositório do GitHub (`iep-ferreira/biomastats`).  
-
-Para quem já instalou versões anteriores do programa, recomenda-se a remoção do pacote e a reinicialização da sessão do R. 
+`r b('Para quem já instalou versões anteriores do programa, recomenda-se a remoção do pacote e a reinicialização da sessão do R.', 'For those who have already installed earlier versions of the program, it is recommended to remove the package and restart the R session.')`
 
 ```{r eval = FALSE}
 remove.packages("biomastats")
 ```
 
-O pacote `devtools` é requerido para a instalção do programa. Para instalar e carregar o pacote `devtools`, use os comandos a seguir: 
+`r b('O pacote <code>devtools</code> é requerido para a instalação do programa. Para instalar e carregar o pacote <code>devtools</code>, use os comandos a seguir:', 'The <code>devtools</code> package is required to install the program. To install and load the <code>devtools</code> package, use the following commands:')`
 
 ```{r eval = FALSE}
 #install.packages("devtools") # deixar comentado se houver instalação prévia
 library(devtools)
 ```
 
-Após carregar o `devtools`, o usuário deverá instalar e carregar o pacote `biomastats`. 
+`r b('Após carregar o <code>devtools</code>, o usuário deverá instalar e carregar o pacote <code>biomastats</code>.', 'After loading <code>devtools</code>, the user must install and load the <code>biomastats</code> package.')`
 
-  + Instalação
++ `r b('Instalação', 'Installation')`
 
 ```{r eval = FALSE, message=FALSE, warning=FALSE}
 devtools::install_github("iep-ferreira/biomastats")
 ```
 
-  + Carregamento
++ `r b('Carregamento', 'Loading')`
 
 ```{r message=FALSE, warning=FALSE}
 library(biomastats)
 ```
 
-# Definição do recorte
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Definição do recorte", "Study area definition"))
+```
 
-No programa Bioma Stats, o usuário pode importar um recorte via polígono em `.shp` ou definir uma área a partir de coordenadas centrais e da forma do recorte. 
+`r b('No programa Bioma Stats, o usuário pode importar um recorte via polígono em <code>.shp</code> ou definir uma área a partir de coordenadas centrais e da forma do recorte.', 'In Bioma Stats, the user can import a study area via a polygon <code>.shp</code> file or define an area from central coordinates and the shape of the clip.')`
 
-## Importação de um recorte
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Importação de um recorte", "Importing a study area"))
+```
 
-O usuário tem a opção de indicar o caminho do `shapefile` a ser carregado. O próprio Bioma Stats contém alguns exemplos de arquivos `.shp` alocados na subpasta `./biomastats/shp/`, a qual é encontrada na biblioteca pessoal do R após a instalação do programa.  Para acessar o seu caminho, utilize o comando `system.file` como ilustrado a seguir:    
+`r b('O usuário tem a opção de indicar o caminho do <code>shapefile</code> a ser carregado. O próprio Bioma Stats contém alguns exemplos de arquivos <code>.shp</code> alocados na subpasta <code>./biomastats/shp/</code>, a qual é encontrada na biblioteca pessoal do R após a instalação do programa. Para acessar o seu caminho, utilize o comando <code>system.file</code> como ilustrado a seguir:', 'The user may specify the path of the <code>shapefile</code> to be loaded. Bioma Stats itself contains some example <code>.shp</code> files in the <code>./biomastats/shp/</code> subfolder, which is found in the personal R library after installing the package. To access its path, use the <code>system.file</code> command as illustrated below:')`
 
 ```{r results=FALSE}
 (path_package <- system.file(package = "biomastats"))
 ```
-O recorte pode ser visualizado, antes da análise, com auxílio dos pacotes `sf` e `mapview`. No código a seguir, o arquivo `.shp` com as delimitações da fazenda Lagoa do Sino, da UFSCar de Buri - SP, é carregado e visualizado. 
+
+`r b('O recorte pode ser visualizado, antes da análise, com auxílio dos pacotes <code>sf</code> e <code>mapview</code>. No código a seguir, o arquivo <code>.shp</code> com as delimitações da fazenda Lagoa do Sino, da UFSCar de Buri - SP, é carregado e visualizado.', 'The study area can be previewed before analysis with the help of the <code>sf</code> and <code>mapview</code> packages. In the code below, the <code>.shp</code> file with the boundaries of the Lagoa do Sino farm at UFSCar Buri - SP is loaded and visualized.')`
 
 ```{r}
 ufscar_shp <- file.path(path_package, "shp/UFSCar.shp")
 ```
 
-```{r}
+```{r, out.width='100%'}
 # install.packages("sf")
 # install.packages("mapview")
 library(sf)
 library(mapview)
-mapview(sf::read_sf(ufscar_shp))
+recorte_ufscar <- sf::read_sf(ufscar_shp)
+mapview::mapview(
+  sf::st_transform(recorte_ufscar, 4326),
+  layer.name = "UFSCar Lagoa do Sino",
+  map.types = "CartoDB.Positron"
+)
 ```
 
-## Criação de um recorte
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Criação de um recorte", "Creating a study area"))
+```
 
-Outra forma de definir o recorte é a partir dr coordenadas centrais. Com as coordenadas centrais, a forma e o tamanho do recorte desejados pelo pesquisador, a função `make_polygon` do programa Bioma Stats é capaz de criar o `.shp` automaticamente. Neste caso, o usuário deve informar a latitude (`lat`), a longitude (`lon`), o diâmetro (`size`, em km) e a forma desejada (`shape` = `circle`, `hexagon` ou `square`), como demonstrado a seguir: 
+`r b('Outra forma de definir o recorte é a partir das coordenadas centrais. Com as coordenadas centrais, a forma e o tamanho do recorte desejados pelo pesquisador, a função <code>make_polygon</code> do programa Bioma Stats é capaz de criar o <code>.shp</code> automaticamente. Neste caso, o usuário deve informar a latitude (<code>lat</code>), a longitude (<code>lon</code>), o diâmetro (<code>size</code>, em km) e a forma desejada (<code>shape</code> = <code>circle</code>, <code>hexagon</code> ou <code>square</code>), como demonstrado a seguir:', 'Another way to define the study area is from central coordinates. With the central coordinates, shape, and size desired by the researcher, the <code>make_polygon</code> function in Bioma Stats can create the <code>.shp</code> automatically. In this case, the user must provide latitude (<code>lat</code>), longitude (<code>lon</code>), diameter (<code>size</code>, in km), and desired shape (<code>shape</code> = <code>circle</code>, <code>hexagon</code>, or <code>square</code>), as shown below:')`
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 ```
 
-Neste exemplo, criou-se uma região hexagonal de $2,5$km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o `.shp` foi automaticamente salvo como `polygon.shp` no diretório `shp` da biblioteca pessoal do R `biomastats`.
+`r b('Neste exemplo, criou-se uma região hexagonal de $2{,}5$ km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o <code>.shp</code> foi automaticamente salvo como <code>polygon.shp</code> no diretório <code>shp</code> da biblioteca pessoal do R <code>biomastats</code>.', 'In this example, a hexagonal region $2.5$ km in diameter was created, centered on the Lagoa do Sino campus location. Note that the <code>.shp</code> was automatically saved as <code>polygon.shp</code> in the <code>shp</code> directory of the personal R library <code>biomastats</code>.')`
 
-```{r}
-shp_path <- file.path(path_package, "shp/polygon.shp")
-mapview(sf::read_sf(shp_path))
+```{r, out.width='100%'}
+recorte_hexagonal <- sf::read_sf(file.path(path_package, "shp/polygon.shp"))
+mapview::mapview(
+  sf::st_transform(recorte_hexagonal, 4326),
+  layer.name = "Recorte hexagonal",
+  map.types = "CartoDB.Positron"
+)
 ```
 
-# Carregamento dos dados
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Carregamento dos dados", "Data loading"))
+```
 
-Os dados de uso e ocupação do solo são carregados e pré-processados pela função `load_rasters`. O fluxo padrão tem duas etapas: (i) baixar a coleção completa do MapBiomas para um diretório local e (ii) carregar, a partir desse diretório, apenas o recorte de interesse. Como a coleção já se encontra baixada neste computador, somente a segunda etapa é executada aqui.
+`r b('Os dados de uso e ocupação do solo são carregados e pré-processados pela função <code>load_rasters</code>. O fluxo padrão tem duas etapas: (i) baixar a coleção completa do MapBiomas para um diretório local e (ii) carregar, a partir desse diretório, apenas o recorte de interesse. Como a coleção já se encontra baixada neste computador, somente a segunda etapa é executada aqui.', 'Land use and land cover data are loaded and pre-processed by the <code>load_rasters</code> function. The standard workflow has two steps: (i) download the full MapBiomas collection to a local directory and (ii) load only the study area clip from that directory. Since the collection is already downloaded on this computer, only the second step is executed here.')`
 
-## Download da coleção completa
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Download da coleção completa", "Downloading the full collection"))
+```
 
-O download dos mapas anuais é feito uma única vez com a função `download_mapbiomas`, que obtém os arquivos diretamente do repositório público do MapBiomas e os salva no diretório indicado em `dest_dir`. Anos já presentes no diretório são ignorados, evitando `downloads` duplicados. Recomenda-se definir o caminho da coleção em uma variável, para reutilizá-lo nas etapas seguintes.
+`r b('O download dos mapas anuais é feito uma única vez com a função <code>download_mapbiomas</code>, que obtém os arquivos diretamente do repositório público do MapBiomas e os salva no diretório indicado em <code>dest_dir</code>. Anos já presentes no diretório são ignorados, evitando <code>downloads</code> duplicados. Recomenda-se definir o caminho da coleção em uma variável, para reutilizá-lo nas etapas seguintes.', 'Annual maps are downloaded once with the <code>download_mapbiomas</code> function, which retrieves files directly from the public MapBiomas repository and saves them in the directory specified in <code>dest_dir</code>. Years already present in the directory are skipped, avoiding duplicate <code>downloads</code>. It is recommended to define the collection path in a variable for reuse in subsequent steps.')`
 
 ```{r message=FALSE, warning=FALSE}
 path_collection_10 <- "C:/Users/Pichau/Documents/collection_10"
 ```
 
-Como a coleção já está disponível localmente, o comando de download a seguir é apenas ilustrativo e **não** precisa ser executado novamente.
+`r b('Como a coleção já está disponível localmente, o comando de download a seguir é apenas ilustrativo e <strong>não</strong> precisa ser executado novamente.', 'Since the collection is already available locally, the download command below is illustrative only and <strong>does not</strong> need to be run again.')`
 
 ```{r eval=FALSE, message=FALSE, warning=FALSE}
 download_mapbiomas(dest_dir = path_collection_10, data_type = "cover", 
                    collection = 10, time_range = c(1985, 2024))
 ```
 
-## Carregamento local do recorte
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Carregamento local do recorte", "Loading the clip from local storage"))
+```
 
-Com a coleção armazenada localmente, o recorte é carregado com `load_rasters` usando `method = "library"`. O usuário informa o caminho do `shapefile` (`shape_path`), o intervalo de anos (`start` e `end`), o caminho da pasta onde a coleção foi salva (`import_folder_path`) e a coleção utilizada (`collection`).
+`r b('Com a coleção armazenada localmente, o recorte é carregado com <code>load_rasters</code> usando <code>method = "library"</code>. O usuário informa o caminho do <code>shapefile</code> (<code>shape_path</code>), o intervalo de anos (<code>start</code> e <code>end</code>), o caminho da pasta onde a coleção foi salva (<code>import_folder_path</code>) e a coleção utilizada (<code>collection</code>).', 'With the collection stored locally, the clip is loaded with <code>load_rasters</code> using <code>method = "library"</code>. The user provides the <code>shapefile</code> path (<code>shape_path</code>), the year range (<code>start</code> and <code>end</code>), the path to the folder where the collection was saved (<code>import_folder_path</code>), and the collection used (<code>collection</code>).')`
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 mapas <- load_rasters(
@@ -145,85 +219,100 @@ mapas <- load_rasters(
 )
 ```
 
-Observe que o usuário deve sempre especificar os anos de início (`start`) e fim (`end`) do estudo. A Coleção 10 do MapBiomas, utilizada neste material, contém mapas anuais de uso e ocupação do solo de 1985 a 2024.
+`r b('Observe que o usuário deve sempre especificar os anos de início (<code>start</code>) e fim (<code>end</code>) do estudo. A Coleção 10 do MapBiomas, utilizada neste material, contém mapas anuais de uso e ocupação do solo de 1985 a 2024.', 'Note that the user must always specify the study start year (<code>start</code>) and end year (<code>end</code>). MapBiomas Collection 10, used in this material, contains annual land use and land cover maps from 1985 to 2024.')`
 
-Como `load_rasters` apenas recorta a janela de interesse a partir dos arquivos nacionais, qualquer número de recortes pode ser carregado localmente de forma rápida e sem novas transferências pela internet.
+`r b('Como <code>load_rasters</code> apenas recorta a janela de interesse a partir dos arquivos nacionais, qualquer número de recortes pode ser carregado localmente de forma rápida e sem novas transferências pela internet.', 'Because <code>load_rasters</code> only crops the area of interest from the national files, any number of clips can be loaded locally quickly and without new internet transfers.')`
 
-# Exportação e leitura de objetos do Bioma Stats
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Exportação e leitura de objetos do Bioma Stats", "Exporting and loading Bioma Stats objects"))
+```
 
-Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (`Rdata`). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras, evitando refazer o recorte da coleção.
+`r b('Os mapas pré-processados no Bioma Stats podem ser exportados e distribuídos como objeto de dados do R (<code>Rdata</code>). Dessa forma, os resultados podem ser compartilhados com outros pesquisadores ou guardados para análises futuras, evitando refazer o recorte da coleção.', 'Pre-processed maps in Bioma Stats can be exported and shared as R data objects (<code>Rdata</code>). This way, results can be shared with other researchers or saved for future analyses, avoiding redoing the collection clip.')`
 
 ```{r eval=FALSE}
 save(mapas, file = "./meu_recorte_ufscar.Rdata")
 ```
 
-Todas as informações relevantes são recuperadas quando o usuário carrega o arquivo `.Rdata`, recuperando o objeto `mapas` com todos os seus atributos: 
+`r b('Todas as informações relevantes são recuperadas quando o usuário carrega o arquivo <code>.Rdata</code>, recuperando o objeto <code>mapas</code> com todos os seus atributos:', 'All relevant information is recovered when the user loads the <code>.Rdata</code> file, restoring the <code>mapas</code> object with all its attributes:')`
 
 ```{r eval=FALSE}
 load("./meu_recorte_ufscar.Rdata")
 ```
 
-Os objetos do Bioma Stats possuem atributos como horizonte de tempo (`time_range`), delimitações do recorte (`shape`) e rasters recortados e reprojetados para WSG84 (`rasters`). Eles podem ser acessados diretamente, usando o comando \$. 
+`r b('Os objetos do Bioma Stats possuem atributos como horizonte de tempo (<code>time_range</code>), delimitações do recorte (<code>shape</code>) e rasters recortados e reprojetados para WGS84 (<code>raster</code>). Eles podem ser acessados diretamente, usando o operador <code>&#36;</code>.', 'Bioma Stats objects have attributes such as time range (<code>time_range</code>), clip boundaries (<code>shape</code>), and cropped rasters reprojected to WGS84 (<code>raster</code>). They can be accessed directly using the <code>&#36;</code> operator.')`
 
 ```{r}
 mapas$time_range
 ```
 
-# Cálculo de áreas 
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Cálculo de áreas", "Area calculation"))
+```
 
-A função `get_area` do Bioma Stats faz o cálculo de área das classes da paisagem e corrige o seu valor de acordo com as coordenadas dos pixels. As áreas são exportadas na forma de tabela estruturada, organizadas por classe da paisagem e ano.  
+`r b('A função <code>get_area</code> do Bioma Stats faz o cálculo de área das classes da paisagem e corrige o seu valor de acordo com as coordenadas dos pixels. As áreas são exportadas na forma de tabela estruturada, organizadas por classe da paisagem e ano.', 'The <code>get_area</code> function in Bioma Stats calculates landscape class areas and corrects their values according to pixel coordinates. Areas are exported as a structured table organized by landscape class and year.')`
 
 ```{r}
 results <- get_area(mapas, plot_type = "areaplot")
 head(results$aggregate_data, 6)
 ```
 
-O atributo `time` do resultado fornece ao usuário o gráfico de séries temporais para todas as classes de uso e ocupação do solo existentes na paisagem. Há duas opções para o gráfico das séries temporais: `plot_type = "areaplot"` ou `plot_type = "profile"`.  
+`r b('O atributo <code>time_series</code> do resultado fornece ao usuário o gráfico de séries temporais para todas as classes de uso e ocupação do solo existentes na paisagem. Há duas opções para o gráfico das séries temporais: <code>plot_type = "areaplot"</code> ou <code>plot_type = "profile"</code>.', 'The <code>time_series</code> attribute of the result provides the user with a time series plot for all land use and land cover classes in the landscape. There are two options for the time series plot: <code>plot_type = "areaplot"</code> or <code>plot_type = "profile"</code>.')`
 
 ```{r}
-results$time
+results$time_series
 ```
 
-# Mapas de uso e ocupação
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Mapas de uso e ocupação", "Land use and land cover maps"))
+```
 
-Adicionalmente, comando `land_vis` permite ao usuário visualizar o mapa de uso e ocupação da área para o ano de sua escolha. As cores e legendas seguem o padrão seguem normas técnicas e foram importados da plataforma MapBiomas. 
+`r b('Adicionalmente, o comando <code>land_vis</code> permite ao usuário visualizar o mapa de uso e ocupação da área para o ano de sua escolha. As cores e legendas seguem normas técnicas e foram importadas da plataforma MapBiomas.', 'Additionally, the <code>land_vis</code> command allows the user to visualize the land use and land cover map for a chosen year. Colors and legends follow technical standards and were imported from the MapBiomas platform.')`
 
-## Mapa da UFSCar Lagoa do Sino, ano de 1990
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Mapa da UFSCar Lagoa do Sino, ano de 1990", "UFSCar Lagoa do Sino map, year 1990"))
+```
 
 ```{r}
 land_vis(mapas, year = 1990)
 ```
 
-## Mapa da UFSCar Lagoa do Sino, ano de 2024
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Mapa da UFSCar Lagoa do Sino, ano de 2024", "UFSCar Lagoa do Sino map, year 2024"))
+```
 
 ```{r}
 land_vis(mapas, year = 2024)
 ```
 
-# Distribuição de classes
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Distribuição de classes", "Class distribution"))
+```
 
-O comando `land_dist` apresenta a distribuição de classes, em termos de área total, para o ano de referência. As opções são gráfico de colunas (`type = "barplot"`) e de pizza (`type = "pie"`).
+`r b('O comando <code>land_dist</code> apresenta a distribuição de classes, em termos de área total, para o ano de referência. As opções são gráfico de colunas (<code>type = "barplot"</code>) e de pizza (<code>type = "pie"</code>).', 'The <code>land_dist</code> command shows class distribution in terms of total area for the reference year. Options are column chart (<code>type = "barplot"</code>) and pie chart (<code>type = "pie"</code>).')`
 
-## Gráfico de colunas 
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Gráfico de colunas", "Column chart"))
+```
 
 ```{r}
 land_dist(results, year = 2024, type = "barplot")
 ```
 
-## Gráfico de setores
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Gráfico de setores", "Pie chart"))
+```
 
 ```{r}
 land_dist(results, year = 2024, type = "pie")
 ```
 
-# Métricas da paisagem
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Métricas da paisagem", "Landscape metrics"))
+```
 
-O Bioma Stats também apresenta um módulo para a reclassificação e métricas da paisagem. O módulo é integrado com o programa `landscapemetrics` do R e possui uso intuitivo: na função `biomastats_metrics`, o usuário precisa passar o objeto no padrão biomastats, o horizonte de tempo, a zona de fuso horário,  o hemisfério (`"south"` ou `"north"`) e as métricas de interesse (`"Frag. Avg. Area (ha)"`, `"Edge Length (m)"`, `"Edge Density (m/ha)"`,          
-`"Total Reclassified Area (ha)"`, `"Aggregation Index (%)"`, `"Number of Fragments"`         
-). Ao fazer `metrics = "keep.all"`, todas as métricas existentes no programa serão calculadas. 
+`r b('O Bioma Stats também apresenta um módulo para a reclassificação e métricas da paisagem. O módulo é integrado com o programa <code>landscapemetrics</code> do R e possui uso intuitivo: na função <code>biomastats_metrics</code>, o usuário precisa passar o objeto no padrão biomastats, o horizonte de tempo, a zona de fuso horário, o hemisfério (<code>"south"</code> ou <code>"north"</code>) e as métricas de interesse (<code>"Frag. Avg. Area (ha)"</code>, <code>"Edge Length (m)"</code>, <code>"Edge Density (m/ha)"</code>, <code>"Total Reclassified Area (ha)"</code>, <code>"Aggregation Index (%)"</code>, <code>"Number of Fragments"</code>). Ao fazer <code>metrics = "keep.all"</code>, todas as métricas existentes no programa serão calculadas.', 'Bioma Stats also provides a module for reclassification and landscape metrics. The module is integrated with the R <code>landscapemetrics</code> package and is intuitive to use: in <code>biomastats_metrics</code>, the user must pass the biomastats-standard object, the time range, the time zone, the hemisphere (<code>"south"</code> or <code>"north"</code>), and metrics of interest (<code>"Frag. Avg. Area (ha)"</code>, <code>"Edge Length (m)"</code>, <code>"Edge Density (m/ha)"</code>, <code>"Total Reclassified Area (ha)"</code>, <code>"Aggregation Index (%)"</code>, <code>"Number of Fragments"</code>). With <code>metrics = "keep.all"</code>, all metrics available in the program will be calculated.')`
 
-
-Por padrão (`classes = NULL`), o programa abre uma janela seletora para a escolha interativa das classes de uso e ocupação do solo. Para tornar a análise reprodutível, os códigos das classes também podem ser informados diretamente no argumento `classes`. No exemplo a seguir, selecionamos as classes florestais Formação Florestal (código 3) e Formação Savânica (código 4).
+`r b('Por padrão (<code>classes = NULL</code>), o programa abre uma janela seletora para a escolha interativa das classes de uso e ocupação do solo. Para tornar a análise reprodutível, os códigos das classes também podem ser informados diretamente no argumento <code>classes</code>. No exemplo a seguir, selecionamos as classes florestais Formação Florestal (código 3) e Formação Savânica (código 4).', 'By default (<code>classes = NULL</code>), the program opens a selector window for interactive choice of land use and land cover classes. To make the analysis reproducible, class codes can also be provided directly in the <code>classes</code> argument. In the example below, we select the forest classes Forest Formation (code 3) and Savanna Formation (code 4).')`
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 plot_teste <- biomastats_metrics(mapas, start = 1985, end = 2024, zone = "22",
@@ -231,115 +320,139 @@ plot_teste <- biomastats_metrics(mapas, start = 1985, end = 2024, zone = "22",
                                  metrics = "keep.all")
 ```
 
-As métricas são exportadas na forma de tabela, como retorno da função `biomastats_metrics`: 
+`r b('As métricas são exportadas na forma de tabela, como retorno da função <code>biomastats_metrics</code>:', 'Metrics are exported as a table returned by <code>biomastats_metrics</code>:')`
 
 ```{r}
 head(plot_teste$metrics_table, 6)
 ```
 
-Elas também podem ser visualizadas em gráficos de séries temporais, como ilustram os exemplos a seguir: 
+`r b('Elas também podem ser visualizadas em gráficos de séries temporais, como ilustram os exemplos a seguir:', 'They can also be visualized in time series plots, as illustrated in the examples below:')`
 
-## Área das classes selecionadas
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Área das classes selecionadas", "Area of selected classes"))
+```
 
 ```{r}
 plot_teste$area_plot
 ```
 
-## Índice de agregação para as classes selecionadas
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Índice de agregação para as classes selecionadas", "Aggregation index for selected classes"))
+```
 
 ```{r}
 plot_teste$ai_plot
 ```
 
-## Gráficos customizáveis
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Gráficos customizáveis", "Customizable plots"))
+```
 
-As saídas gráficas do _Bioma Stats_ são objetos oriundos do pacote gráfico `ggplot2`. Dessa forma, os gráficos podem ser customizados usando a sintaxe introduzida por Hadley Wickham no `ggplot2`. Por exemplo, abaixo usamos a sintaxe do `ggplot2` para mudar a cor dos pontos e remover as grades de fundo.    
+`r b('As saídas gráficas do _Bioma Stats_ são objetos oriundos do pacote gráfico <code>ggplot2</code>. Dessa forma, os gráficos podem ser customizados usando a sintaxe introduzida por Hadley Wickham no <code>ggplot2</code>. Por exemplo, abaixo usamos a sintaxe do <code>ggplot2</code> para mudar a cor dos pontos e remover as grades de fundo.', 'Graphical outputs from _Bioma Stats_ are objects from the <code>ggplot2</code> package. Thus, plots can be customized using the syntax introduced by Hadley Wickham in <code>ggplot2</code>. For example, below we use <code>ggplot2</code> syntax to change point color and remove background grid lines.')`
 
 ```{r}
 # install.packages("ggplot2")
 library(ggplot2)
 plot_teste$ai_plot +
-  geom_point(color = "red") +  # Troca a cor dos pontos para azul (pode trocar por outras cores)
-  theme_minimal() +  # Aplica um tema minimalista no fundo
-  theme(
-    panel.grid = element_blank()  # Remove todas as grades
-  )
+  geom_point(color = "red") +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
 ```
 
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Dicionário de classes e mapas reclassificados", "Class dictionary and reclassified maps"))
+```
 
-# Dicionário de classes e mapas reclassificados
+`r b('O _Bioma Stats_ contém um dicionário de classes, indicando seus códigos, níveis hierárquicos, nomes em Português e Inglês, e cores padronizadas pela norma brasileira do IBGE.', 'The _Bioma Stats_ contains a class dictionary listing codes, hierarchical levels, names in Portuguese and English, and colors standardized by the Brazilian IBGE norm.')`
 
-O _Bioma Stats_ contém um dicionário de classes, indicando seus códigos, níveis hierárquicos, nomes em Português e Inglês, e cores padronizadas pela norma brasileira do IBGE.  
-
-No exemplo a seguir, o dicionário é carregado a partir do comando `dict_build` e, com os códigos processados em `biomastats_metrics`, os nomes das classificações usadas são recuperados. 
+`r b('No exemplo a seguir, o dicionário é carregado a partir do comando <code>dict_build</code> e, com os códigos processados em <code>biomastats_metrics</code>, os nomes das classificações usadas são recuperados.', 'In the example below, the dictionary is loaded with <code>dict_build</code> and, with the codes processed in <code>biomastats_metrics</code>, the names of the classifications used are retrieved.')`
 
 ```{r}
 dicti <- biomastats:::dict_build()
 dicti$class[dicti$code %in% plot_teste$classes]
 ```
-# Mapas reclassificados
 
-O _Bioma Stats_ também apresenta recurso para visualizar os mapas após a reclassificação. A função `reclass_map` processa objetos exportados pela função `biomastats_metrics` e, para usá-la, o usuário precisa apenas informar o objeto exportado (`obj = plot_teste`, por exemplo) e o ano de interesse. 
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Mapas reclassificados", "Reclassified maps"))
+```
 
-## Mapa da Lagoa do Sino reclassificado em 1985
+`r b('O _Bioma Stats_ também apresenta recurso para visualizar os mapas após a reclassificação. A função <code>reclass_map</code> processa objetos exportados pela função <code>biomastats_metrics</code> e, para usá-la, o usuário precisa apenas informar o objeto exportado (<code>obj = plot_teste</code>, por exemplo) e o ano de interesse.', 'The _Bioma Stats_ also provides a feature to visualize maps after reclassification. The <code>reclass_map</code> function processes objects exported by <code>biomastats_metrics</code>; to use it, the user only needs to provide the exported object (<code>obj = plot_teste</code>, for example) and the year of interest.')`
+
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Mapa da Lagoa do Sino reclassificado em 1985", "Lagoa do Sino reclassified map, year 1985"))
+```
 
 ```{r}
 reclass_map(obj = plot_teste, year = 1985)
 ```
 
-## Mapa da Lagoa do Sino reclassificado em 2024
+```{r echo=FALSE, results='asis'}
+cat(bh(2, "Mapa da Lagoa do Sino reclassificado em 2024", "Lagoa do Sino reclassified map, year 2024"))
+```
 
 ```{r}
 reclass_map(obj = plot_teste, year = 2024)
 ```
 
-# Contribua com o projeto
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Contribua com o projeto", "Contribute to the project"))
+```
 
-Se você deseja: 
+`r b('Se você deseja:', 'If you would like to:')`
 
-  + Sugerir novas funcionalidades ao programa 
-  
-  + Reportar erros 
-  
-  + Solicitar suporte técnico
-  
-  + Colaborar com o projeto
+```{r echo=FALSE, results='asis'}
+cat("<ul>\n")
+cat(bli("Sugerir novas funcionalidades ao programa", "Suggest new features for the program"))
+cat(bli("Reportar erros", "Report errors"))
+cat(bli("Solicitar suporte técnico", "Request technical support"))
+cat(bli("Colaborar com o projeto", "Collaborate on the project"))
+cat("</ul>\n")
+```
 
-[Entre em contato conosco por e-mail](mailto:iuri@ufscar.br)
+[`r b('Entre em contato conosco por e-mail', 'Contact us by email')`](mailto:iuri@ufscar.br)
 
-# Agradecimentos
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Agradecimentos", "Acknowledgments"))
+```
 
-A equipe do CeMECA - UFSCar Lagoa do Sino agradece ao Projeto MapBiomas pela disponibilização das coleções de uso e cobertura da terra. Os dados utilizados neste estudo são provenientes do MapBiomas – Coleção 7 da Série Anual de Mapas de Cobertura e Uso do Solo do Brasil, acessados em outubro de 2023 em https://mapbiomas.org.
+`r b('A equipe do CeMECA - UFSCar Lagoa do Sino agradece ao Projeto MapBiomas pela disponibilização das coleções de uso e cobertura da terra. Os dados utilizados neste estudo são provenientes do MapBiomas – Coleção 10 da Série Anual de Mapas de Cobertura e Uso do Solo do Brasil, acessados em https://mapbiomas.org.', 'The CeMECA team at UFSCar Lagoa do Sino thanks the MapBiomas Project for providing land use and land cover collections. Data used in this study come from MapBiomas – Collection 10 of the Annual Series of Land Cover and Land Use Maps of Brazil, accessed at https://mapbiomas.org.')`
 
-A equipe do CeMECA - UFSCar Lagoa do Sino agradece ao Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) pelo fomento 406540/2023 - 3. 
+`r b('A equipe do CeMECA - UFSCar Lagoa do Sino agradece ao Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) pelo fomento 406540/2023 - 3.', 'The CeMECA team at UFSCar Lagoa do Sino thanks the National Council for Scientific and Technological Development (CNPq) for funding 406540/2023 - 3.')`
 
-Agradeço a equipe CeMECA pela colaboração no desenvolvimento e teste do Programa _Bioma Stats_: 
-- **Kaik Octaviano Fontana** - Pré-processamento de dados
-- **Cristiano Augusto de Souza** - Funções de visualização
-- **Paulo Guilherme Molin** (ctb) - Consultoria em GIS
-- **Mateus Faria Santa** - Funções de visualização
-- **Ruth Silva Souza**  - Funções de visualização
-- **Victor de Camargo Gomes** - Métricas de paisagem
-- **Ana Beatriz Oliveira Prado** - Aquisição de dados e sistemas de comunicação
-- **Ronan Emmanuel de Paula Ferreira** - Sistemas de comunicação
-- **Gustavo Bilia Marques** - Aquisição de dados e sistemas de comunicação
-- **João Vitor Valença Stefanini** - Sistemas de comunicação e visualização
+`r b('Agradeço a equipe CeMECA pela colaboração no desenvolvimento e teste do Programa _Bioma Stats_:', 'I thank the CeMECA team for collaboration in developing and testing the _Bioma Stats_ program:')`
 
-Agradeço aos prof. pesquisadores, membros do Projeto Universal CNPq 406540, e que assessoram a equipe de desenvolvimento do _Bioma Stats_ em diversas frentes: 
+```{r echo=FALSE, results='asis'}
+cat("<ul>\n")
+cat(bli("<strong>Kaik Octaviano Fontana</strong> - Pré-processamento de dados", "<strong>Kaik Octaviano Fontana</strong> - Data preprocessing"))
+cat(bli("<strong>Cristiano Augusto de Souza</strong> - Funções de visualização", "<strong>Cristiano Augusto de Souza</strong> - Visualization functions"))
+cat(bli("<strong>Paulo Guilherme Molin</strong> (ctb) - Consultoria em GIS", "<strong>Paulo Guilherme Molin</strong> (ctb) - GIS consulting"))
+cat(bli("<strong>Mateus Faria Santa</strong> - Funções de visualização", "<strong>Mateus Faria Santa</strong> - Visualization functions"))
+cat(bli("<strong>Ruth Silva Souza</strong> - Funções de visualização", "<strong>Ruth Silva Souza</strong> - Visualization functions"))
+cat(bli("<strong>Victor de Camargo Gomes</strong> - Métricas de paisagem", "<strong>Victor de Camargo Gomes</strong> - Landscape metrics"))
+cat(bli("<strong>Ana Beatriz Oliveira Prado</strong> - Aquisição de dados e sistemas de comunicação", "<strong>Ana Beatriz Oliveira Prado</strong> - Data acquisition and communication systems"))
+cat(bli("<strong>Gustavo Bilia Marques</strong> - Aquisição de dados e sistemas de comunicação", "<strong>Gustavo Bilia Marques</strong> - Data acquisition and communication systems"))
+cat(bli("<strong>João Vitor Valença Stefanini</strong> - Sistemas de comunicação e visualização", "<strong>João Vitor Valença Stefanini</strong> - Communication systems and visualization"))
+cat("</ul>\n")
+```
 
-- **Prof. Dr. Paulo Guilherme Molin** - Assessoria em Geotecnologias  
-- **Prof.ª Dr.ª Débora Cristina Rother** - Assessoria em Ecologia da Paisagem
-- **Prof. Dr. Heber Lombardi de Carvalho** - Assessoria em Gestão e Sistemas de Informação 
-- **Prof. Dr. Jorge Luis Rodrigues Pantoja Filho** - Assessoria em Meio Ambiente
-- **Prof. Dr. Rafael Tiezzi de** - Assessoria em Meio Ambiente
+`r b('Agradeço aos prof. pesquisadores, membros do Projeto Universal CNPq 406540, que assessoram a equipe de desenvolvimento do _Bioma Stats_ em diversas frentes:', 'I thank the faculty researchers, members of CNPq Universal Project 406540, who advise the _Bioma Stats_ development team in various areas:')`
 
-# Termos de uso
+```{r echo=FALSE, results='asis'}
+cat("<ul>\n")
+cat(bli("<strong>Prof. Dr. Paulo Guilherme Molin</strong> - Assessoria em Geotecnologias", "<strong>Prof. Dr. Paulo Guilherme Molin</strong> - Geotechnology advisory"))
+cat(bli("<strong>Prof.ª Dr.ª Débora Cristina Rother</strong> - Assessoria em Ecologia da Paisagem", "<strong>Prof. Dr. Débora Cristina Rother</strong> - Landscape ecology advisory"))
+cat(bli("<strong>Prof. Dr. Heber Lombardi de Carvalho</strong> - Assessoria em Gestão e Sistemas de Informação", "<strong>Prof. Dr. Heber Lombardi de Carvalho</strong> - Management and information systems advisory"))
+cat(bli("<strong>Prof. Dr. Jorge Luis Rodrigues Pantoja Filho</strong> - Assessoria em Meio Ambiente", "<strong>Prof. Dr. Jorge Luis Rodrigues Pantoja Filho</strong> - Environment advisory"))
+cat(bli("<strong>Prof. Dr. Rafael de Oliveira Tiezzi</strong> - Assessoria em Meio Ambiente", "<strong>Prof. Dr. Rafael de Oliveira Tiezzi</strong> - Environment advisory"))
+cat("</ul>\n")
+```
 
-O código-fonte deste programa está protegido por direitos autorais e é regido pela Licença GNU Affero General Public License (GNU AGPL) versão 3.0 ou posterior. Qualquer redistribuição ou modificação do código-fonte deve ser realizada de acordo com os termos desta licença.
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Termos de uso", "Terms of use"))
+```
 
-É crucial destacar que a GNU AGPL estabelece a necessidade de que os autores do software sejam devidamente reconhecidos em qualquer redistribuição ou modificação efetuada no código-fonte original. Tal premissa se constitui como um requisito imprescindível para assegurar o respeito aos direitos autorais dos criadores do software, bem como para manter a transparência e a credibilidade do software, objetivos estes que são de grande relevância para toda a comunidade de usuários e desenvolvedores de software livre. Consequentemente, é fundamental observar tal exigência ao utilizar o programa.
+`r b('O código-fonte deste programa está protegido por direitos autorais e é regido pela Licença GNU Affero General Public License (GNU AGPL) versão 3.0 ou posterior. Qualquer redistribuição ou modificação do código-fonte deve ser realizada de acordo com os termos desta licença.', 'The source code of this program is protected by copyright and is governed by the GNU Affero General Public License (GNU AGPL) version 3.0 or later. Any redistribution or modification of the source code must be carried out in accordance with the terms of this license.')`
 
-A documentação deste programa foi confeccionada com a ajuda do modelo de linguagem GPT-4, desenvolvido pela OpenAI. O GPT-4 é uma ferramenta de inteligência artificial avançada que utiliza técnicas de aprendizado profundo para gerar texto natural em diversos idiomas e áreas de conhecimento. Agradecemos à OpenAI pelo fornecimento desta ferramenta e reconhecemos a sua contribuição na elaboração desta documentação.
+`r b('É crucial destacar que a GNU AGPL estabelece a necessidade de que os autores do software sejam devidamente reconhecidos em qualquer redistribuição ou modificação efetuada no código-fonte original. Tal premissa se constitui como um requisito imprescindível para assegurar o respeito aos direitos autorais dos criadores do software, bem como para manter a transparência e a credibilidade do software, objetivos estes que são de grande relevância para toda a comunidade de usuários e desenvolvedores de software livre. Consequentemente, é fundamental observar tal exigência ao utilizar o programa.', 'It is essential to note that the GNU AGPL requires that the software authors be properly acknowledged in any redistribution or modification of the original source code. This is an indispensable requirement to ensure respect for the copyright of the software creators and to maintain transparency and credibility of the software—goals of great relevance to the entire community of free software users and developers. Therefore, it is essential to observe this requirement when using the program.')`
 
-Ao utilizar este programa, você concorda em cumprir os termos e condições estabelecidos pela Licença GNU Affero General Public License (GNU AGPL) versão 3.0 ou posterior. Para obter mais informações sobre a licença, consulte o arquivo "LICENSE" que acompanha este programa ou acesse o seguinte link: <https://www.gnu.org/licenses/agpl-3.0.html>.
-
+`r b('Ao utilizar este programa, você concorda em cumprir os termos e condições estabelecidos pela Licença GNU Affero General Public License (GNU AGPL) versão 3.0 ou posterior. Para obter mais informações sobre a licença, consulte o arquivo "LICENSE" que acompanha este programa ou acesse o seguinte link: <a href="https://www.gnu.org/licenses/agpl-3.0.html">https://www.gnu.org/licenses/agpl-3.0.html</a>.', 'By using this program, you agree to comply with the terms and conditions established by the GNU Affero General Public License (GNU AGPL) version 3.0 or later. For more information about the license, see the "LICENSE" file that accompanies this program or visit: <a href="https://www.gnu.org/licenses/agpl-3.0.html">https://www.gnu.org/licenses/agpl-3.0.html</a>.')`
