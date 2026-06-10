@@ -16,3 +16,5 @@ Ao utilizar este programa, você concorda em cumprir os termos e condições est
 
 É importante ressaltar que este programa é distribuído na esperança de que seja útil, mas SEM QUALQUER GARANTIA; sem sequer a garantia implícita de COMERCIALIZAÇÃO ou ADEQUAÇÃO A UM PROPÓSITO ESPECÍFICO. Consulte a Licença GNU Affero General Public License para obter mais detalhes.
 
+oiii :(
+
