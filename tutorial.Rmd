@@ -156,26 +156,37 @@ library(mapview)
 # de calcular os limites para que o mapa seja enquadrado na área de estudo.
 area_estudo <- sf::read_sf(ufscar_shp) |>
   sf::st_transform(4326)
-limites <- sf::st_bbox(area_estudo)
 
-mapview(area_estudo, map.types = "CartoDB.Positron")@map |>
-  leaflet::fitBounds(
-    lng1 = unname(limites["xmin"]), lat1 = unname(limites["ymin"]),
-    lng2 = unname(limites["xmax"]), lat2 = unname(limites["ymax"])
-  ) |>
-  htmlwidgets::onRender(
-    "function(el, x) {
-       var map = this;
-       setTimeout(function() {
-         map.invalidateSize();
-         map.fitBounds(
-           [[x.limits.lat[0], x.limits.lng[0]],
-            [x.limits.lat[1], x.limits.lng[1]]],
-           { padding: [20, 20] }
-         );
-       }, 0);
-     }"
-  )
+basemaps <- c(
+  "CartoDB.Positron", "CartoDB.DarkMatter", "OpenStreetMap",
+  "Esri.WorldImagery", "OpenTopoMap"
+)
+
+mapa_centrado <- function(x) {
+  bb <- sf::st_bbox(x)
+  mapview(x, map.types = basemaps)@map |>
+    leaflet::fitBounds(
+      lng1 = unname(bb["xmin"]), lat1 = unname(bb["ymin"]),
+      lng2 = unname(bb["xmax"]), lat2 = unname(bb["ymax"])
+    ) |>
+    htmlwidgets::onRender(
+      "function(el, x) {
+         var map = this;
+         function ajustarMapa() {
+           map.invalidateSize();
+           map.fitBounds(
+             [[x.limits.lat[0], x.limits.lng[0]],
+              [x.limits.lat[1], x.limits.lng[1]]],
+             { padding: [50, 50] }
+           );
+         }
+         map.whenReady(ajustarMapa);
+         setTimeout(ajustarMapa, 250);
+       }"
+    )
+}
+
+mapa_centrado(area_estudo)
 ```
 
 ```{r echo=FALSE, results='asis'}
@@ -190,8 +201,30 @@ make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 
 `r b('Neste exemplo, criou-se uma região hexagonal de $2{,}5$ km de diâmetro, centrada na localização do campus Lagoa do Sino. Observe que o <code>.shp</code> foi automaticamente salvo como <code>polygon.shp</code> no diretório <code>shp</code> da biblioteca pessoal do R <code>biomastats</code>.', 'In this example, a hexagonal region $2.5$ km in diameter was created, centered on the Lagoa do Sino campus location. Note that the <code>.shp</code> was automatically saved as <code>polygon.shp</code> in the <code>shp</code> directory of the personal R library <code>biomastats</code>.')`
 
-```{r, out.width='100%'}
-mapview(sf::read_sf(file.path(path_package, "shp/polygon.shp")))
+```{r toggle-mapa-polygon, echo=FALSE, results='asis'}
+codigo_mapa_polygon <- paste(
+  knitr::knit_code$get("mapa-polygon"), collapse = "\n"
+)
+cat(
+  '<details class="mapa-polygon-code">',
+  '<summary role="button" style="cursor:pointer; font-weight:600;">',
+  'Mostrar código R do mapa polygon.shp</summary>',
+  '<div class="sourceCode"><pre><code>',
+  htmltools::htmlEscape(codigo_mapa_polygon),
+  '</code></pre></div></details>',
+  '<script>(function(){var d=document.querySelector(".mapa-polygon-code");',
+  'if(!d)return;var s=d.querySelector("summary");d.addEventListener("toggle",',
+  'function(){s.textContent=d.open?"Ocultar código R do mapa polygon.shp":',
+  '"Mostrar código R do mapa polygon.shp";});})();</script>',
+  sep = ""
+)
+```
+
+```{r mapa-polygon, echo=FALSE, out.width='100%'}
+polygon_estudo <- sf::read_sf(file.path(path_package, "shp/polygon.shp")) |>
+  sf::st_transform(4326)
+
+mapa_centrado(polygon_estudo)
 ```
 
 ```{r echo=FALSE, results='asis'}
