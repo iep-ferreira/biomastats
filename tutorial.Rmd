@@ -151,7 +151,31 @@ ufscar_shp <- file.path(path_package, "shp/UFSCar.shp")
 # install.packages("mapview")
 library(sf)
 library(mapview)
-mapview(sf::read_sf(ufscar_shp))
+
+# O Leaflet trabalha com longitude/latitude; transforme o shapefile antes
+# de calcular os limites para que o mapa seja enquadrado na área de estudo.
+area_estudo <- sf::read_sf(ufscar_shp) |>
+  sf::st_transform(4326)
+limites <- sf::st_bbox(area_estudo)
+
+mapview(area_estudo, map.types = "CartoDB.Positron")@map |>
+  leaflet::fitBounds(
+    lng1 = unname(limites["xmin"]), lat1 = unname(limites["ymin"]),
+    lng2 = unname(limites["xmax"]), lat2 = unname(limites["ymax"])
+  ) |>
+  htmlwidgets::onRender(
+    "function(el, x) {
+       var map = this;
+       setTimeout(function() {
+         map.invalidateSize();
+         map.fitBounds(
+           [[x.limits.lat[0], x.limits.lng[0]],
+            [x.limits.lat[1], x.limits.lng[1]]],
+           { padding: [20, 20] }
+         );
+       }, 0);
+     }"
+  )
 ```
 
 ```{r echo=FALSE, results='asis'}
