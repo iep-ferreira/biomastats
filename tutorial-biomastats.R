@@ -15,27 +15,31 @@ make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 shp_path <- file.path(path_package, "shp/polygon.shp")
 
 # Carregamento dos Dados
-## Método 1: Download automático
+## Caminho da coleção já baixada localmente
+path_collection_10 <- "C:/Users/Pichau/Documents/collection_10"
+
+## Passo 1 (apenas uma vez): baixar a coleção completa do MapBiomas.
+## A coleção já está baixada, portanto este passo NÃO precisa ser executado de novo.
+# download_mapbiomas(
+#   dest_dir = path_collection_10,
+#   data_type = "cover",
+#   collection = 10,
+#   time_range = c(1985, 2024)
+# )
+
+## Passo 2: Carregar o recorte a partir da coleção local
 mapas <- load_rasters(
   shape_path = ufscar_shp,
   start = 1985,
-  end = 2021,
-  method = "download",
-  export_folder_path = "./meus-mapas/"
+  end = 2024,
+  method = "library",
+  import_folder_path = path_collection_10,
+  collection = 10
 )
 
-## Método 2: Importar coleção local
-# mapas <- load_rasters(
-#   shape_path = shp_path,
-#   start = 1985,
-#   end = 2021,
-#   method = "library",
-#   import_folder_path = "./minha-colecao/"
-# )
-
 # Exportação/Load de Objetos
-save(mapas, file = "./meus-recortes/biomastats_ufscar_exemplo.Rdata")
-load("./meus-recortes/biomastats_ufscar_exemplo.Rdata") # Para uso futuro
+save(mapas, file = "./meu_recorte_ufscar.Rdata")
+load("./meu_recorte_ufscar.Rdata") # Para uso futuro
 
 # Cálculo de Áreas por Classe
 results <- get_area(mapas, plot_type = "areaplot")
@@ -44,18 +48,18 @@ results$time # Gráfico temporal
 
 # Visualização de Mapas Temáticos
 land_vis(mapas, year = 1990) # Mapa para 1990
-land_vis(mapas, year = 2020) # Mapa para 2020
+land_vis(mapas, year = 2024) # Mapa para 2024
 
 # Distribuição de Classes
-land_dist(results, year = 2020, type = "barplot") # Gráfico de barras
-land_dist(results, year = 2020, type = "pie")     # Gráfico de pizza
+land_dist(results, year = 2024, type = "barplot") # Gráfico de barras
+land_dist(results, year = 2024, type = "pie")     # Gráfico de pizza
 
 # Métricas da Paisagem (interativo)
 plot_teste <- biomastats_metrics(
   mapas,
   start = 1985,
-  end = 2020,
-  zone = "20",
+  end = 2024,
+  zone = "22",
   hemisphere = "south",
   metrics = "keep.all"
 ) # Abre janela interativa para seleção de classes
@@ -73,4 +77,4 @@ plot_teste$ai_plot +
 
 # Mapas Reclassificados
 reclass_map(obj = plot_teste, year = 1985) # 1985
-reclass_map(obj = plot_teste, year = 2020) # 2020
+reclass_map(obj = plot_teste, year = 2024) # 2024
