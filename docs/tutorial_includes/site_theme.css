@@ -58,6 +58,7 @@ text-rendering: optimizeLegibility;
 .feature-card p.feature-desc {
 text-align: justify;
 hyphens: auto;
+font-size: 0.8em;
 }
 
 .main-container,
@@ -188,20 +189,73 @@ border-radius: var(--radius-lg);
 border: 1px solid #d0cbc0;
 box-shadow: var(--shadow-md);
 }
-#biomastats-hero .hero-affiliation {
-margin: 1.5rem auto 0;
-max-width: min(68ch, 92%);
-font-size: 0.85rem;
-line-height: 1.5;
+#biomastats-hero .hero-cover-credit {
+margin-top: 0.5rem;
+font-size: 0.72rem;
+font-style: italic;
 color: var(--text-muted);
+text-align: center;
 }
-#biomastats-hero .hero-affiliation p {
-margin: 0 0 0.3rem;
+
+/* Rodapé institucional */
+#biomastats-footer {
+margin-top: 3rem;
+padding: 2.25rem clamp(1rem, 4vw, 3rem);
+background: var(--primary-darker);
+color: rgba(255, 255, 255, 0.85);
+border-top: 4px solid var(--primary-green);
 }
-#biomastats-hero .hero-affiliation a {
-color: var(--primary-dark);
-text-decoration: underline;
+#biomastats-footer .footer-inner {
+display: flex;
+align-items: center;
+justify-content: center;
+flex-wrap: wrap;
+gap: clamp(1.5rem, 5vw, 3.5rem);
+max-width: 1100px;
+margin: 0 auto;
+}
+#biomastats-footer .footer-logos {
+display: flex;
+align-items: center;
+gap: clamp(1.25rem, 4vw, 2.5rem);
+flex-shrink: 0;
+}
+#biomastats-footer .footer-logos img {
+display: block;
+width: auto;
+height: 58px;
+object-fit: contain;
+background: #fff;
+padding: 8px 12px;
+border-radius: var(--radius);
+}
+#biomastats-footer .footer-info {
+flex: 1 1 320px;
+min-width: 260px;
+font-size: 0.85rem;
+line-height: 1.55;
+}
+#biomastats-footer .footer-info p {
+margin: 0 0 0.35rem;
+}
+#biomastats-footer .footer-info .footer-org {
+font-weight: 600;
+color: #fff;
+}
+#biomastats-footer .footer-info a {
+color: #fff !important;
+text-decoration: underline !important;
 text-underline-offset: 0.15em;
+}
+#biomastats-footer .footer-info a:hover {
+color: var(--primary-green) !important;
+}
+@media (max-width: 768px) {
+#biomastats-footer .footer-inner { flex-direction: column; text-align: center; }
+#biomastats-footer .footer-info { flex-basis: auto; min-width: 0; }
+}
+@media (max-width: 480px) {
+#biomastats-footer .footer-logos img { height: 46px; }
 }
 
 .main-container > #header,
@@ -331,7 +385,7 @@ text-decoration-thickness: 1.5px;
 code, kbd, pre { font-family: var(--font-mono) !important; }
 
 code {
-font-size: 12pt !important;
+font-size: 0.92em !important;
 color: var(--code-text) !important;
 background: var(--code-bg) !important;
 border: 1px solid var(--border-light) !important;
@@ -594,11 +648,29 @@ padding-right: 0.5rem;
 html { zoom: 1; }
 }
 @media (max-width: 768px) {
-:root { --reading-scale: 1.35; }
-.main-container, .container-fluid.main-container { padding: 0 1rem 2rem !important; }
+:root { --reading-scale: 1.15; }
+body { font-size: 11.5pt !important; line-height: 1.6 !important; }
+.main-container, .container-fluid.main-container { padding: 0 0.9rem 2rem !important; }
 #biomastats-topbar { padding: 0.6rem 1rem; }
-h1 { font-size: 2.1rem !important; }
-h2 { font-size: 1.6rem !important; }
-pre { font-size: 0.9rem !important; }
-.features-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+#biomastats-topbar, #biomastats-hero { padding-left: 1rem; padding-right: 1rem; }
+h1 { font-size: 1.7rem !important; }
+h2 { font-size: 1.35rem !important; }
+h3 { font-size: 1.15rem !important; }
+pre { font-size: 0.82rem !important; }
+div.sourceCode, pre.sourceCode { font-size: 0.82rem !important; }
+table { font-size: 0.82rem; }
+/* Figuras ocupam a largura total em telas pequenas */
+.figure img:not(.leaflet-tile):not([class*="leaflet"]) { width: 100% !important; }
+.html-widget.leaflet, .leaflet.html-widget { height: 340px !important; }
+#biomastats-hero .hero-title { font-size: clamp(1.5rem, 6vw, 1.9rem); }
+#biomastats-hero .hero-cover { max-width: 100%; }
+}
+@media (max-width: 480px) {
+:root { --reading-scale: 1; }
+body { font-size: 11pt !important; }
+#biomastats-topbar .brand-text { font-size: 0.85rem; }
+h1 { font-size: 1.45rem !important; }
+h2 { font-size: 1.2rem !important; }
+pre, div.sourceCode, pre.sourceCode { font-size: 0.76rem !important; }
+.html-widget.leaflet, .leaflet.html-widget { height: 280px !important; }
 }
