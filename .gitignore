@@ -6,5 +6,7 @@ objetos-tutorial/
 ignorados/
 vignette/
 *.css
+!tutorial_includes/site_theme.css
+!docs/tutorial_includes/site_theme.css
 *.log
 *.Rhistory
