@@ -503,3 +503,19 @@ cat(bh(1, "Termos de uso", "Terms of use"))
 `r b('É crucial destacar que a GNU AGPL estabelece a necessidade de que os autores do software sejam devidamente reconhecidos em qualquer redistribuição ou modificação efetuada no código-fonte original. Tal premissa se constitui como um requisito imprescindível para assegurar o respeito aos direitos autorais dos criadores do software, bem como para manter a transparência e a credibilidade do software, objetivos estes que são de grande relevância para toda a comunidade de usuários e desenvolvedores de software livre. Consequentemente, é fundamental observar tal exigência ao utilizar o programa.', 'It is essential to note that the GNU AGPL requires that the software authors be properly acknowledged in any redistribution or modification of the original source code. This is an indispensable requirement to ensure respect for the copyright of the software creators and to maintain transparency and credibility of the software—goals of great relevance to the entire community of free software users and developers. Therefore, it is essential to observe this requirement when using the program.')`
 
 `r b('Ao utilizar este programa, você concorda em cumprir os termos e condições estabelecidos pela Licença GNU Affero General Public License (GNU AGPL) versão 3.0 ou posterior. Para obter mais informações sobre a licença, consulte o arquivo "LICENSE" que acompanha este programa ou acesse o seguinte link: <a href="https://www.gnu.org/licenses/agpl-3.0.html">https://www.gnu.org/licenses/agpl-3.0.html</a>.', 'By using this program, you agree to comply with the terms and conditions established by the GNU Affero General Public License (GNU AGPL) version 3.0 or later. For more information about the license, see the "LICENSE" file that accompanies this program or visit: <a href="https://www.gnu.org/licenses/agpl-3.0.html">https://www.gnu.org/licenses/agpl-3.0.html</a>.')`
+
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Declaração de uso de Inteligência Artificial", "Statement on the use of Artificial Intelligence"))
+```
+
+`r b('Durante a preparação deste material e do pacote _Bioma Stats_, foram utilizadas ferramentas de Inteligência Artificial (IA) como apoio, sob supervisão e revisão da equipe. Especificamente, a IA foi empregada para:', 'During the preparation of this material and of the _Bioma Stats_ package, Artificial Intelligence (AI) tools were used as support, under the team&rsquo;s supervision and review. Specifically, AI was used for:')`
+
+```{r echo=FALSE, results='asis'}
+cat("<ul>\n")
+cat(bli("Refatoração e otimização de trechos de código", "Refactoring and optimization of code snippets"))
+cat(bli("Ajustes textuais e de redação (clareza, coesão e revisão)", "Textual and writing adjustments (clarity, cohesion, and proofreading)"))
+cat(bli("Transcrição e tradução de conteúdos do Português para o Inglês", "Transcription and translation of content from Portuguese into English"))
+cat("</ul>\n")
+```
+
+`r b('Todo o conteúdo gerado com auxílio de IA foi revisado e validado pelos autores, que assumem integral responsabilidade pelas informações apresentadas.', 'All content produced with AI assistance was reviewed and validated by the authors, who take full responsibility for the information presented.')`

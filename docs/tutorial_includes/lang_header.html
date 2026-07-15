@@ -31,9 +31,25 @@
     </p>
     <figure class="hero-cover">
       <img src="tutorial_includes/cover_art.jpg" alt="Arte de capa: mosaico de usos e cobertura da terra com gráficos de análise de paisagem">
+      <figcaption class="hero-cover-credit">
+        <span class="lang-pt">Arte de capa gerada com o Fable 5.</span>
+        <span class="lang-en">Cover art generated with Fable 5.</span>
+      </figcaption>
     </figure>
-    <div class="hero-affiliation">
-      <p>
+  </div>
+</header>
+<footer id="biomastats-footer">
+  <div class="footer-inner">
+    <div class="footer-logos">
+      <a href="https://www.ufscar.br" target="_blank" rel="noopener" aria-label="Universidade Federal de São Carlos (UFSCar)">
+        <img src="tutorial_includes/logo_ufscar.png" alt="Logo da Universidade Federal de São Carlos (UFSCar)">
+      </a>
+      <a href="https://www.gov.br/cnpq" target="_blank" rel="noopener" aria-label="Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq)">
+        <img src="tutorial_includes/logo_cnpq.png" alt="Logo do CNPq">
+      </a>
+    </div>
+    <div class="footer-info">
+      <p class="footer-org">
         <span class="lang-pt">Universidade Federal de São Carlos (UFSCar) · Campus Lagoa do Sino, Buri&nbsp;-&nbsp;SP</span>
         <span class="lang-en">Federal University of São Carlos (UFSCar) · Lagoa do Sino Campus, Buri&nbsp;-&nbsp;SP, Brazil</span>
       </p>
@@ -51,7 +67,7 @@
       </p>
     </div>
   </div>
-</header>
+</footer>
 <script>
 (function () {
   function setTutorialLang(lang) {
@@ -132,13 +148,17 @@
 
     mc.insertBefore(aside, mc.firstChild);
 
+    var footer = document.getElementById("biomastats-footer");
+
     var wrap = document.createElement("div");
     wrap.className = "tutorial-content";
     wrap.id = "tutorial-content";
     Array.prototype.slice.call(mc.children).forEach(function (el) {
-      if (el.id !== "reactive-toc") wrap.appendChild(el);
+      if (el.id !== "reactive-toc" && el.id !== "biomastats-footer") wrap.appendChild(el);
     });
     mc.appendChild(wrap);
+
+    if (footer) document.body.appendChild(footer);
 
     function onScroll() {
       var y = window.scrollY + 120;
