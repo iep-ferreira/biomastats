@@ -6,6 +6,8 @@
 # ---- FLUXO 1: testes do código em desenvolvimento --------------------------
 
 # Execute somente este bloco para rodar a suíte testthat no código local.
+library(biomastats)
+library(devtools)
 devtools::test()
 
 
@@ -15,10 +17,10 @@ devtools::test()
 branch <- system2("git", c("rev-parse", "--abbrev-ref", "HEAD"), stdout = TRUE)
 commit <- system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE)
 message("Branch: ", branch, " | commit: ", commit)
-message("A instalação usa o commit; alterações não commitadas ficam de fora.")
+
 
 # 2. Preparar uma biblioteca e uma cópia temporárias do pacote
-biblioteca <- file.path(tempdir(), "biomastats-local-lib")
+biblioteca <- file.path(tempdir(), "biomastats-local-lib") # cria path temp
 origem <- file.path(tempdir(), paste0("biomastats-head-", commit))
 arquivo <- file.path(tempdir(), paste0("biomastats-", commit, ".zip"))
 unlink(c(biblioteca, origem, arquivo), recursive = TRUE, force = TRUE)
@@ -28,6 +30,9 @@ dir.create(origem, recursive = TRUE, showWarnings = FALSE)
 utils::unzip(arquivo, exdir = origem)
 
 # 3. Usar a biblioteca temporária nesta sessão
+detach("package:biomastats", unload = TRUE, character.only = TRUE)
+unloadNamespace("biomastats")
+
 bibliotecas_anteriores <- .libPaths()
 .libPaths(c(biblioteca, bibliotecas_anteriores))
 
@@ -37,11 +42,12 @@ status_instalacao <- system2(
   c("CMD", "INSTALL", paste0("--library=", biblioteca), "--no-multiarch", origem)
 )
 stopifnot(identical(status_instalacao, 0L))
-find.package("biomastats", lib.loc = biblioteca)
+
 
 # 5. Carregar o pacote instalado
-suppressPackageStartupMessages(library(biomastats))
+library(biomastats)
 packageVersion("biomastats")
+find.package("biomastats")
 
 # 6. Ler os shapefiles instalados
 ufscar_shp <- system.file("shp", "UFSCar.shp", package = "biomastats")
