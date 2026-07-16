@@ -29,4 +29,4 @@ RUN R CMD INSTALL .
 
 COPY docker/smoke-test.R /usr/local/bin/biomastats-smoke-test.R
 
-CMD ["bash", "-lc", "Rscript /usr/local/bin/biomastats-smoke-test.R && cd /opt && R CMD build --no-build-vignettes biomastats && R CMD check --no-manual --no-vignettes biomastats_*.tar.gz"]
+CMD ["bash", "-lc", "Rscript /usr/local/bin/biomastats-smoke-test.R && cd /opt && R CMD build --no-build-vignettes --no-manual biomastats && R CMD check --no-manual --no-vignettes biomastats_*.tar.gz"]

@@ -8,6 +8,11 @@ Com o pacote e as dependências instalados, execute:
 devtools::test()
 ```
 
+O arquivo `test-package-locally.R` executa somente `devtools::test()`. O
+`devtools::check()` não deve ser executado diretamente no Windows deste
+projeto, pois o `R CMD build` pode copiar checkpoints longos do diretório
+`.git` antes de aplicar o `.Rbuildignore`.
+
 Os testes carregam `inst/examples/mapa_exemplo.Rdata` e reproduzem as etapas de análise do tutorial: leitura da área, cálculo de áreas, visualização, distribuição de classes, métricas e mapas reclassificados. A função `load_rasters()` não é chamada pelos testes.
 
 ## Sandbox Linux com Docker
@@ -27,6 +32,13 @@ bash ./scripts/test-sandbox.sh
 ```
 
 O Docker precisa estar instalado e com o daemon em execução. A imagem usa Linux e R 4.4.2 para tornar a instalação reproduzível.
+
+## GitHub Actions
+
+Cada push e pull request executa o build e o check em Linux, Windows e macOS.
+O Linux testa as versões 4.4.3, 4.5.3 e 4.6.1; Windows e macOS testam a
+versão 4.6.1. A matriz cobre a versão atual, uma versão anterior amplamente
+utilizada e a série anterior ainda relevante.
 
 ## Mock temporário durante o desenvolvimento
 

@@ -4,6 +4,7 @@
 ^\.Rproj\.user$
 ^\.dockerignore$
 ^\.git$
+^\.github$
 ^\.agents$
 ^docker$
 ^development$

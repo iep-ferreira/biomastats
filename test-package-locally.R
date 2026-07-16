@@ -1,5 +1,7 @@
 library(devtools)
-# fluxo
+
+# Feedback rápido durante o desenvolvimento.
+# O build/check oficial ocorre no Docker Linux e no GitHub Actions.
 devtools::test()
-# montagem
-devtools::check()
+# no power shell 
+# .\scripts\test-sandbox.ps1
