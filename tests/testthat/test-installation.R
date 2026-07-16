@@ -1,0 +1,12 @@
+test_that("biomastats is installed and loadable", {
+  expect_true(nzchar(system.file(package = "biomastats")))
+  expect_true(requireNamespace("biomastats", quietly = TRUE))
+  expect_true(is.function(biomastats::get_area))
+  expect_true(is.function(biomastats::land_vis))
+})
+
+test_that("package examples are installed", {
+  expect_true(file.exists(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats")))
+  expect_true(file.exists(system.file("shp", "UFSCar.shp", package = "biomastats")))
+  expect_true(file.exists(system.file("shp", "polygon.shp", package = "biomastats")))
+})

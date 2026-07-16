@@ -1,0 +1,10 @@
+.git
+.github
+docs
+ignorados
+preview*.log
+tutorial.html
+..Rcheck
+_stage
+_checklib
+Rplots.pdf

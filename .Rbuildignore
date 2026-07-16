@@ -2,3 +2,14 @@
 ^renv\.lock$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.dockerignore$
+^\.agents$
+^docker$
+^development$
+^scripts$
+^TESTING\.md$
+^test-new-functions\.R$
+^docs$
+^ignorados$
+^preview.*
+^tutorial.*

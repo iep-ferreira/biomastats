@@ -64,9 +64,9 @@ edge density, edge length, and average fragment area for selected classes.
 This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
   It checks for valid metric types and generates summary plots for selected metrics.
 }
-\examples{
-# Example usage:
+\examples{\dontrun{
 rasters_data <- list(raster = list_of_rasters, time_range = c(2000, 2020))
-class_metrics(rasters_data, start = 2000, end = 2020, zone = "Zone1", hemisphere = "north")
-
+biomastats_metrics(rasters_data, start = 2000, end = 2020,
+                   zone = "Zone1", hemisphere = "north")
+}
 }
