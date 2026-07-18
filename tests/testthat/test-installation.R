@@ -9,4 +9,5 @@ test_that("package examples are installed", {
   expect_true(file.exists(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats")))
   expect_true(file.exists(system.file("shp", "UFSCar.shp", package = "biomastats")))
   expect_true(file.exists(system.file("shp", "polygon.shp", package = "biomastats")))
+  expect_true(file.exists(system.file("api-servers.json", package = "biomastats")))
 })
