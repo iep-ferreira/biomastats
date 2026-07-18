@@ -1,58 +1,64 @@
-#' Check if Required Maps Exist in Directory and Construct Download Queue
+#' Check required maps and construct the raster list
 #'
-#' @param ids Vector of map fragment IDs
-#' @param start Starting year
-#' @param end Ending year
-#' @return List of downloaded maps
-#' @importFrom raster raster
-#' @importFrom raster merge
+#' @param ids Vector of map fragment identifiers.
+#' @param start Starting year.
+#' @param end Ending year.
+#' @param export_folder_path Directory used to store downloaded raster files.
+#' @param type Data type passed to `download_maps()`.
+#' @param collection Collection passed to `download_maps()`.
+#' @return A list containing one merged raster for each year.
+#' @importFrom raster raster merge
+#' @export
 #'
 #' @examples
 #' \dontrun{
-#' check_maps(ids = c(1, 2, 3), start = 1990, end = 2000, export_folder_path)
+#' check_maps(
+#'   ids = c(1, 2), start = 1990, end = 2000,
+#'   export_folder_path = "maps", type = "cover", collection = "7"
+#' )
 #' }
-#' @export
+check_maps <- function(
+    ids,
+    start,
+    end,
+    export_folder_path,
+    type = "cover",
+    collection = "7") {
 
-check_maps <- function(ids, start, end, export_folder_path) {
+  if (length(ids) == 0L) {
+    stop("'ids' must contain at least one fragment.", call. = FALSE)
+  }
+  if (!dir.exists(export_folder_path)) {
+    dir.create(export_folder_path, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(export_folder_path)) {
+    stop("Could not create the export directory.", call. = FALSE)
+  }
 
-dir_path <- export_folder_path
+  maps <- vector("list", length = end - start + 1L)
 
-maps <- list()
+  for (year in start:end) {
+    current_fig <- NULL
 
-print(ids)
+    for (id in ids) {
+      local_path <- download_maps(
+        fragment = id,
+        type = type,
+        collection = collection,
+        year = year,
+        export_folder_path = export_folder_path
+      )
 
- for (year in start:end) {
+      fragment_raster <- raster::raster(local_path)
+      current_fig <- if (is.null(current_fig)) {
+        fragment_raster
+      } else {
+        raster::merge(current_fig, fragment_raster)
+      }
+    }
 
- for (id in ids) {
-        
-        file_name <- file.path(dir_path, paste0("coverage-frag-", id, "-year-", year, ".tif"))
+    maps[[year - start + 1L]] <- current_fig
+  }
 
-        if(!file.exists(file_name)){
-          message("Downloading the map fragment!")
-          cat(file_name, "\n")
-          download_maps(num_year = year, fragment_id = id, file_name = file_name)
-          } else{
-          message("The map fragment is already downloaded.")
-          cat(file_name, "\n")
-        } # end-if
-        
-        if (id == ids[1]) {  
-        # Download the first fragment
-          current_fig <- raster::raster(file_name)
-          
-        } else {
-          
-          temp_fig <- raster::raster(file_name)
-          current_fig <- raster::merge(current_fig, temp_fig)          
-        
-        } # end-for ids
-
-      } # end-for years
- 
-    maps[[year - (start - 1)]] <- current_fig
-
-  } # end-for year
-
-  return(maps)
-
-} # end-function
+  maps
+}

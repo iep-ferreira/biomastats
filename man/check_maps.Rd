@@ -2,25 +2,32 @@
 % Please edit documentation in R/check_maps.R
 \name{check_maps}
 \alias{check_maps}
-\title{Check if Required Maps Exist in Directory and Construct Download Queue}
+\title{Check required maps and construct the raster list}
 \usage{
-check_maps(ids, start, end, export_folder_path)
+check_maps(
+  ids,
+  start,
+  end,
+  export_folder_path,
+  type = "cover",
+  collection = "7"
+)
 }
 \arguments{
-\item{ids}{Vector of map fragment IDs}
-
-\item{start}{Starting year}
-
-\item{end}{Ending year}
+\item{ids}{Vector of map fragment identifiers.}
+\item{start}{Starting year.}
+\item{end}{Ending year.}
+\item{export_folder_path}{Directory used to store downloaded raster files.}
+\item{type}{Data type passed to \code{download_maps()}.}
+\item{collection}{Collection passed to \code{download_maps()}.}
 }
-\value{
-List of downloaded maps
-}
-\description{
-Check if Required Maps Exist in Directory and Construct Download Queue
-}
+\value{A list containing one merged raster for each year.}
+\description{Checks and downloads the fragments required to construct one raster per year.}
 \examples{
 \dontrun{
-check_maps(ids = c(1, 2, 3), start = 1990, end = 2000, export_folder_path)
+check_maps(
+  ids = c(1, 2), start = 1990, end = 2000,
+  export_folder_path = "maps", type = "cover", collection = "7"
+)
 }
 }

@@ -1,34 +1,40 @@
 #' Fetch a tile manifest from the Biomastats API
 #'
-#' Sends the fragment identifier to a Biomastats API endpoint and returns the
-#' JSON response parsed as an R object. The `type` and `collection` arguments
-#' are reserved for the versioned API contract and are intentionally ignored
-#' until those parameters are implemented by the service.
+#' Fetches a tile manifest as an unchanged JSON string. By default, a valid
+#' cached response is returned before any network request is made. Cached
+#' manifests are keyed by `type`, `collection`, and `fragment`, and expire
+#' after seven days.
 #'
-#' The function tries the configured endpoints first. If all of them fail with
-#' a connection or retryable HTTP error, it can read a small HTTPS discovery
-#' document and try the returned aliases. Discovery is never performed when
-#' the initial request succeeds.
+#' If the configured API endpoints fail with a connection or retryable HTTP
+#' error, the function can read a small HTTPS discovery document and try its
+#' aliases. Discovery is never performed when an endpoint succeeds.
 #'
-#' @param type Character. Reserved data type; currently ignored. Defaults to
-#'   `"cover"`.
-#' @param collection Character or numeric. Reserved collection identifier;
-#'   currently ignored. Defaults to `"7"`.
+#' The `type` and `collection` arguments are currently used only to identify
+#' cache entries. They are reserved for the versioned API contract and are not
+#' yet sent to the service.
+#'
+#' @param type Character data type. Defaults to `"cover"`.
+#' @param collection Character or numeric collection identifier. Defaults to
+#'   `"7"`.
 #' @param fragment Character or numeric fragment identifier.
+#' @param use_cache Logical. If `TRUE`, return a valid cached manifest before
+#'   contacting the API. If `FALSE`, bypass cache reads and refresh the cache
+#'   with a successful API response.
 #' @param api_urls Optional character vector of API endpoint URLs. If omitted,
 #'   the `biomastats.api_urls` option is used, followed by the built-in URLs.
 #' @param discovery_url Optional HTTPS URL for a JSON discovery document. If
 #'   omitted, the `biomastats.api_discovery_url` option is used, followed by
-#'   the package's public discovery document.
+#'   the package's public discovery document on GitHub.
 #' @param timeout Number of seconds allowed for each HTTP request.
 #' @param allow_http Logical; allow HTTP endpoints for local development.
 #'   HTTPS is required by default.
-#' @return A parsed JSON object, usually a list containing the tile manifest.
+#' @return A length-one character vector containing the API JSON exactly as it
+#'   was received or read from cache.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' manifest <- fetch_tile_manifest(
+#' manifest_json <- fetch_tile_manifest(
 #'   type = "cover", collection = "7", fragment = 1
 #' )
 #' }
@@ -36,6 +42,7 @@ fetch_tile_manifest <- function(
     type = "cover",
     collection = "7",
     fragment,
+    use_cache = TRUE,
     api_urls = NULL,
     discovery_url = NULL,
     timeout = 30,
@@ -44,15 +51,127 @@ fetch_tile_manifest <- function(
   if (missing(fragment) || length(fragment) != 1L || is.na(fragment)) {
     stop("'fragment' must be one non-missing value.", call. = FALSE)
   }
+  if (length(type) != 1L || is.na(type) || !nzchar(as.character(type))) {
+    stop("'type' must be one non-empty value.", call. = FALSE)
+  }
+  if (length(collection) != 1L || is.na(collection) ||
+      !nzchar(as.character(collection))) {
+    stop("'collection' must be one non-empty value.", call. = FALSE)
+  }
+  if (!is.logical(use_cache) || length(use_cache) != 1L || is.na(use_cache)) {
+    stop("'use_cache' must be TRUE or FALSE.", call. = FALSE)
+  }
   if (!is.numeric(timeout) || length(timeout) != 1L ||
       is.na(timeout) || timeout <= 0) {
     stop("'timeout' must be one positive number of seconds.", call. = FALSE)
   }
 
-  # Reserved until the API implements them. Keeping these arguments now makes
-  # the public function compatible with the planned endpoint contract.
-  invisible(type)
-  invisible(collection)
+  type <- as.character(type)
+  collection <- as.character(collection)
+  fragment <- as.character(fragment)
+  cache_values <- c(type = type, collection = collection, fragment = fragment)
+  if (any(!grepl("^[A-Za-z0-9._-]+$", cache_values))) {
+    stop(
+      "'type', 'collection', and 'fragment' may contain only letters, numbers, dots, underscores, and hyphens.",
+      call. = FALSE
+    )
+  }
+
+  `%||%` <- function(x, y) if (is.null(x)) y else x
+
+  validate_manifest <- function(json_text) {
+    parsed <- tryCatch(
+      jsonlite::fromJSON(json_text, simplifyVector = FALSE),
+      error = function(error) error
+    )
+    if (inherits(parsed, "error")) {
+      return(list(ok = FALSE, message = conditionMessage(parsed)))
+    }
+    if (is.list(parsed) && "error" %in% names(parsed) &&
+        length(parsed$error) == 1L && nzchar(as.character(parsed$error))) {
+      return(list(ok = FALSE, message = as.character(parsed$error)))
+    }
+
+    manifest <- if (is.list(parsed) && "result" %in% names(parsed)) {
+      parsed$result
+    } else {
+      parsed
+    }
+    if (!is.list(manifest) || is.null(manifest$fragment) ||
+        !identical(as.character(manifest$fragment), fragment)) {
+      return(list(ok = FALSE, message = "manifest fragment does not match the request"))
+    }
+
+    list(ok = TRUE)
+  }
+
+  cache_ttl_days <- 7
+  cache_root <- tools::R_user_dir("biomastats", which = "cache")
+  cache_dir <- file.path(cache_root, "manifests")
+  cache_ready <- dir.exists(cache_dir) ||
+    isTRUE(dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE))
+  cache_file <- file.path(
+    cache_dir,
+    paste0(
+      "tile-manifest-type-", type,
+      "-collection-", collection,
+      "-fragment-", fragment,
+      ".json"
+    )
+  )
+
+  if (cache_ready) {
+    cached_files <- list.files(
+      cache_dir,
+      pattern = "^tile-manifest-.*[.]json$",
+      full.names = TRUE
+    )
+    if (length(cached_files) > 0L) {
+      cache_info <- file.info(cached_files)
+      cache_age <- as.numeric(
+        difftime(Sys.time(), cache_info$mtime, units = "days")
+      )
+      expired <- is.na(cache_age) | cache_age > cache_ttl_days
+      unlink(cached_files[expired], force = TRUE)
+    }
+  }
+
+  if (use_cache && cache_ready && file.exists(cache_file)) {
+    cache_size <- file.info(cache_file)$size
+    if (!is.na(cache_size) && cache_size > 0 && cache_size <= 5000000) {
+      cached_raw <- readBin(cache_file, what = "raw", n = cache_size)
+      cached_json <- rawToChar(cached_raw)
+      cached_validation <- validate_manifest(cached_json)
+      if (isTRUE(cached_validation$ok)) return(cached_json)
+    }
+    unlink(cache_file, force = TRUE)
+  }
+
+  write_cache <- function(json_raw) {
+    if (!cache_ready) return(invisible(FALSE))
+
+    temporary_file <- tempfile(
+      pattern = "tile-manifest-",
+      tmpdir = cache_dir,
+      fileext = ".tmp"
+    )
+    on.exit(unlink(temporary_file, force = TRUE), add = TRUE)
+    writeBin(json_raw, temporary_file)
+    copied <- file.copy(temporary_file, cache_file, overwrite = TRUE)
+    invisible(isTRUE(copied))
+  }
+
+  valid_url <- function(url, allow_http = FALSE) {
+    if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
+      return(FALSE)
+    }
+    scheme_ok <- grepl("^https://", url, ignore.case = TRUE) ||
+      (allow_http && grepl("^http://", url, ignore.case = TRUE))
+    if (!scheme_ok) return(FALSE)
+    parsed <- tryCatch(httr::parse_url(url), error = function(error) NULL)
+    !is.null(parsed) && nzchar(parsed$hostname %||% "") &&
+      is.null(parsed$username) && is.null(parsed$password)
+  }
 
   default_urls <- c(
     "https://api.biomastats.org/api/fragment",
@@ -64,21 +183,6 @@ fetch_tile_manifest <- function(
   } else {
     api_urls
   }
-
-  `%||%` <- function(x, y) if (is.null(x)) y else x
-
-  valid_url <- function(url, allow_http = FALSE) {
-    if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
-      return(FALSE)
-    }
-    scheme_ok <- grepl("^https://", url, ignore.case = TRUE) ||
-      (allow_http && grepl("^http://", url, ignore.case = TRUE))
-    if (!scheme_ok) return(FALSE)
-    parsed <- tryCatch(httr::parse_url(url), error = function(e) NULL)
-    !is.null(parsed) && nzchar(parsed$hostname %||% "") &&
-      is.null(parsed$username) && is.null(parsed$password)
-  }
-
   urls <- unique(as.character(urls))
   urls <- urls[vapply(urls, valid_url, logical(1L), allow_http = allow_http)]
   if (length(urls) == 0L) {
@@ -94,13 +198,13 @@ fetch_tile_manifest <- function(
   }
   if (length(discovery) == 0L || is.na(discovery[[1L]]) ||
       !nzchar(discovery[[1L]])) {
-    discovery <- "https://github.com/iep-ferreira/biomastats/tree/main/inst/api-servers.json"
+    discovery <- "https://raw.githubusercontent.com/iep-ferreira/biomastats/main/inst/api-servers.json"
   }
   if (!valid_url(discovery, allow_http = FALSE)) {
     discovery <- NA_character_
   }
 
-  request <- function(url) {
+  request_manifest <- function(url) {
     response <- tryCatch(
       httr::POST(
         url,
@@ -129,42 +233,31 @@ fetch_tile_manifest <- function(
       ))
     }
 
-    text <- httr::content(response, as = "text", encoding = "UTF-8")
-    parsed <- tryCatch(
-      jsonlite::fromJSON(text, simplifyVector = FALSE),
-      error = function(error) error
-    )
-    if (inherits(parsed, "error")) {
+    json_raw <- httr::content(response, as = "raw")
+    json_text <- tryCatch(rawToChar(json_raw), error = function(error) error)
+    if (inherits(json_text, "error")) {
+      return(list(ok = FALSE, retryable = FALSE, message = "response is not valid text"))
+    }
+    validation <- validate_manifest(json_text)
+    if (!isTRUE(validation$ok)) {
       return(list(
         ok = FALSE,
         retryable = FALSE,
-        message = paste0("response is not valid JSON: ", conditionMessage(parsed))
+        message = paste0("invalid manifest: ", validation$message)
       ))
     }
 
-    if (is.list(parsed) && "error" %in% names(parsed) &&
-        length(parsed$error) == 1L && nzchar(as.character(parsed$error))) {
-      return(list(
-        ok = FALSE,
-        retryable = FALSE,
-        message = as.character(parsed$error)
-      ))
-    }
-
-    value <- if (is.list(parsed) && "result" %in% names(parsed)) {
-      parsed$result
-    } else {
-      parsed
-    }
-
-    list(ok = TRUE, value = value)
+    list(ok = TRUE, json = json_text, raw = json_raw)
   }
 
   tried <- character()
   for (url in urls) {
     tried <- c(tried, url)
-    result <- request(url)
-    if (isTRUE(result$ok)) return(result$value)
+    result <- request_manifest(url)
+    if (isTRUE(result$ok)) {
+      write_cache(result$raw)
+      return(result$json)
+    }
     if (!isTRUE(result$retryable)) {
       stop(
         "The API rejected the request at ", url, " (", result$message, ").",
@@ -230,10 +323,7 @@ fetch_tile_manifest <- function(
           } else {
             unlist(api_versions, use.names = FALSE)
           }
-          aliases <- c(
-            aliases,
-            version_aliases
-          )
+          aliases <- c(aliases, version_aliases)
         }
       }
     }
@@ -246,8 +336,11 @@ fetch_tile_manifest <- function(
 
     for (url in aliases) {
       tried <- c(tried, url)
-      result <- request(url)
-      if (isTRUE(result$ok)) return(result$value)
+      result <- request_manifest(url)
+      if (isTRUE(result$ok)) {
+        write_cache(result$raw)
+        return(result$json)
+      }
     }
   }
 

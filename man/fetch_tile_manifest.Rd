@@ -7,6 +7,7 @@ fetch_tile_manifest(
   type = "cover",
   collection = "7",
   fragment,
+  use_cache = TRUE,
   api_urls = NULL,
   discovery_url = NULL,
   timeout = 30,
@@ -14,22 +15,23 @@ fetch_tile_manifest(
 )
 }
 \arguments{
-\item{type}{Reserved data type; currently ignored.}
-\item{collection}{Reserved collection identifier; currently ignored.}
+\item{type}{Data type used to identify the cache entry; currently not sent to the API.}
+\item{collection}{Collection identifier used to identify the cache entry; currently not sent to the API.}
 \item{fragment}{Character or numeric fragment identifier.}
+\item{use_cache}{If TRUE, return a valid cached manifest before contacting the API.}
 \item{api_urls}{Optional API endpoint URLs.}
 \item{discovery_url}{Optional HTTPS URL for a JSON discovery document.}
 \item{timeout}{Seconds allowed for each HTTP request.}
 \item{allow_http}{Allow HTTP endpoints for local development.}
 }
-\value{A parsed object containing the tile manifest, normally the API response's `result` field.}
+\value{A length-one character vector containing the unchanged JSON response.}
 \description{
-Sends the fragment identifier to the Biomastats API. If configured endpoints
-fail with connection or retryable HTTP errors, HTTPS aliases from a discovery
-document are tried.
+Fetches a tile manifest as unchanged JSON. Valid cache entries are reused for
+seven days. If configured endpoints fail with connection or retryable HTTP
+errors, HTTPS aliases from a discovery document are tried.
 }
 \examples{
 \dontrun{
-manifest <- fetch_tile_manifest(type = "cover", collection = "7", fragment = 1)
+manifest_json <- fetch_tile_manifest(type = "cover", collection = "7", fragment = 1)
 }
 }

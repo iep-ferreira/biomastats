@@ -2,23 +2,34 @@
 % Please edit documentation in R/download_maps.R
 \name{download_maps}
 \alias{download_maps}
-\title{Download Maps}
+\title{Download one map fragment for a specific year}
 \usage{
-download_maps(num_year, fragment_id, file_name)
+download_maps(
+  fragment,
+  type = "cover",
+  collection = "7",
+  year,
+  export_folder_path
+)
 }
 \arguments{
-\item{num_year}{Year number of the map to be downloaded.}
-
-\item{fragment_id}{ID of the map fragment to be downloaded.}
+\item{fragment}{Fragment identifier.}
+\item{type}{Data type used by the manifest cache.}
+\item{collection}{Collection used by the manifest cache.}
+\item{year}{Year to select from the manifest.}
+\item{export_folder_path}{Directory where the raster file will be stored.}
 }
-\value{
-No return value, called for side effects.
-}
+\value{Invisibly returns the downloaded or existing local file path.}
 \description{
-This function downloads maps using a list of links.
+Reads a cached tile manifest, selects the requested year, and downloads one of
+its available links. If more than one valid link is available, one is selected
+at random.
 }
 \examples{
 \dontrun{
-  download_maps(num_year = 2022, fragment_id = 1, file_name)
+download_maps(
+  fragment = 1, type = "cover", collection = "7", year = 1985,
+  export_folder_path = "maps"
+)
 }
 }
