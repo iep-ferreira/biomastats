@@ -2,7 +2,7 @@
 % Please edit documentation in R/download_maps.R
 \name{download_maps}
 \alias{download_maps}
-\title{Download one map fragment for a specific year}
+\title{Download one map fragment for one or more years}
 \usage{
 download_maps(
   fragment,
@@ -16,14 +16,13 @@ download_maps(
 \item{fragment}{Fragment identifier.}
 \item{type}{Data type used by the manifest cache.}
 \item{collection}{Collection used by the manifest cache.}
-\item{year}{Year to select from the manifest.}
+\item{year}{One or more years to select from the manifest.}
 \item{export_folder_path}{Directory where the raster file will be stored.}
 }
-\value{Invisibly returns the downloaded or existing local file path.}
+\value{Invisibly returns the local file paths in the same order as \code{year}.}
 \description{
-Reads a cached tile manifest, selects the requested year, and downloads one of
-its available links. If more than one valid link is available, one is selected
-at random.
+Reuses valid local files before reading the cached tile manifest. For each
+missing year, one of the available links is selected at random and downloaded.
 }
 \examples{
 \dontrun{

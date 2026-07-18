@@ -55,14 +55,6 @@ load_rasters <- function(shape_path = NULL,
     if (length(ids) == 0L) {
       stop("No map fragments intersect the study area.", call. = FALSE)
     }
-    for (id in ids) {
-      fetch_tile_manifest(
-        type = type,
-        collection = collection,
-        fragment = id,
-        use_cache = TRUE
-      )
-    }
     biome_rasters <- check_maps(
       ids = ids,
       start = start,

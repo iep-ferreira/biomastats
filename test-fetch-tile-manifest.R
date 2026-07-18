@@ -50,9 +50,13 @@ downloaded_file <- biomastats::download_maps(
   export_folder_path = download_folder
 )
 
-teste <- load_rasters(start = 1985, end = 2020, method = "download", export_folder_path = download_folder, type = "cover", collection = "7")
 
-land_vis(teste, year = 2010)
+make_polygon(lat = -20.22, lon = -49.60, size = 5, shape = "hexagon")
+
+
+teste <- load_rasters(start = 2015, end = 2020, method = "download", export_folder_path = download_folder, type = "cover", collection = "7")
+
+land_vis(teste, year = 2020)
 
 ### Agora com o recorte maior e menos anos
 

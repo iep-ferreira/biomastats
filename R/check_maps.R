@@ -35,29 +35,41 @@ check_maps <- function(
     stop("Could not create the export directory.", call. = FALSE)
   }
 
-  maps <- vector("list", length = end - start + 1L)
+  years <- seq.int(start, end)
+  requirements <- expand.grid(
+    fragment = ids,
+    year = years,
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  )
+  requirements$local_path <- mapply(
+    .find_local_map_file,
+    fragment = requirements$fragment,
+    year = requirements$year,
+    MoreArgs = list(export_folder_path = export_folder_path, type = type),
+    USE.NAMES = FALSE
+  )
 
-  for (year in start:end) {
-    current_fig <- NULL
+  missing <- is.na(requirements$local_path)
+  missing_fragments <- unique(requirements$fragment[missing])
 
-    for (id in ids) {
-      local_path <- download_maps(
-        fragment = id,
-        type = type,
-        collection = collection,
-        year = year,
-        export_folder_path = export_folder_path
-      )
+  for (fragment in missing_fragments) {
+    rows <- which(missing & requirements$fragment == fragment)
+    requirements$local_path[rows] <- download_maps(
+      fragment = fragment,
+      type = type,
+      collection = collection,
+      year = requirements$year[rows],
+      export_folder_path = export_folder_path
+    )
+  }
 
-      fragment_raster <- raster::raster(local_path)
-      current_fig <- if (is.null(current_fig)) {
-        fragment_raster
-      } else {
-        raster::merge(current_fig, fragment_raster)
-      }
-    }
+  maps <- vector("list", length = length(years))
 
-    maps[[year - start + 1L]] <- current_fig
+  for (index in seq_along(years)) {
+    local_paths <- requirements$local_path[requirements$year == years[[index]]]
+    fragment_rasters <- lapply(local_paths, raster::raster)
+    maps[[index]] <- Reduce(raster::merge, fragment_rasters)
   }
 
   maps
