@@ -70,7 +70,7 @@ land_vis <- function(data = NULL, year = 1985){
     ggplot2::xlab("Longitude") + ggplot2::ylab("Latitude") + ggplot2::ggtitle(paste("Year: ", as.character(year))) +
     ggplot2::scale_fill_manual(
       values = cores_classes,
-      name = "Land Uses",
+      name = "Land Use Classes",
       labels = names_classes,
       guide = ggplot2::guide_legend(reverse = TRUE))
 
