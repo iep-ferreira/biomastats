@@ -12,7 +12,7 @@ load_rasters(
   export_folder_path = NULL,
   import_folder_path = NULL,
   type = "cover",
-  collection = "7"
+  collection = "10"
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ load_rasters(
 
 \item{type}{Data type requested from the Biomastats API. Default is \code{"cover"}.}
 
-\item{collection}{Collection version. Default is \code{"7"}.}
+\item{collection}{Collection version. Default is \code{"10"}.}
 }
 \value{
 A list containing the shapefile, time range, and masked raster data.

@@ -10,7 +10,7 @@
 #' @param export_folder_path Directory where downloaded raster files are stored.
 #' @param import_folder_path Directory containing an existing raster library.
 #' @param type Data type requested from the Biomastats API. Default is "cover".
-#' @param collection The collection version. Default is "7".
+#' @param collection The collection version. Default is "10".
 #'
 #' @return A list containing the shapefile, time range, and masked raster data.
 #' @importFrom sf st_read st_crs
@@ -28,7 +28,7 @@ load_rasters <- function(shape_path = NULL,
                          export_folder_path = NULL,
                          import_folder_path = NULL,
                          type = "cover",
-                         collection = "7"
+                         collection = "10"
 ) { # starts function
 
   method <- match.arg(method)

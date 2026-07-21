@@ -14,7 +14,7 @@
 #' \dontrun{
 #' check_maps(
 #'   ids = c(1, 2), start = 1990, end = 2000,
-#'   export_folder_path = "maps", type = "cover", collection = "7"
+#'   export_folder_path = "maps", type = "cover", collection = "10"
 #' )
 #' }
 check_maps <- function(
@@ -23,7 +23,7 @@ check_maps <- function(
     end,
     export_folder_path,
     type = "cover",
-    collection = "7") {
+    collection = "10") {
 
   if (length(ids) == 0L) {
     stop("'ids' must contain at least one fragment.", call. = FALSE)
@@ -46,7 +46,11 @@ check_maps <- function(
     .find_local_map_file,
     fragment = requirements$fragment,
     year = requirements$year,
-    MoreArgs = list(export_folder_path = export_folder_path, type = type),
+    MoreArgs = list(
+      export_folder_path = export_folder_path,
+      type = type,
+      collection = collection
+    ),
     USE.NAMES = FALSE
   )
 

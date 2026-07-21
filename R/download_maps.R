@@ -2,7 +2,8 @@
     export_folder_path,
     fragment,
     year,
-    type = "cover") {
+    type = "cover",
+    collection = "10") {
 
   file_prefix <- if (identical(as.character(type), "cover")) {
     "coverage"
@@ -11,7 +12,10 @@
   }
   candidates <- file.path(
     export_folder_path,
-    paste0(file_prefix, "-frag-", fragment, "-year-", year, c(".tif", ".tiff"))
+    paste0(
+      file_prefix, "-collection-", collection,
+      "-frag-", fragment, "-year-", year, c(".tif", ".tiff")
+    )
   )
   sizes <- file.info(candidates)$size
   valid <- candidates[file.exists(candidates) & !is.na(sizes) & sizes > 0]
@@ -27,7 +31,8 @@
 #'
 #' @param fragment Fragment identifier.
 #' @param type Data type used by the manifest cache.
-#' @param collection Collection used by the manifest cache.
+#' @param collection Collection requested from the API and used to identify
+#'   local files and the manifest cache.
 #' @param year One or more years to select from the manifest.
 #' @param export_folder_path Directory where the raster file will be stored.
 #' @return Invisibly returns the local file paths in the same order as `year`.
@@ -36,14 +41,14 @@
 #' @examples
 #' \dontrun{
 #' download_maps(
-#'   fragment = 1, type = "cover", collection = "7", year = 1985,
+#'   fragment = 1, type = "cover", collection = "10", year = 1985,
 #'   export_folder_path = "maps"
 #' )
 #' }
 download_maps <- function(
     fragment,
     type = "cover",
-    collection = "7",
+    collection = "10",
     year,
     export_folder_path) {
 
@@ -69,7 +74,8 @@ download_maps <- function(
         export_folder_path = export_folder_path,
         fragment = fragment,
         year = current_year,
-        type = type
+        type = type,
+        collection = collection
       )
     },
     character(1L)

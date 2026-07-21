@@ -2,20 +2,20 @@
 #'
 #' Fetches a tile manifest as an unchanged JSON string. By default, a valid
 #' cached response is returned before any network request is made. Cached
-#' manifests are keyed by `type`, `collection`, and `fragment`, and expire
+#' manifests are keyed by API-contract version, `type`, `collection`, and
+#' `fragment`, and expire
 #' after seven days.
 #'
 #' If the configured API endpoints fail with a connection or retryable HTTP
 #' error, the function can read a small HTTPS discovery document and try its
 #' aliases. Discovery is never performed when an endpoint succeeds.
 #'
-#' The `type` and `collection` arguments are currently used only to identify
-#' cache entries. They are reserved for the versioned API contract and are not
-#' yet sent to the service.
+#' The current API contract requires `collection` and `fragment` in every
+#' request. `type` remains a client-side cache discriminator.
 #'
 #' @param type Character data type. Defaults to `"cover"`.
 #' @param collection Character or numeric collection identifier. Defaults to
-#'   `"7"`.
+#'   `"10"`.
 #' @param fragment Character or numeric fragment identifier.
 #' @param use_cache Logical. If `TRUE`, return a valid cached manifest before
 #'   contacting the API. If `FALSE`, bypass cache reads and refresh the cache
@@ -35,12 +35,12 @@
 #' @examples
 #' \dontrun{
 #' manifest_json <- fetch_tile_manifest(
-#'   type = "cover", collection = "7", fragment = 1
+#'   type = "cover", collection = "10", fragment = 1
 #' )
 #' }
 fetch_tile_manifest <- function(
     type = "cover",
-    collection = "7",
+    collection = "10",
     fragment,
     use_cache = TRUE,
     api_urls = NULL,
@@ -97,7 +97,11 @@ fetch_tile_manifest <- function(
     } else {
       parsed
     }
-    if (!is.list(manifest) || is.null(manifest$fragment) ||
+    if (!is.list(manifest) || is.null(manifest$collection) ||
+        !identical(as.character(manifest$collection), collection)) {
+      return(list(ok = FALSE, message = "manifest collection does not match the request"))
+    }
+    if (is.null(manifest$fragment) ||
         !identical(as.character(manifest$fragment), fragment)) {
       return(list(ok = FALSE, message = "manifest fragment does not match the request"))
     }
@@ -113,7 +117,7 @@ fetch_tile_manifest <- function(
   cache_file <- file.path(
     cache_dir,
     paste0(
-      "tile-manifest-type-", type,
+      "tile-manifest-v3-type-", type,
       "-collection-", collection,
       "-fragment-", fragment,
       ".json"
@@ -123,7 +127,7 @@ fetch_tile_manifest <- function(
   if (cache_ready) {
     cached_files <- list.files(
       cache_dir,
-      pattern = "^tile-manifest-.*[.]json$",
+      pattern = "^tile-manifest-v3-.*[.]json$",
       full.names = TRUE
     )
     if (length(cached_files) > 0L) {
@@ -208,12 +212,9 @@ fetch_tile_manifest <- function(
     response <- tryCatch(
       httr::POST(
         url,
-        httr::add_headers(
-          Accept = "application/json",
-          `Content-Type` = "application/x-www-form-urlencoded"
-        ),
-        body = list(fragment = fragment),
-        encode = "form",
+        httr::add_headers(Accept = "application/json"),
+        body = list(collection = collection, fragment = fragment),
+        encode = "json",
         httr::timeout(timeout)
       ),
       error = function(error) error

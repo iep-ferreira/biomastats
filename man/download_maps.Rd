@@ -7,7 +7,7 @@
 download_maps(
   fragment,
   type = "cover",
-  collection = "7",
+  collection = "10",
   year,
   export_folder_path
 )
@@ -15,7 +15,7 @@ download_maps(
 \arguments{
 \item{fragment}{Fragment identifier.}
 \item{type}{Data type used by the manifest cache.}
-\item{collection}{Collection used by the manifest cache.}
+\item{collection}{Collection requested from the API and used to identify local files and the manifest cache.}
 \item{year}{One or more years to select from the manifest.}
 \item{export_folder_path}{Directory where the raster file will be stored.}
 }
@@ -27,7 +27,7 @@ missing year, one of the available links is selected at random and downloaded.
 \examples{
 \dontrun{
 download_maps(
-  fragment = 1, type = "cover", collection = "7", year = 1985,
+  fragment = 1, type = "cover", collection = "10", year = 1985,
   export_folder_path = "maps"
 )
 }

@@ -10,7 +10,7 @@ check_maps(
   end,
   export_folder_path,
   type = "cover",
-  collection = "7"
+  collection = "10"
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ check_maps(
 \dontrun{
 check_maps(
   ids = c(1, 2), start = 1990, end = 2000,
-  export_folder_path = "maps", type = "cover", collection = "7"
+  export_folder_path = "maps", type = "cover", collection = "10"
 )
 }
 }

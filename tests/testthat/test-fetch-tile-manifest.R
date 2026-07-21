@@ -23,13 +23,13 @@ test_that("fetch_tile_manifest reuses an exact valid JSON cache entry", {
   cache_file <- file.path(
     cache_dir,
     paste0(
-      "tile-manifest-type-cover-collection-7-fragment-",
+      "tile-manifest-v3-type-cover-collection-7-fragment-",
       fragment,
       ".json"
     )
   )
   manifest_json <- paste0(
-    '{"error":"","result":{"fragment":', fragment,
+    '{"error":"","result":{"collection":7,"fragment":', fragment,
     ',"version":"test-v1","years":{}}}'
   )
   writeBin(charToRaw(manifest_json), cache_file)
@@ -78,13 +78,13 @@ test_that("manifest cache entries expire after seven days", {
   cache_file <- file.path(
     cache_dir,
     paste0(
-      "tile-manifest-type-cover-collection-7-fragment-",
+      "tile-manifest-v3-type-cover-collection-7-fragment-",
       fragment,
       ".json"
     )
   )
   manifest_json <- paste0(
-    '{"error":"","result":{"fragment":', fragment,
+    '{"error":"","result":{"collection":7,"fragment":', fragment,
     ',"version":"test-v1","years":{}}}'
   )
   writeBin(charToRaw(manifest_json), cache_file)
@@ -113,13 +113,13 @@ test_that("download_maps selects one cached record for the requested year", {
   cache_file <- file.path(
     cache_dir,
     paste0(
-      "tile-manifest-type-cover-collection-7-fragment-",
+      "tile-manifest-v3-type-cover-collection-7-fragment-",
       fragment,
       ".json"
     )
   )
   manifest_json <- paste0(
-    '{"error":"","result":{"fragment":', fragment,
+    '{"error":"","result":{"collection":7,"fragment":', fragment,
     ',"years":{"1985":[',
     '{"shareable_link":"https://example.org/a","file_name":"a.tif"},',
     '{"shareable_link":"https://example.org/b","file_name":"b.tif"}',
@@ -151,7 +151,7 @@ test_that("download_maps skips manifests when the local raster exists", {
   dir.create(export_dir, recursive = TRUE, showWarnings = FALSE)
   local_path <- file.path(
     export_dir,
-    paste0("coverage-frag-", fragment, "-year-", year, ".tif")
+    paste0("coverage-collection-7-frag-", fragment, "-year-", year, ".tif")
   )
   writeBin(as.raw(1L), local_path)
 
@@ -178,7 +178,7 @@ test_that("download_maps fetches one manifest for multiple missing years", {
   dir.create(export_dir, recursive = TRUE)
   existing_file <- file.path(
     export_dir,
-    paste0("coverage-frag-", fragment, "-year-1985.tif")
+    paste0("coverage-collection-7-frag-", fragment, "-year-1985.tif")
   )
   writeBin(as.raw(1L), existing_file)
   calls <- new.env(parent = emptyenv())
@@ -187,11 +187,11 @@ test_that("download_maps fetches one manifest for multiple missing years", {
   manifest_json <- paste0(
     '{"error":"","result":{"fragment":', fragment, ',"years":{',
     '"1985":[{"shareable_link":"https://example.org/1985",',
-    '"file_name":"coverage-frag-', fragment, '-year-1985.tif"}],',
+    '"file_name":"coverage-collection-7-frag-', fragment, '-year-1985.tif"}],',
     '"1986":[{"shareable_link":"https://example.org/1986",',
-    '"file_name":"coverage-frag-', fragment, '-year-1986.tif"}],',
+    '"file_name":"coverage-collection-7-frag-', fragment, '-year-1986.tif"}],',
     '"1987":[{"shareable_link":"https://example.org/1987",',
-    '"file_name":"coverage-frag-', fragment, '-year-1987.tif"}]}}}'
+    '"file_name":"coverage-collection-7-frag-', fragment, '-year-1987.tif"}]}}}'
   )
 
   testthat::local_mocked_bindings(
@@ -219,7 +219,7 @@ test_that("download_maps fetches one manifest for multiple missing years", {
   expect_identical(calls$download, 2L)
   expect_identical(
     basename(downloaded),
-    paste0("coverage-frag-", fragment, "-year-", years, ".tif")
+    paste0("coverage-collection-7-frag-", fragment, "-year-", years, ".tif")
   )
   expect_true(all(file.exists(downloaded)))
 })
@@ -233,7 +233,7 @@ test_that("check_maps resolves downloads before loading rasters", {
   write_test_raster <- function(fragment, year) {
     path <- file.path(
       export_dir,
-      paste0("coverage-frag-", fragment, "-year-", year, ".tif")
+      paste0("coverage-collection-7-frag-", fragment, "-year-", year, ".tif")
     )
     map <- raster::raster(
       nrows = 2, ncols = 2,

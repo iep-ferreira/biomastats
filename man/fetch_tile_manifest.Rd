@@ -5,7 +5,7 @@
 \usage{
 fetch_tile_manifest(
   type = "cover",
-  collection = "7",
+  collection = "10",
   fragment,
   use_cache = TRUE,
   api_urls = NULL,
@@ -15,8 +15,8 @@ fetch_tile_manifest(
 )
 }
 \arguments{
-\item{type}{Data type used to identify the cache entry; currently not sent to the API.}
-\item{collection}{Collection identifier used to identify the cache entry; currently not sent to the API.}
+\item{type}{Data type used to identify the cache entry.}
+\item{collection}{Collection identifier sent to the API and used to identify the cache entry.}
 \item{fragment}{Character or numeric fragment identifier.}
 \item{use_cache}{If TRUE, return a valid cached manifest before contacting the API.}
 \item{api_urls}{Optional API endpoint URLs.}
@@ -32,6 +32,6 @@ errors, HTTPS aliases from a discovery document are tried.
 }
 \examples{
 \dontrun{
-manifest_json <- fetch_tile_manifest(type = "cover", collection = "7", fragment = 1)
+manifest_json <- fetch_tile_manifest(type = "cover", collection = "10", fragment = 1)
 }
 }
