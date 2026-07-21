@@ -2,12 +2,16 @@
 
 # Quick live test for fetch_tile_manifest().
 # This script requires internet access and is not part of the automated tests.
+.rs.restartR()
 
-devtools::load_all(quiet = TRUE)
+setwd("C:/Users/Pichau/Desktop/biomastats")
+devtools::load_all(".", quiet = TRUE)
+
+"fetch_tile_manifest" %in% getNamespaceExports("biomastats")
 
 manifest_json <- biomastats::fetch_tile_manifest(
   type = "cover",
-  collection = "7",
+  collection = "10",
   fragment = 50,
   use_cache = FALSE,
   timeout = 30
@@ -45,30 +49,35 @@ stopifnot(
 downloaded_file <- biomastats::download_maps(
   fragment = download_fragment,
   type = "cover",
-  collection = "7",
+  collection = "10",
   year = download_year,
   export_folder_path = download_folder
 )
 
 
-make_polygon(lat = -20.22, lon = -49.60, size = 5, shape = "hexagon")
+make_polygon(lat = -20.22, lon = -49.60, size = 2, shape = "hexagon")
 
 
-teste <- load_rasters(start = 2015, end = 2020, method = "download", export_folder_path = download_folder, type = "cover", collection = "7")
+teste <- load_rasters(start = 1985, end = 2024, method = "download", 
+                      export_folder_path = download_folder, type = "cover", collection = "10")
 
-land_vis(teste, year = 2020)
+land_vis(teste, year = 2024)
+
+res <- get_area(teste)
+res$time_series 
 
 ### Agora com o recorte maior e menos anos
 
 make_polygon(lat = -20.22, lon = -49.60, size = 50, shape = "hexagon")
 
-teste <- load_rasters(start = 1985, end = 1990, method = "download", export_folder_path = download_folder, type = "cover", collection = "7")
+teste <- load_rasters(start = 2022, end = 2024, method = "download", export_folder_path = download_folder, 
+                      type = "cover", collection = "10")
 
-land_vis(teste, year = 1990)
+land_vis(teste, year = 2022)
 
 res<-get_area(teste)
 
-land_dist(res, year = 1990)
+land_dist(res, year = 2022)
 
 
 
