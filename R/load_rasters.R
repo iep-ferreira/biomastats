@@ -6,9 +6,11 @@
 #' @param shape_path A character string specifying the path to the shapefile.
 #' @param start A numeric value indicating the start year for raster data.
 #' @param end A numeric value indicating the end year for raster data.
-#' @param data_from A character vector specifying the source of raster data. Can be "download" or "folder".
-#' @param folder_path A character string specifying the path to the folder containing raster files. Required if data_from = "folder".
-#' @param collection The collection version.  
+#' @param method Raster source: `"download"` or `"library"`.
+#' @param export_folder_path Directory where downloaded raster files are stored.
+#' @param import_folder_path Directory containing an existing raster library.
+#' @param type Data type requested from the Biomastats API. Default is "cover".
+#' @param collection The collection version. Default is "10".
 #'
 #' @return A list containing the shapefile, time range, and masked raster data.
 #' @importFrom sf st_read st_crs
@@ -22,11 +24,14 @@
 
 load_rasters <- function(shape_path = NULL,
                          start = 1985, end = 2020,
-                         method = c("download"),
-                         export_folder_path = NULL, 
-                         import_folder_path = NULL, 
-                         collection = 10
+                         method = c("download", "library"),
+                         export_folder_path = NULL,
+                         import_folder_path = NULL,
+                         type = "cover",
+                         collection = "10"
 ) { # starts function
+
+  method <- match.arg(method)
 
   sys_path <- system.file(package = "biomastats")
 
@@ -40,16 +45,29 @@ load_rasters <- function(shape_path = NULL,
 
   s_utm <- sf::st_crs(s)$proj4string
   
-    # Identifies the pieces (ids) need to recompose the map
-    ids <- compare_shapefiles(shape_path)
+  # Identify the fragments required to recompose the study area.
+  ids <- unique(compare_shapefiles(shape_path))
 
-    # Identifica mapas para download
-  if(method == "download"){    
-    if(is.null(export_folder_path)){ stop("Error! Path for the export maps library is undefined.") }
-    biome_rasters <- check_maps(ids, start, end, export_folder_path)
+  if (method == "download") {
+    if (is.null(export_folder_path)) {
+      stop("Error! Path for the export maps library is undefined.")
+    }
+    if (length(ids) == 0L) {
+      stop("No map fragments intersect the study area.", call. = FALSE)
+    }
+    biome_rasters <- check_maps(
+      ids = ids,
+      start = start,
+      end = end,
+      export_folder_path = export_folder_path,
+      type = type,
+      collection = collection
+    )
   } else if (method == "library") {
-    if(is.null(import_folder_path)){ stop("Error! Path for the import maps library is undefined.") }
-  biome_rasters <- load_rasters_from_folder(start, end, import_folder_path)
+    if (is.null(import_folder_path)) {
+      stop("Error! Path for the import maps library is undefined.")
+    }
+    biome_rasters <- load_rasters_from_folder(start, end, import_folder_path)
   }
 
     biome_utm <- sf::st_crs(biome_rasters[[1]])$proj4string

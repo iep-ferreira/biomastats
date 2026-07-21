@@ -8,9 +8,11 @@ load_rasters(
   shape_path = NULL,
   start = 1985,
   end = 2020,
-  method = c("download"),
+  method = c("download", "library"),
   export_folder_path = NULL,
-  import_folder_path = NULL
+  import_folder_path = NULL,
+  type = "cover",
+  collection = "10"
 )
 }
 \arguments{
@@ -20,9 +22,15 @@ load_rasters(
 
 \item{end}{A numeric value indicating the end year for raster data.}
 
-\item{data_from}{A character vector specifying the source of raster data. Can be "download" or "folder".}
+\item{method}{Raster source: \code{"download"} or \code{"library"}.}
 
-\item{folder_path}{A character string specifying the path to the folder containing raster files. Required if data_from = "folder".}
+\item{export_folder_path}{Directory where downloaded raster files are stored.}
+
+\item{import_folder_path}{Directory containing an existing raster library.}
+
+\item{type}{Data type requested from the Biomastats API. Default is \code{"cover"}.}
+
+\item{collection}{Collection version. Default is \code{"10"}.}
 }
 \value{
 A list containing the shapefile, time range, and masked raster data.

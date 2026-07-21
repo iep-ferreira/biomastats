@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "api_versions": {
+    "v1": [
+      "https://api.biomastats.org/api/fragment",
+      "https://biomastats-worker.ferreira-iep.workers.dev/api"
+    ]
+  },
+  "base_urls": [
+    "https://api.biomastats.org/api/fragment",
+    "https://biomastats-worker.ferreira-iep.workers.dev/api"
+  ]
+}

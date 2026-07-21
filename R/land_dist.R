@@ -62,7 +62,7 @@ land_dist <- function(data = NULL, year = NULL, type = "barplot" ){
       ggplot2::coord_polar("y", start = 0) +
       ggplot2::scale_fill_manual(values = dat$cores,
                         limits = dat$names,
-                        name = "Land Uses") +
+                        name = "Land Use Classes") +
       ggplot2::theme_void() +
       ggplot2::labs(x = NULL, y = NULL) +
       ggplot2::ggtitle(paste("Year: ", as.character(year)))
