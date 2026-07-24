@@ -82,14 +82,55 @@ mapa_uso
 mapa_uso_final <- biomastats::land_vis(mapas, year = ultimo_ano)
 mapa_uso_final
 
-# 10. Distribuir classes
+# 10. Calcular distância até feições OSM usando um raster anual
+# Este bloco faz uma consulta online ao OpenStreetMap/Overpass. Em recortes
+# extensos, informe value_feature para reduzir o volume retornado.
+indice_ano <- ano_visualizacao - primeiro_ano + 1
+raster_anual <- mapas[["raster"]][[indice_ano]]
+
+distancia_vias <- biomastats::distance_to_feature(
+  reference_raster = raster_anual,
+  key_feature = "highway",
+  value_feature = NULL
+)
+distancia_vias[["raster"]]
+mapa_distancia_vias <- distancia_vias[["plot"]] +
+  ggplot2::labs(
+    title = paste("Distance to roads in", ano_visualizacao)
+  )
+mapa_distancia_vias
+
+arquivo_mapa_distancia <- tempfile(fileext = ".png")
+ggplot2::ggsave(
+  filename = arquivo_mapa_distancia,
+  plot = mapa_distancia_vias,
+  width = 8,
+  height = 6,
+  dpi = 150
+)
+stopifnot(file.exists(arquivo_mapa_distancia))
+
+# 11. Calcular densidade local de uma feição OSM e obter o valor global
+# Este bloco também faz uma consulta online ao OpenStreetMap/Overpass.
+densidade_vias <- biomastats::density_of_feature(
+  reference_raster = raster_anual,
+  key_feature = "highway",
+  value_feature = "primary",
+  window_size = 9,
+  window_shape = "circle"
+)
+densidade_vias[["plot"]]
+stopifnot(is.numeric(densidade_vias[["global"]]),
+          length(densidade_vias[["global"]]) == 1L)
+
+# 12. Distribuir classes
 distribuicao_barra <- biomastats::land_dist(areas, year = ultimo_ano, type = "barplot")
 distribuicao_barra
 
 distribuicao_pizza <- biomastats::land_dist(areas, year = ultimo_ano, type = "pie")
 distribuicao_pizza
 
-# 11. Calcular métrica e gerar mapa reclassificado
+# 13. Calcular métrica e gerar mapa reclassificado
 metricas <- biomastats::biomastats_metrics(
   mapas,
   start = primeiro_ano,
@@ -104,9 +145,9 @@ metricas[["metrics_table"]]
 mapa_reclassificado <- biomastats::reclass_map(metricas, year = primeiro_ano)
 mapa_reclassificado
 
-# 12. Opcional: mapas interativos no RStudio
+# 14. Opcional: mapas interativos no RStudio
 # mapview::mapview(ufscar)
 # mapview::mapview(polygon_estudo)
 
-# 13. Restaurar a biblioteca original ao terminar o fluxo 2
+# 15. Restaurar a biblioteca original ao terminar o fluxo 2
 .libPaths(bibliotecas_anteriores)

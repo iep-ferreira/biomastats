@@ -50,6 +50,31 @@ results$time # Gráfico temporal
 land_vis(mapas, year = 1990) # Mapa para 1990
 land_vis(mapas, year = 2024) # Mapa para 2024
 
+# Distância até feições do OpenStreetMap usando um raster anual
+# Requer internet e disponibilidade de um servidor Overpass.
+ano_distancia <- 2024
+indice_ano <- ano_distancia - mapas$time_range[1] + 1
+raster_anual <- mapas$raster[[indice_ano]]
+
+distancia_vias <- distance_to_feature(
+  reference_raster = raster_anual,
+  key_feature = "highway",
+  value_feature = NULL
+)
+mapa_distancia_vias <- distancia_vias$plot +
+  ggplot2::labs(
+    title = paste("Distance to roads in", ano_distancia)
+  )
+mapa_distancia_vias
+
+ggplot2::ggsave(
+  filename = "distance-to-roads-2024.png",
+  plot = mapa_distancia_vias,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+
 # Distribuição de Classes
 land_dist(results, year = 2024, type = "barplot") # Gráfico de barras
 land_dist(results, year = 2024, type = "pie")     # Gráfico de pizza

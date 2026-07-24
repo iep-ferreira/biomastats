@@ -21,7 +21,8 @@ License: Affero GPL 3.0
 Encoding: UTF-8
 LazyData: false
 Reference:... 
-Suggests: 
+Suggests:
+    patchwork,
     testthat (>= 3.1.7)
 Config/testthat/edition: 3
 Imports:

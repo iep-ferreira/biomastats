@@ -26,8 +26,9 @@ large Overpass queries.}
 \item{provider}{Data provider. Only \code{"osm"} is currently supported.}
 }
 \value{
-A list with one element, \code{raster}, containing a \code{RasterLayer} of
-distances to the nearest matching OSM feature.
+A list with two elements: \code{raster}, a \code{RasterLayer} of distances to
+the nearest matching OSM feature, and \code{plot}, an adaptable \code{ggplot}
+map.
 }
 \description{
 Downloads an OpenStreetMap feature within the extent of a reference raster,
@@ -48,7 +49,10 @@ key. These discovery functions require network access.
 
 Distances are returned in metres for longitude/latitude rasters and in the
 map units of projected rasters. Cells that are \code{NA} in
-\code{reference_raster} remain \code{NA} in the result.
+\code{reference_raster} remain \code{NA} in the result. The returned
+\code{plot} is a regular \code{ggplot2} object with English labels, so it can
+be customized with \code{ggplot2} layers and exported with
+\code{ggplot2::ggsave()}.
 }
 \examples{
 \dontrun{
@@ -57,6 +61,9 @@ road_distance <- distance_to_feature(
   key_feature = "highway",
   value_feature = "primary"
 )
+road_distance$plot
+ggplot2::ggsave("road-distance.png", road_distance$plot,
+                width = 8, height = 6, dpi = 300)
 
 water_distance <- distance_to_feature(
   reference_raster,

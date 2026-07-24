@@ -30,8 +30,14 @@ A `Raster` object with the rasterized OSM feature aligned to
 \description{
 Queries OpenStreetMap for a feature inside the extent of a reference
 raster, then rasterizes the returned geometries using the same extent and
-resolution. The OSM query is made with `osmdata::opq()` and therefore may
-require network access and an available Overpass provider.
+resolution. The query is reduced to the smallest bounding box containing
+valid reference cells, then expanded by a buffer equal to the diagonal
+diameter of that box. The buffer brings features crossing the study-area
+border into the query and reduces edge effects in the distance raster. The
+OSM query is made with `osmdata::opq()` and therefore may require network
+access and an available Overpass provider. If the installed
+`osmdata` version cannot assemble the returned feature metadata, the same
+query is read from OSM XML through the GDAL driver used by `sf`.
 }
 \details{
 The current implementation supports OpenStreetMap through `osmdata` only.
