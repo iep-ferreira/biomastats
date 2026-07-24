@@ -82,19 +82,26 @@ mapa_uso
 mapa_uso_final <- biomastats::land_vis(mapas, year = ultimo_ano)
 mapa_uso_final
 
-# 10. Calcular distância até feições OSM usando um raster anual
-# Este bloco faz uma consulta online ao OpenStreetMap/Overpass. Em recortes
-# extensos, informe value_feature para reduzir o volume retornado.
+# 10. Integrar feições OSM e calcular métricas usando um raster anual
+# Cada feição é consultada uma vez e reutilizada por distância e densidade.
 indice_ano <- ano_visualizacao - primeiro_ano + 1
 raster_anual <- mapas[["raster"]][[indice_ano]]
 
-distancia_vias <- biomastats::distance_to_feature(
+feicoes_integradas <- biomastats::integrate_feature(
   reference_raster = raster_anual,
-  key_feature = "highway",
-  value_feature = NULL
+  features = list(
+    roads = list(key = "highway", value = "primary")
+  ),
+  metrics = list(
+    distance = list(),
+    density = list(window_size = 9, window_shape = "circle")
+  ),
+  plot = TRUE
 )
-distancia_vias[["raster"]]
-mapa_distancia_vias <- distancia_vias[["plot"]] +
+feicoes_integradas[["results"]][["roads"]][["distance"]][["raster"]]
+feicoes_integradas[["results"]][["roads"]][["density"]][["global"]]
+
+mapa_distancia_vias <- feicoes_integradas[["plots"]][["roads_distance"]] +
   ggplot2::labs(
     title = paste("Distance to roads in", ano_visualizacao)
   )
@@ -110,27 +117,14 @@ ggplot2::ggsave(
 )
 stopifnot(file.exists(arquivo_mapa_distancia))
 
-# 11. Calcular densidade local de uma feição OSM e obter o valor global
-# Este bloco também faz uma consulta online ao OpenStreetMap/Overpass.
-densidade_vias <- biomastats::density_of_feature(
-  reference_raster = raster_anual,
-  key_feature = "highway",
-  value_feature = "primary",
-  window_size = 9,
-  window_shape = "circle"
-)
-densidade_vias[["plot"]]
-stopifnot(is.numeric(densidade_vias[["global"]]),
-          length(densidade_vias[["global"]]) == 1L)
-
-# 12. Distribuir classes
+# 11. Distribuir classes
 distribuicao_barra <- biomastats::land_dist(areas, year = ultimo_ano, type = "barplot")
 distribuicao_barra
 
 distribuicao_pizza <- biomastats::land_dist(areas, year = ultimo_ano, type = "pie")
 distribuicao_pizza
 
-# 13. Calcular métrica e gerar mapa reclassificado
+# 12. Calcular métrica e gerar mapa reclassificado
 metricas <- biomastats::biomastats_metrics(
   mapas,
   start = primeiro_ano,
@@ -145,9 +139,9 @@ metricas[["metrics_table"]]
 mapa_reclassificado <- biomastats::reclass_map(metricas, year = primeiro_ano)
 mapa_reclassificado
 
-# 14. Opcional: mapas interativos no RStudio
+# 13. Opcional: mapas interativos no RStudio
 # mapview::mapview(ufscar)
 # mapview::mapview(polygon_estudo)
 
-# 15. Restaurar a biblioteca original ao terminar o fluxo 2
+# 14. Restaurar a biblioteca original ao terminar o fluxo 2
 .libPaths(bibliotecas_anteriores)

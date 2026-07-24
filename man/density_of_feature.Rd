@@ -6,19 +6,22 @@
 \usage{
 density_of_feature(
   reference_raster,
-  key_feature,
+  key_feature = NULL,
   value_feature = NULL,
   provider = "osm",
   window_size = 5L,
-  window_shape = c("square", "circle")
+  window_shape = c("square", "circle"),
+  feature_raster = NULL,
+  plot = TRUE
 )
 }
 \arguments{
 \item{reference_raster}{A \code{RasterLayer} defining the analysis extent,
 resolution, CRS, and valid-cell mask.}
 
-\item{key_feature}{A non-empty OSM key such as \code{"highway"},
-\code{"waterway"}, \code{"natural"}, or \code{"landuse"}.}
+\item{key_feature}{An OSM key such as \code{"highway"} or
+\code{"waterway"}. It is required when \code{feature_raster} is \code{NULL}
+and is otherwise used as a plot label.}
 
 \item{value_feature}{An optional OSM value. Use \code{NULL} to match every
 value for the key; a specific value is recommended for large study areas.}
@@ -30,6 +33,12 @@ window in raster cells. For example, \code{5} means a 5 by 5 window.}
 
 \item{window_shape}{Shape of the moving window: \code{"square"} or
 \code{"circle"}.}
+
+\item{feature_raster}{Optional rasterized feature returned by
+\code{load_osm_data()}. When supplied, no OSM request is made.}
+
+\item{plot}{Logical; if \code{TRUE}, return an adaptable \code{ggplot2} map.
+Use \code{FALSE} to calculate only the raster and global value.}
 }
 \value{
 A list with \code{raster}, a \code{RasterLayer} of local feature density,
@@ -38,9 +47,11 @@ A list with \code{raster}, a \code{RasterLayer} of local feature density,
 reference raster.
 }
 \description{
-Downloads an OpenStreetMap feature, rasterizes it on the reference grid, and
-calculates the proportion of occupied cells within a moving window. The
-denominator is adjusted near the border and around \code{NA} cells.
+Calculates the proportion of feature cells within a moving window. A raster
+previously loaded by \code{load_osm_data()} can be reused through
+\code{feature_raster}. If it is \code{NULL}, the function loads the requested
+OSM feature for standalone use. If no feature cell occurs inside the valid
+study-area mask, local and global densities are returned as zero.
 }
 \details{
 This is a cell-coverage density. For linear features, it should not be
@@ -49,6 +60,9 @@ rasterization method are explicitly accounted for. The \code{global} value is
 the proportion of occupied valid cells in the complete reference raster.
 The returned \code{plot} is a regular \code{ggplot2} object and can be
 customized and exported with \code{ggplot2::ggsave()}.
+
+For multiple metrics or features, use \code{integrate_feature()}. It loads
+each OSM feature once and passes the resulting raster to this function.
 }
 \examples{
 \dontrun{

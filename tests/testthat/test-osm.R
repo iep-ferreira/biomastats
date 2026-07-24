@@ -523,6 +523,34 @@ test_that("density_of_feature supports circular windows and export", {
   expect_gt(file.info(output_file)$size, 0)
 })
 
+test_that("density_of_feature returns zero when the feature is outside the mask", {
+  reference <- raster::raster(
+    nrows = 3, ncols = 3,
+    xmn = 0, xmx = 3, ymn = 0, ymx = 3,
+    crs = "+proj=utm +zone=23 +datum=WGS84 +units=m"
+  )
+  reference <- raster::setValues(
+    reference,
+    c(NA, NA, NA, NA, 1, NA, NA, NA, NA)
+  )
+  feature <- raster::setValues(
+    reference,
+    c(0, NA, NA, NA, NA, NA, NA, NA, NA)
+  )
+
+  result <- density_of_feature(
+    reference,
+    key_feature = "waterway",
+    feature_raster = feature,
+    window_size = 3,
+    plot = FALSE
+  )
+
+  expect_equal(result$global, 0)
+  expect_equal(raster::getValues(result$raster)[5], 0)
+  expect_null(result$plot)
+})
+
 test_that("density_of_feature validates the moving window", {
   reference <- raster::raster(
     nrows = 2, ncols = 2,
@@ -537,5 +565,116 @@ test_that("density_of_feature validates the moving window", {
   expect_error(
     density_of_feature(reference, "highway", window_size = 0),
     "odd positive integer"
+  )
+})
+
+test_that("integrate_feature loads each feature once and reuses it", {
+  reference <- raster::raster(
+    nrows = 3, ncols = 3,
+    xmn = 0, xmx = 3, ymn = 0, ymx = 3,
+    crs = "+proj=utm +zone=23 +datum=WGS84 +units=m"
+  )
+  reference <- raster::setValues(reference, rep(1, 9))
+  calls <- new.env(parent = emptyenv())
+  calls$total <- 0L
+  calls$keys <- character()
+
+  mock_load_osm_data <- function(reference_raster, key_feature,
+                                 value_feature = NULL, provider = "osm") {
+    calls$total <- calls$total + 1L
+    calls$keys <- c(calls$keys, key_feature)
+    values <- rep(NA_real_, raster::ncell(reference_raster))
+    values[if (identical(key_feature, "highway")) 5 else 1] <- 0
+    raster::setValues(reference_raster, values)
+  }
+  testthat::local_mocked_bindings(
+    load_osm_data = mock_load_osm_data,
+    .package = "biomastats"
+  )
+
+  result <- integrate_feature(
+    reference,
+    features = list(
+      roads = list(key = "highway", value = "primary"),
+      rivers = list(key = "waterway", value = "river")
+    ),
+    metrics = list(
+      distance = list(),
+      density = list(window_size = 3, window_shape = "circle")
+    ),
+    plot = FALSE
+  )
+
+  expect_s3_class(result, "biomastats_feature_integration")
+  expect_named(result, c("features", "results", "plots"))
+  expect_equal(calls$total, 2L)
+  expect_equal(calls$keys, c("highway", "waterway"))
+  expect_named(result$features, c("roads", "rivers"))
+  expect_named(result$results$roads, c("distance", "density"))
+  expect_s4_class(result$results$roads$distance$raster, "RasterLayer")
+  expect_s4_class(result$results$roads$density$raster, "RasterLayer")
+  expect_equal(result$results$roads$density$global, 1 / 9)
+  expect_null(result$results$roads$distance$plot)
+  expect_null(result$results$roads$density$plot)
+  expect_null(result$plots)
+})
+
+test_that("integrate_feature returns named plots without reloading", {
+  reference <- raster::raster(
+    nrows = 3, ncols = 3,
+    xmn = -48.6, xmx = -48.5, ymn = -23.7, ymx = -23.6,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  reference <- raster::setValues(reference, rep(1, 9))
+  feature <- raster::setValues(
+    reference,
+    c(NA, NA, NA, NA, 0, NA, NA, NA, NA)
+  )
+  calls <- 0L
+  testthat::local_mocked_bindings(
+    load_osm_data = function(...) {
+      calls <<- calls + 1L
+      feature
+    },
+    .package = "biomastats"
+  )
+
+  result <- integrate_feature(
+    reference,
+    features = list(roads = list(key = "highway")),
+    metrics = c("distance_to_feature", "density_of_feature"),
+    plot = TRUE
+  )
+
+  expect_equal(calls, 1L)
+  expect_named(result$plots, c("roads_distance", "roads_density"))
+  expect_s3_class(result$plots$roads_distance, "ggplot")
+  expect_s3_class(result$plots$roads_density, "ggplot")
+})
+
+test_that("integrate_feature validates feature and metric specifications", {
+  reference <- raster::raster(
+    nrows = 2, ncols = 2,
+    crs = "+proj=utm +zone=23 +datum=WGS84 +units=m"
+  )
+  reference <- raster::setValues(reference, rep(1, 4))
+
+  expect_error(integrate_feature(reference, list(), "distance"),
+               "non-empty list")
+  expect_error(
+    integrate_feature(reference, list(roads = list(value = "primary"))),
+    "must define"
+  )
+  expect_error(
+    integrate_feature(reference, list(roads = "highway"), "unknown"),
+    "Unsupported metric"
+  )
+  expect_error(
+    integrate_feature(
+      reference,
+      list(roads = "highway"),
+      list(density = list(window_size = 3, unsupported = TRUE))
+    ),
+    "Unsupported density option"
   )
 })

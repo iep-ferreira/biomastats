@@ -1,9 +1,10 @@
 #' Distance to the nearest OpenStreetMap feature
 #'
-#' Downloads an OpenStreetMap feature within the extent of a reference raster,
-#' rasterizes all matching point, line, and polygon geometries, and calculates
-#' the straight-line distance from each valid reference cell to the nearest
-#' feature cell.
+#' Calculates the straight-line distance from each valid reference cell to the
+#' nearest occupied cell in a rasterized feature. A feature previously loaded
+#' by [load_osm_data()] can be supplied through `feature_raster`, avoiding a
+#' repeated OSM request. If `feature_raster` is `NULL`, the function retains
+#' its convenient standalone behavior and loads the requested OSM feature.
 #'
 #' OSM uses an open key/value tagging system rather than a closed feature list.
 #' Common keys applicable to distance calculations include `highway`,
@@ -22,12 +23,17 @@
 #'
 #' @param reference_raster A `RasterLayer` defining the analysis extent,
 #'   resolution, CRS, and valid-cell mask.
-#' @param key_feature A non-empty OSM key such as `"highway"`, `"waterway"`,
-#'   `"natural"`, or `"amenity"`.
+#' @param key_feature An OSM key such as `"highway"` or `"waterway"`. It is
+#'   required when `feature_raster` is `NULL` and is otherwise used as a plot
+#'   label.
 #' @param value_feature An optional OSM value such as `"primary"`, `"river"`,
 #'   `"water"`, or `"hospital"`. Use `NULL` to match every value for the key;
 #'   a specific value is recommended to avoid very large Overpass queries.
 #' @param provider Data provider. Only `"osm"` is currently supported.
+#' @param feature_raster Optional rasterized feature returned by
+#'   [load_osm_data()]. When supplied, no OSM request is made.
+#' @param plot Logical; if `TRUE`, return an adaptable `ggplot2` map. Use
+#'   `FALSE` to calculate only the raster.
 #'
 #' @return A list with two elements: `raster`, a `RasterLayer` of distances to
 #'   the nearest matching OSM feature, and `plot`, an adaptable `ggplot` map.
@@ -51,8 +57,9 @@
 #'   value_feature = "water"
 #' )
 #' }
-distance_to_feature <- function(reference_raster, key_feature,
-                                value_feature = NULL, provider = "osm") {
+distance_to_feature <- function(reference_raster, key_feature = NULL,
+                                value_feature = NULL, provider = "osm",
+                                feature_raster = NULL, plot = TRUE) {
   if (!inherits(reference_raster, "RasterLayer")) {
     stop("'reference_raster' must be a raster::RasterLayer.", call. = FALSE)
   }
@@ -71,15 +78,35 @@ distance_to_feature <- function(reference_raster, key_feature,
          call. = FALSE)
   }
 
-  raster_distance <- load_osm_data(
-    reference_raster = reference_raster,
-    key_feature = key_feature,
-    value_feature = value_feature,
-    provider = provider
-  )
+  if (!is.logical(plot) || length(plot) != 1L || is.na(plot)) {
+    stop("'plot' must be TRUE or FALSE.", call. = FALSE)
+  }
+
+  if (is.null(feature_raster)) {
+    if (is.null(key_feature)) {
+      stop("'key_feature' is required when 'feature_raster' is NULL.",
+           call. = FALSE)
+    }
+    raster_distance <- load_osm_data(
+      reference_raster = reference_raster,
+      key_feature = key_feature,
+      value_feature = value_feature,
+      provider = provider
+    )
+  } else {
+    raster_distance <- feature_raster
+  }
 
   if (!inherits(raster_distance, "RasterLayer")) {
     stop("The rasterized OSM feature must be a single RasterLayer.",
+         call. = FALSE)
+  }
+  if (!raster::compareRaster(
+    reference_raster, raster_distance,
+    extent = TRUE, rowcol = TRUE, crs = TRUE, res = TRUE,
+    stopiffalse = FALSE
+  )) {
+    stop("'feature_raster' must be aligned with 'reference_raster'.",
          call. = FALSE)
   }
 
@@ -99,11 +126,15 @@ distance_to_feature <- function(reference_raster, key_feature,
     distance_values
   )
 
-  distance_plot <- plot_feature_distance(
-    raster_distance = raster_distance_result,
-    key_feature = key_feature,
-    value_feature = value_feature
-  )
+  distance_plot <- if (isTRUE(plot)) {
+    plot_feature_distance(
+      raster_distance = raster_distance_result,
+      key_feature = if (is.null(key_feature)) "feature" else key_feature,
+      value_feature = value_feature
+    )
+  } else {
+    NULL
+  }
 
   list(
     raster = raster_distance_result,

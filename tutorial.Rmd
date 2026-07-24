@@ -48,7 +48,7 @@ stopifnot(identical(tutorial_install_status, 0L))
 
 .libPaths(c(tutorial_library, .libPaths()))
 suppressPackageStartupMessages(library(biomastats))
-stopifnot(is.function(distance_to_feature))
+stopifnot(is.function(integrate_feature))
 
 bh <- function(level, pt, en) {
   id <- gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(en)))
@@ -367,97 +367,50 @@ land_vis(mapas, year = 2024)
 ```
 
 ```{r echo=FALSE, results='asis'}
-cat(bh(1, "Distância até feições do OpenStreetMap", "Distance to OpenStreetMap features"))
+cat(bh(1, "Integração de feições do OpenStreetMap", "OpenStreetMap feature integration"))
 ```
 
-`r b('A função <code>distance_to_feature</code> pode receber diretamente um raster anual armazenado no objeto retornado por <code>load_rasters</code>. O índice do raster é calculado a partir do primeiro ano de <code>mapas&#36;time_range</code>. Neste painel, calculamos a distância até duas feições da paisagem: vias (<code>highway</code>) e cursos d’água (<code>waterway</code>).', 'The <code>distance_to_feature</code> function can directly receive an annual raster stored in the object returned by <code>load_rasters</code>. The raster index is calculated from the first year in <code>mapas&#36;time_range</code>. This panel compares distances to two landscape features: roads (<code>highway</code>) and waterways (<code>waterway</code>).')`
+`r b('A função <code>integrate_feature</code> recebe um raster anual, uma lista de feições e uma lista de métricas. Cada feição é consultada e rasterizada apenas uma vez; o mesmo raster é então reutilizado pelos cálculos de distância e densidade. Isso reduz chamadas ao servidor Overpass e garante que as métricas usem exatamente a mesma representação espacial da feição.', 'The <code>integrate_feature</code> function receives an annual raster, a feature list, and a metric list. Each feature is queried and rasterized only once; the same raster is then reused for distance and density calculations. This reduces Overpass requests and ensures that all metrics use exactly the same spatial representation of the feature.')`
 
-`r b('Este exemplo requer conexão com a internet e disponibilidade de um servidor Overpass. Para recortes extensos, recomenda-se informar também <code>value_feature</code>, como <code>"primary"</code> ou <code>"secondary"</code>, reduzindo o volume da consulta.', 'This example requires an internet connection and an available Overpass server. For large study areas, also provide <code>value_feature</code>, such as <code>"primary"</code> or <code>"secondary"</code>, to reduce the query size.')`
+`r b('No exemplo, as feições são vias principais (<code>highway = primary</code>) e rios (<code>waterway = river</code>). Para ambas são calculadas distância e densidade local, esta última com janela circular de 9 por 9 células. O argumento <code>plot</code> controla se os mapas em padrão <code>ggplot2</code> serão produzidos.', 'In this example, the features are primary roads (<code>highway = primary</code>) and rivers (<code>waterway = river</code>). Distance and local density are calculated for both, with density using a 9 by 9 circular window. The <code>plot</code> argument controls whether standard <code>ggplot2</code> maps are produced.')`
 
-```{r configure-overpass, include=FALSE}
-tutorial_overpass_url <- osmdata::get_overpass_url()
-osmdata::set_overpass_url(
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
-)
-```
-
-```{r distance-features-panel, echo=FALSE, fig.width=12, fig.height=5, out.width="100%", message=FALSE, warning=FALSE}
+```{r integrate-feature-usage, eval=FALSE}
 ano_distancia <- 2024
 indice_ano <- ano_distancia - mapas$time_range[1] + 1
 raster_anual <- mapas$raster[[indice_ano]]
 
-distancia_vias <- distance_to_feature(
+integrated_features <- integrate_feature(
   reference_raster = raster_anual,
-  key_feature = "highway",
-  value_feature = "primary"
-)
-
-mapa_distancia_vias <- distancia_vias$plot +
-  ggplot2::labs(
-    title = paste("Distance to roads in", ano_distancia)
-  )
-
-distancia_agua <- distance_to_feature(
-  reference_raster = raster_anual,
-  key_feature = "waterway",
-  value_feature = "river"
-)
-
-mapa_distancia_agua <- distancia_agua$plot +
-  ggplot2::labs(
-    title = paste("Distance to waterways in", ano_distancia)
-  )
-
-patchwork::wrap_plots(
-  mapa_distancia_vias,
-  mapa_distancia_agua,
-  ncol = 2
+  features = list(
+    roads = list(key = "highway", value = "primary"),
+    rivers = list(key = "waterway", value = "river")
+  ),
+  metrics = list(
+    distance = list(),
+    density = list(window_size = 9, window_shape = "circle")
+  ),
+  plot = TRUE
 )
 ```
 
-`r b('O elemento <code>plot</code> retornado pela função segue o padrão <code>ggplot2</code>: títulos, escalas, temas e camadas podem ser adaptados normalmente. O mapa também pode ser exportado diretamente com <code>ggsave</code>.', 'The <code>plot</code> element returned by the function follows the <code>ggplot2</code> standard: titles, scales, themes, and layers can be customized normally. The map can also be exported directly with <code>ggsave</code>.')`
+`r b('Este exemplo requer conexão com a internet e disponibilidade de um servidor Overpass. Informar valores específicos para cada chave reduz o volume das consultas.', 'This example requires an internet connection and an available Overpass server. Providing specific values for each key reduces query volume.')`
+
+```{r integrated-features-panel, echo=FALSE, out.width="100%"}
+knitr::include_graphics(
+  "inst/tutorial/integrated-features-panel.png"
+)
+```
+
+`r b('O painel foi gerado com a versão atual do pacote e preservado no tutorial para que a documentação possa ser recompilada mesmo quando os servidores públicos do Overpass estiverem indisponíveis. Os rasters calculados ficam em <code>results</code>, os rasters OSM carregados uma única vez ficam em <code>features</code>, o valor global da densidade fica em <code>results&#36;roads&#36;density&#36;global</code> e os mapas exportáveis ficam em <code>plots</code>.', 'The panel was generated with the current package version and preserved in the tutorial so the documentation can be rebuilt even when public Overpass servers are unavailable. Calculated rasters are stored in <code>results</code>, OSM rasters loaded once are stored in <code>features</code>, global density is stored in <code>results&#36;roads&#36;density&#36;global</code>, and exportable maps are stored in <code>plots</code>.')`
 
 ```{r eval=FALSE, echo=FALSE}
 ggplot2::ggsave(
-  filename = "distance-to-roads-2024.png",
-  plot = mapa_distancia_vias,
+  filename = "primary-road-density-2024.png",
+  plot = integrated_features$plots$roads_density,
   width = 8,
   height = 6,
   dpi = 300
 )
-```
-
-```{r restore-overpass, include=FALSE}
-osmdata::set_overpass_url(tutorial_overpass_url)
-```
-
-```{r echo=FALSE, results='asis'}
-cat(bh(1, "Densidade local de feições", "Local feature density"))
-```
-
-`r b('Além da distância, <code>density_of_feature</code> calcula a proporção de células ocupadas por uma feição dentro de uma janela móvel ajustável. O objeto também retorna <code>global</code>, a cobertura total da feição no recorte.', 'In addition to distance, <code>density_of_feature</code> calculates the proportion of cells occupied by a feature within an adjustable moving window. The returned object also includes <code>global</code>, the total feature coverage in the study area.')`
-
-```{r density-feature-map, echo=FALSE, fig.width=8, fig.height=5, out.width="100%", message=FALSE, warning=FALSE}
-tutorial_overpass_url_density <- osmdata::get_overpass_url()
-osmdata::set_overpass_url(
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
-)
-
-densidade_vias <- density_of_feature(
-  reference_raster = raster_anual,
-  key_feature = "highway",
-  value_feature = "primary",
-  window_size = 9,
-  window_shape = "circle"
-)
-
-densidade_vias$plot +
-  ggplot2::labs(title = paste("Road density in", ano_distancia))
-```
-
-```{r density-feature-global, echo=FALSE}
-message("Global road coverage: ", round(densidade_vias$global, 4))
-osmdata::set_overpass_url(tutorial_overpass_url_density)
 ```
 
 ```{r echo=FALSE, results='asis'}

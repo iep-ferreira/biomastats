@@ -6,17 +6,20 @@
 \usage{
 distance_to_feature(
   reference_raster,
-  key_feature,
+  key_feature = NULL,
   value_feature = NULL,
-  provider = "osm"
+  provider = "osm",
+  feature_raster = NULL,
+  plot = TRUE
 )
 }
 \arguments{
 \item{reference_raster}{A \code{RasterLayer} defining the analysis extent,
 resolution, CRS, and valid-cell mask.}
 
-\item{key_feature}{A non-empty OSM key such as \code{"highway"},
-\code{"waterway"}, \code{"natural"}, or \code{"amenity"}.}
+\item{key_feature}{An OSM key such as \code{"highway"} or
+\code{"waterway"}. It is required when \code{feature_raster} is \code{NULL}
+and is otherwise used as a plot label.}
 
 \item{value_feature}{An optional OSM value such as \code{"primary"},
 \code{"river"}, \code{"water"}, or \code{"hospital"}. Use \code{NULL} to
@@ -24,6 +27,12 @@ match every value for the key; a specific value is recommended to avoid very
 large Overpass queries.}
 
 \item{provider}{Data provider. Only \code{"osm"} is currently supported.}
+
+\item{feature_raster}{Optional rasterized feature returned by
+\code{load_osm_data()}. When supplied, no OSM request is made.}
+
+\item{plot}{Logical; if \code{TRUE}, return an adaptable \code{ggplot2} map.
+Use \code{FALSE} to calculate only the raster.}
 }
 \value{
 A list with two elements: \code{raster}, a \code{RasterLayer} of distances to
@@ -31,10 +40,10 @@ the nearest matching OSM feature, and \code{plot}, an adaptable \code{ggplot}
 map.
 }
 \description{
-Downloads an OpenStreetMap feature within the extent of a reference raster,
-rasterizes all matching point, line, and polygon geometries, and calculates
-the straight-line distance from each valid reference cell to the nearest
-feature cell.
+Calculates the straight-line distance from each valid reference cell to the
+nearest occupied feature cell. A raster previously loaded by
+\code{load_osm_data()} can be reused through \code{feature_raster}. If it is
+\code{NULL}, the function loads the requested OSM feature for standalone use.
 }
 \details{
 OSM uses an open key/value tagging system rather than a closed feature list.
@@ -46,6 +55,9 @@ predominantly linear features; \code{landuse}, \code{leisure},
 mixed geometries. Use \code{osmdata::available_features()} to retrieve current
 keys and \code{osmdata::available_tags()} to inspect values for a selected
 key. These discovery functions require network access.
+
+For multiple metrics or features, use \code{integrate_feature()}. It loads
+each OSM feature once and passes the resulting raster to this function.
 
 Distances are returned in metres for longitude/latitude rasters and in the
 map units of projected rasters. Cells that are \code{NA} in

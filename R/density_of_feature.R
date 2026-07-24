@@ -1,10 +1,15 @@
 #' Local density of an OpenStreetMap feature
 #'
-#' Downloads an OpenStreetMap feature, rasterizes it on the reference grid,
-#' and calculates the proportion of occupied cells within a moving window.
+#' Calculates the proportion of feature cells within a moving window. A
+#' feature previously loaded by [load_osm_data()] can be supplied through
+#' `feature_raster`, avoiding a repeated OSM request. If `feature_raster` is
+#' `NULL`, the function loads the requested OSM feature for standalone use.
 #' The same window is used at every valid cell, while the denominator is
 #' adjusted near the border and around `NA` cells to avoid treating nodata as
 #' part of the landscape.
+#' If the loaded feature has no occupied cell inside the valid study-area
+#' mask, local density and global density are returned as zero rather than as
+#' an error.
 #'
 #' This is a cell-coverage density. It is especially useful for comparing the
 #' local concentration of roads, waterways, built-up areas, or other mapped
@@ -15,14 +20,19 @@
 #'
 #' @param reference_raster A `RasterLayer` defining the analysis extent,
 #'   resolution, CRS, and valid-cell mask.
-#' @param key_feature A non-empty OSM key such as `"highway"`, `"waterway"`,
-#'   `"natural"`, or `"landuse"`.
+#' @param key_feature An OSM key such as `"highway"` or `"waterway"`. It is
+#'   required when `feature_raster` is `NULL` and is otherwise used as a plot
+#'   label.
 #' @param value_feature An optional OSM value. Use `NULL` to match every value
 #'   for the key; a specific value is recommended for large study areas.
 #' @param provider Data provider. Only `"osm"` is currently supported.
 #' @param window_size Odd positive integer defining the side of the moving
 #'   window in raster cells. For example, `5` means a 5 by 5 window.
 #' @param window_shape Shape of the moving window: `"square"` or `"circle"`.
+#' @param feature_raster Optional rasterized feature returned by
+#'   [load_osm_data()]. When supplied, no OSM request is made.
+#' @param plot Logical; if `TRUE`, return an adaptable `ggplot2` map. Use
+#'   `FALSE` to calculate only the raster and global value.
 #'
 #' @return A list with `raster`, a `RasterLayer` of local feature density,
 #'   `plot`, an adaptable `ggplot2` map with English labels, and `global`, the
@@ -45,10 +55,11 @@
 #' ggplot2::ggsave("road-density.png", roads_density$plot,
 #'                 width = 8, height = 6, dpi = 300)
 #' }
-density_of_feature <- function(reference_raster, key_feature,
+density_of_feature <- function(reference_raster, key_feature = NULL,
                                 value_feature = NULL, provider = "osm",
                                 window_size = 5L,
-                                window_shape = c("square", "circle")) {
+                                window_shape = c("square", "circle"),
+                                feature_raster = NULL, plot = TRUE) {
   if (!inherits(reference_raster, "RasterLayer")) {
     stop("'reference_raster' must be a raster::RasterLayer.", call. = FALSE)
   }
@@ -74,24 +85,37 @@ density_of_feature <- function(reference_raster, key_feature,
   }
   window_size <- as.integer(window_size)
   window_shape <- match.arg(window_shape)
+  if (!is.logical(plot) || length(plot) != 1L || is.na(plot)) {
+    stop("'plot' must be TRUE or FALSE.", call. = FALSE)
+  }
 
-  feature_raster <- load_osm_data(
-    reference_raster = reference_raster,
-    key_feature = key_feature,
-    value_feature = value_feature,
-    provider = provider
-  )
+  if (is.null(feature_raster)) {
+    if (is.null(key_feature)) {
+      stop("'key_feature' is required when 'feature_raster' is NULL.",
+           call. = FALSE)
+    }
+    feature_raster <- load_osm_data(
+      reference_raster = reference_raster,
+      key_feature = key_feature,
+      value_feature = value_feature,
+      provider = provider
+    )
+  }
   if (!inherits(feature_raster, "RasterLayer")) {
     stop("The rasterized OSM feature must be a single RasterLayer.",
+         call. = FALSE)
+  }
+  if (!raster::compareRaster(
+    reference_raster, feature_raster,
+    extent = TRUE, rowcol = TRUE, crs = TRUE, res = TRUE,
+    stopiffalse = FALSE
+  )) {
+    stop("'feature_raster' must be aligned with 'reference_raster'.",
          call. = FALSE)
   }
 
   feature_values <- raster::getValues(feature_raster)
   occupied <- !is.na(feature_values) & valid_reference
-  if (!any(occupied)) {
-    stop("The rasterized OSM feature contains no occupied cells.",
-         call. = FALSE)
-  }
 
   # Use zeros for valid non-feature cells and NA for the study-area mask.
   feature_binary <- raster::setValues(
@@ -130,13 +154,17 @@ density_of_feature <- function(reference_raster, key_feature,
   density_raster <- raster::setValues(reference_raster, density_values)
 
   global_density <- sum(occupied) / sum(valid_reference)
-  density_plot <- plot_feature_density(
-    density_raster = density_raster,
-    key_feature = key_feature,
-    value_feature = value_feature,
-    window_size = window_size,
-    window_shape = window_shape
-  )
+  density_plot <- if (isTRUE(plot)) {
+    plot_feature_density(
+      density_raster = density_raster,
+      key_feature = if (is.null(key_feature)) "feature" else key_feature,
+      value_feature = value_feature,
+      window_size = window_size,
+      window_shape = window_shape
+    )
+  } else {
+    NULL
+  }
 
   list(
     raster = density_raster,

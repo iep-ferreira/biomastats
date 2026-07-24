@@ -4,6 +4,7 @@ test_that("biomastats is installed and loadable", {
   expect_true(is.function(biomastats::get_area))
   expect_true(is.function(biomastats::land_vis))
   expect_true(is.function(biomastats::density_of_feature))
+  expect_true(is.function(biomastats::integrate_feature))
 })
 
 test_that("package examples are installed", {
