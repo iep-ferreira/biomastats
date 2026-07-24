@@ -6,32 +6,68 @@
 # ---- FLUXO 1: testes do código em desenvolvimento --------------------------
 
 # Execute somente este bloco para rodar a suíte testthat no código local.
-library(biomastats)
+if ("biomastats" %in% loadedNamespaces()) {
+  stop(
+    paste(
+      "O namespace biomastats já está carregado nesta sessão.",
+      "Reinicie o R antes de executar o Fluxo 1."
+    ),
+    call. = FALSE
+  )
+}
 library(devtools)
+devtools::load_all(".")
+stopifnot("osm_options" %in% names(formals(integrate_feature)))
 devtools::test()
 
 
 # ---- FLUXO 2: instalação limpa e uso como usuário --------------------------
 
-# 1. Identificar a branch e o último commit
+# 1. Identificar a branch, o último commit e a árvore de trabalho
 branch <- system2("git", c("rev-parse", "--abbrev-ref", "HEAD"), stdout = TRUE)
 commit <- system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE)
-message("Branch: ", branch, " | commit: ", commit)
+alteracoes_locais <- system2("git", c("status", "--porcelain"), stdout = TRUE)
+message(
+  "Branch: ", branch,
+  " | commit: ", commit,
+  " | alterações locais: ", length(alteracoes_locais)
+)
 
 
-# 2. Preparar uma biblioteca e uma cópia temporárias do pacote
-biblioteca <- file.path(tempdir(), "biomastats-local-lib") # cria path temp
-origem <- file.path(tempdir(), paste0("biomastats-head-", commit))
-arquivo <- file.path(tempdir(), paste0("biomastats-", commit, ".zip"))
-unlink(c(biblioteca, origem, arquivo), recursive = TRUE, force = TRUE)
+# 2. Descarregar qualquer instalação usada anteriormente nesta sessão.
+# Isso deve ocorrer antes de remover bibliotecas temporárias, pois o namespace
+# pode estar usando os arquivos .rdb/.rdx da instalação anterior.
+if ("package:biomastats" %in% search()) {
+  detach_resultado <- tryCatch(
+    {
+      detach("package:biomastats", unload = TRUE, character.only = TRUE)
+      NULL
+    },
+    error = identity
+  )
+  if (inherits(detach_resultado, "error")) {
+    stop(
+      "Não foi possível descarregar biomastats. Reinicie o R e execute este fluxo novamente.",
+      call. = FALSE
+    )
+  }
+}
+if ("biomastats" %in% loadedNamespaces()) {
+  unload_resultado <- tryCatch(unloadNamespace("biomastats"), error = identity)
+  if (inherits(unload_resultado, "error")) {
+    stop(
+      "O namespace biomastats está corrompido. Reinicie o R antes de continuar.",
+      call. = FALSE
+    )
+  }
+}
+invisible(gc())
+
+# 3. Preparar uma biblioteca exclusiva para esta execução e usar nela a
+# árvore de trabalho atual. tempfile() evita reutilizar uma base lazy-load.
+biblioteca <- tempfile("biomastats-local-lib-")
+origem <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
 dir.create(biblioteca, recursive = TRUE, showWarnings = FALSE)
-system2("git", c("archive", "--format=zip", "-o", arquivo, "HEAD"))
-dir.create(origem, recursive = TRUE, showWarnings = FALSE)
-utils::unzip(arquivo, exdir = origem)
-
-# 3. Usar a biblioteca temporária nesta sessão
-detach("package:biomastats", unload = TRUE, character.only = TRUE)
-unloadNamespace("biomastats")
 
 bibliotecas_anteriores <- .libPaths()
 .libPaths(c(biblioteca, bibliotecas_anteriores))
@@ -45,7 +81,15 @@ stopifnot(identical(status_instalacao, 0L))
 
 
 # 5. Carregar o pacote instalado
-library(biomastats)
+library(biomastats, lib.loc = biblioteca)
+stopifnot(packageVersion("biomastats") == package_version("2.0.0"))
+stopifnot(packageVersion("osmdata") >= package_version("0.4.0"))
+if (!"osm_options" %in% names(formals(biomastats::integrate_feature))) {
+  stop(
+    "A sessão não carregou a árvore de trabalho atual: 'osm_options' ausente.",
+    call. = FALSE
+  )
+}
 packageVersion("biomastats")
 find.package("biomastats")
 
@@ -84,6 +128,15 @@ mapa_uso_final
 
 # 10. Integrar feições OSM e calcular métricas usando um raster anual
 # Cada feição é consultada uma vez e reutilizada por distância e densidade.
+if (!"osm_options" %in% names(formals(biomastats::integrate_feature))) {
+  stop(
+    paste(
+      "Versão antiga do biomastats carregada.",
+      "Execute primeiro o FLUXO 2 deste arquivo."
+    ),
+    call. = FALSE
+  )
+}
 indice_ano <- ano_visualizacao - primeiro_ano + 1
 raster_anual <- mapas[["raster"]][[indice_ano]]
 
@@ -95,6 +148,11 @@ feicoes_integradas <- biomastats::integrate_feature(
   metrics = list(
     distance = list(),
     density = list(window_size = 9, window_shape = "circle")
+  ),
+  osm_options = list(
+    timeout = 60,
+    use_cache = TRUE,
+    cache_ttl_days = 7
   ),
   plot = TRUE
 )

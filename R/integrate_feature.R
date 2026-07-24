@@ -6,7 +6,8 @@
 #' road or waterway feature.
 #'
 #' `features` is a named list. Each element must contain `key` and may contain
-#' `value` and `provider`. `metrics` can be a character vector or a named list
+#' `value`, `provider`, `buffer_distance`, and `osm_options`. `metrics` can be a
+#' character vector or a named list
 #' of metric options. Available metrics are `"distance"` and `"density"`;
 #' function-name aliases `"distance_to_feature"` and `"density_of_feature"`
 #' are also accepted. Density options include `window_size` and
@@ -24,6 +25,10 @@
 #' @param buffer_distance Default buffer around each valid reference extent,
 #'   in metres. Defaults to `2000` (2 km). A feature specification may define
 #'   its own `buffer_distance`.
+#' @param osm_options Default named list of connection options passed to
+#'   [load_osm_data()]. Supported entries are `timeout`, `overpass_urls`,
+#'   `use_cache`, and `cache_ttl_days`. Individual feature specifications may
+#'   override these values with their own `osm_options` list.
 #' @param plot Logical; if `TRUE`, create and return a plot for every
 #'   feature/metric combination. If `FALSE`, metric plots are `NULL` and the
 #'   top-level `plots` element is also `NULL`.
@@ -56,6 +61,7 @@
 integrate_feature <- function(reference_raster, features,
                               metrics = c("distance", "density"),
                               provider = "osm", buffer_distance = 2000,
+                              osm_options = list(),
                               plot = TRUE) {
   if (!inherits(reference_raster, "RasterLayer")) {
     stop("'reference_raster' must be a raster::RasterLayer.", call. = FALSE)
@@ -71,6 +77,7 @@ integrate_feature <- function(reference_raster, features,
     stop("'provider' must be one non-empty character string.", call. = FALSE)
   }
   validate_osm_buffer_distance(buffer_distance)
+  osm_options <- normalize_osm_options(osm_options)
 
   feature_names <- names(features)
   if (is.null(feature_names)) {
@@ -88,7 +95,8 @@ integrate_feature <- function(reference_raster, features,
 
   feature_specs <- lapply(feature_names, function(feature_name) {
     normalize_feature_spec(
-      features[[feature_name]], feature_name, provider, buffer_distance
+      features[[feature_name]], feature_name, provider, buffer_distance,
+      osm_options
     )
   })
   names(feature_specs) <- feature_names
@@ -103,12 +111,18 @@ integrate_feature <- function(reference_raster, features,
   for (feature_name in feature_names) {
     specification <- feature_specs[[feature_name]]
     loaded_feature <- tryCatch(
-      load_osm_data(
-        reference_raster = reference_raster,
-        key_feature = specification$key,
-        value_feature = specification$value,
-        provider = specification$provider,
-        buffer_distance = specification$buffer_distance
+      do.call(
+        load_osm_data,
+        c(
+          list(
+            reference_raster = reference_raster,
+            key_feature = specification$key,
+            value_feature = specification$value,
+            provider = specification$provider,
+            buffer_distance = specification$buffer_distance
+          ),
+          specification$osm_options
+        )
       ),
       error = function(error) {
         stop(
@@ -176,7 +190,8 @@ integrate_feature <- function(reference_raster, features,
 }
 
 normalize_feature_spec <- function(specification, feature_name,
-                                   default_provider, default_buffer_distance) {
+                                   default_provider, default_buffer_distance,
+                                   default_osm_options) {
   if (is.character(specification) && length(specification) == 1L) {
     specification <- list(key = specification)
   }
@@ -194,6 +209,15 @@ normalize_feature_spec <- function(specification, feature_name,
   feature_buffer_distance <- specification$buffer_distance
   if (is.null(feature_buffer_distance)) {
     feature_buffer_distance <- default_buffer_distance
+  }
+  feature_osm_options <- specification$osm_options
+  if (is.null(feature_osm_options)) {
+    feature_osm_options <- default_osm_options
+  } else {
+    feature_osm_options <- utils::modifyList(
+      default_osm_options,
+      normalize_osm_options(feature_osm_options)
+    )
   }
 
   if (!is.character(key) || length(key) != 1L || is.na(key) || !nzchar(key)) {
@@ -217,7 +241,8 @@ normalize_feature_spec <- function(specification, feature_name,
     key = key,
     value = value,
     provider = feature_provider,
-    buffer_distance = feature_buffer_distance
+    buffer_distance = feature_buffer_distance,
+    osm_options = feature_osm_options
   )
 }
 

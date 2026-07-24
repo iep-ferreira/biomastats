@@ -10,6 +10,7 @@ density_of_feature(
   value_feature = NULL,
   provider = "osm",
   buffer_distance = 2000,
+  osm_options = list(),
   window_size = 5L,
   window_shape = c("square", "circle"),
   feature_raster = NULL,
@@ -32,6 +33,11 @@ value for the key; a specific value is recommended for large study areas.}
 \item{buffer_distance}{Non-negative buffer around the valid reference extent,
 in metres, used when the feature must be loaded from OSM. The default is
 2000 (2 km).}
+
+\item{osm_options}{Named list of connection options passed to
+\code{load_osm_data()}, such as \code{timeout}, \code{overpass_urls},
+\code{use_cache}, and \code{cache_ttl_days}. Ignored when
+\code{feature_raster} is supplied.}
 
 \item{window_size}{Odd positive integer defining the side of the moving
 window in raster cells. For example, \code{5} means a 5 by 5 window.}

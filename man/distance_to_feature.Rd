@@ -10,6 +10,7 @@ distance_to_feature(
   value_feature = NULL,
   provider = "osm",
   buffer_distance = 2000,
+  osm_options = list(),
   feature_raster = NULL,
   plot = TRUE
 )
@@ -32,6 +33,11 @@ large Overpass queries.}
 \item{buffer_distance}{Non-negative buffer around the valid reference extent,
 in metres, used when the feature must be loaded from OSM. The default is
 2000 (2 km).}
+
+\item{osm_options}{Named list of connection options passed to
+\code{load_osm_data()}, such as \code{timeout}, \code{overpass_urls},
+\code{use_cache}, and \code{cache_ttl_days}. Ignored when
+\code{feature_raster} is supplied.}
 
 \item{feature_raster}{Optional rasterized feature returned by
 \code{load_osm_data()}. When supplied, no OSM request is made.}

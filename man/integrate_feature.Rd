@@ -10,6 +10,7 @@ integrate_feature(
   metrics = c("distance", "density"),
   provider = "osm",
   buffer_distance = 2000,
+  osm_options = list(),
   plot = TRUE
 )
 }
@@ -31,6 +32,11 @@ own provider. Only \code{"osm"} is currently supported.}
 extent, in metres, used for OSM queries. The default is 2000 (2 km). A
 feature specification can override it with its own \code{buffer_distance}.}
 
+\item{osm_options}{Default named list of connection options passed to
+\code{load_osm_data()}. Supported entries are \code{timeout},
+\code{overpass_urls}, \code{use_cache}, and \code{cache_ttl_days}. Individual
+feature specifications may override them with their own \code{osm_options}.}
+
 \item{plot}{Logical; if \code{TRUE}, create and return a plot for every
 feature/metric combination. If \code{FALSE}, metric plots and the top-level
 \code{plots} element are \code{NULL}.}
@@ -48,7 +54,8 @@ queries when distance and density are calculated for the same feature.
 }
 \details{
 \code{features} is a named list. Each element must contain \code{key} and may
-contain \code{value} and \code{provider}. \code{metrics} can be a character
+contain \code{value}, \code{provider}, \code{buffer_distance}, and
+\code{osm_options}. \code{metrics} can be a character
 vector or a named list of metric options. Available metrics are
 \code{"distance"} and \code{"density"}; the function-name aliases
 \code{"distance_to_feature"} and \code{"density_of_feature"} are also

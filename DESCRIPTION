@@ -34,7 +34,7 @@ Imports:
     graphics,
     httr,
     magrittr,
-    osmdata,
+    osmdata (>= 0.4.0),
     raster,
     readxl,
     rvest,

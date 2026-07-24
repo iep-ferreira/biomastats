@@ -3,3 +3,10 @@
 Sys.setenv(
   R_USER_CACHE_DIR = file.path(tempdir(), "biomastats-test-user-cache")
 )
+
+# Network-facing OSM tests opt into cache explicitly when exercising it.
+options(
+  biomastats.osm_use_cache = FALSE,
+  biomastats.osm_cache_dir = file.path(tempdir(), "biomastats-test-osm-cache"),
+  biomastats.check_updates = FALSE
+)

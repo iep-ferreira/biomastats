@@ -32,60 +32,63 @@ rasterize_osm <- function(osm_data, reference_raster) {
          call. = FALSE)
   }
 
+  reference_extent <- raster::extent(reference_raster)
+  target_bbox <- sf::st_bbox(c(
+    xmin = reference_extent@xmin,
+    ymin = reference_extent@ymin,
+    xmax = reference_extent@xmax,
+    ymax = reference_extent@ymax
+  ), crs = sf::st_crs(target_crs))
+  target_polygon <- sf::st_as_sfc(target_bbox)
+
   prepare_geometry <- function(features) {
+    if (!inherits(features, "sf")) {
+      stop("OSM geometry collections must be sf objects.", call. = FALSE)
+    }
     if (is.na(sf::st_crs(features))) {
       stop("OSM geometries must have a CRS before rasterization.",
            call. = FALSE)
     }
-    sf::st_transform(features, crs = target_crs)
+    transformed <- sf::st_transform(features, crs = target_crs)
+    intersects <- sf::st_intersects(
+      transformed, target_polygon, sparse = FALSE
+    )[, 1]
+    if (!any(intersects)) return(NULL)
+    transformed[intersects, , drop = FALSE]
+  }
+
+  rasterize_geometry <- function(features) {
+    prepared <- prepare_geometry(features)
+    if (is.null(prepared)) return(NULL)
+    raster::rasterize(prepared, reference_raster, field = 1)
   }
 
   # Rasterize each geometry collection only when it has features.
   raster_points <- NULL
   if (!is.null(osm_data$osm_points) && nrow(osm_data$osm_points) > 0) {
-    raster_points <- raster::rasterize(
-      prepare_geometry(osm_data$osm_points),
-      reference_raster,
-      field = 1
-    )
+    raster_points <- rasterize_geometry(osm_data$osm_points)
   }
 
   raster_lines <- NULL
   if (!is.null(osm_data$osm_lines) && nrow(osm_data$osm_lines) > 0) {
-    raster_lines <- raster::rasterize(
-      prepare_geometry(osm_data$osm_lines),
-      reference_raster,
-      field = 1
-    )
+    raster_lines <- rasterize_geometry(osm_data$osm_lines)
   }
 
   raster_multilines <- NULL
   if (!is.null(osm_data$osm_multilines) &&
       nrow(osm_data$osm_multilines) > 0) {
-    raster_multilines <- raster::rasterize(
-      prepare_geometry(osm_data$osm_multilines),
-      reference_raster,
-      field = 1
-    )
+    raster_multilines <- rasterize_geometry(osm_data$osm_multilines)
   }
 
   raster_polygons <- NULL
   if (!is.null(osm_data$osm_polygons) && nrow(osm_data$osm_polygons) > 0) {
-    raster_polygons <- raster::rasterize(
-      prepare_geometry(osm_data$osm_polygons),
-      reference_raster,
-      field = 1
-    )
+    raster_polygons <- rasterize_geometry(osm_data$osm_polygons)
   }
 
   raster_multipolygons <- NULL
   if (!is.null(osm_data$osm_multipolygons) &&
       nrow(osm_data$osm_multipolygons) > 0) {
-    raster_multipolygons <- raster::rasterize(
-      prepare_geometry(osm_data$osm_multipolygons),
-      reference_raster,
-      field = 1
-    )
+    raster_multipolygons <- rasterize_geometry(osm_data$osm_multipolygons)
   }
 
   # Combine rasters in the documented priority order.

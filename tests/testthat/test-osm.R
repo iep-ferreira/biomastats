@@ -7,18 +7,12 @@ test_that("load_osm_data queries a key without a value", {
   reference <- raster::setValues(reference, c(1, NA, 2, 3))
   calls <- new.env(parent = emptyenv())
 
-  mock_opq <- function(bbox, ...) {
+  mock_fetch <- function(bbox, key_feature, value_feature, timeout, endpoint) {
     calls$bbox <- bbox
-    calls$opq_args <- list(...)
-    list(type = "query")
-  }
-  mock_add_osm_feature <- function(query, key, value = NULL) {
-    calls$key <- key
-    calls$value <- value
-    query
-  }
-  mock_osmdata_sf <- function(query) {
-    calls$osm_query <- query
+    calls$key <- key_feature
+    calls$value <- value_feature
+    calls$timeout <- timeout
+    calls$endpoint <- endpoint
     list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
   }
   mock_rasterize_osm <- function(osm_data, reference_raster) {
@@ -27,9 +21,7 @@ test_that("load_osm_data queries a key without a value", {
   }
 
   testthat::local_mocked_bindings(
-    opq = mock_opq,
-    add_osm_feature = mock_add_osm_feature,
-    osmdata_sf = mock_osmdata_sf,
+    fetch_osm_feature = mock_fetch,
     rasterize_osm = mock_rasterize_osm,
     .package = "biomastats"
   )
@@ -45,8 +37,8 @@ test_that("load_osm_data queries a key without a value", {
   expect_true(calls$bbox[["xmax"]] > 2)
   expect_true(calls$bbox[["ymax"]] > 2)
   expect_equal(mean(calls$bbox[c("xmin", "xmax")]), 1, tolerance = 0.01)
-  expect_equal(calls$opq_args$timeout, 60)
-  expect_equal(calls$opq_args$out, "body")
+  expect_equal(calls$timeout, 60)
+  expect_true(grepl("^https://", calls$endpoint))
   expect_equal(calls$reference_values, c(0, NA, 0, 0))
   expect_equal(raster::getValues(result), c(0, NA, 0, NA))
 })
@@ -59,21 +51,15 @@ test_that("load_osm_data passes a feature value to OSM", {
   reference <- raster::setValues(reference, 1)
   calls <- new.env(parent = emptyenv())
 
-  mock_opq <- function(bbox, ...) list(type = "query")
-  mock_add_osm_feature <- function(query, key, value = NULL) {
-    calls$key <- key
-    calls$value <- value
-    query
+  mock_fetch <- function(bbox, key_feature, value_feature, timeout, endpoint) {
+    calls$key <- key_feature
+    calls$value <- value_feature
+    list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
   }
-  mock_osmdata_sf <- function(query) list(
-    osm_points = NULL, osm_lines = NULL, osm_polygons = NULL
-  )
   mock_rasterize_osm <- function(osm_data, reference_raster) reference_raster
 
   testthat::local_mocked_bindings(
-    opq = mock_opq,
-    add_osm_feature = mock_add_osm_feature,
-    osmdata_sf = mock_osmdata_sf,
+    fetch_osm_feature = mock_fetch,
     rasterize_osm = mock_rasterize_osm,
     .package = "biomastats"
   )
@@ -100,14 +86,10 @@ test_that("load_osm_data uses an adjustable metric buffer in metres", {
   calls$boxes <- list()
 
   testthat::local_mocked_bindings(
-    opq = function(bbox, ...) {
+    fetch_osm_feature = function(bbox, ...) {
       calls$boxes[[length(calls$boxes) + 1L]] <- bbox
-      list(type = "query")
+      list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
     },
-    add_osm_feature = function(query, key, value = NULL) query,
-    osmdata_sf = function(query) list(
-      osm_points = NULL, osm_lines = NULL, osm_polygons = NULL
-    ),
     rasterize_osm = function(osm_data, reference_raster) reference_raster,
     .package = "biomastats"
   )
@@ -122,7 +104,124 @@ test_that("load_osm_data uses an adjustable metric buffer in metres", {
                tolerance = 0.005)
 })
 
-test_that("load_osm_data falls back to OSM XML on metadata parser errors", {
+test_that("load_osm_data reuses a fresh persistent cache entry", {
+  reference <- raster::raster(
+    nrows = 1, ncols = 1,
+    xmn = -48.55, xmx = -48.54, ymn = -23.61, ymx = -23.60,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  reference <- raster::setValues(reference, 1)
+  cache_dir <- tempfile("biomastats-osm-cache-")
+  old_options <- options(biomastats.osm_cache_dir = cache_dir)
+  on.exit(options(old_options), add = TRUE)
+  calls <- 0L
+
+  testthat::local_mocked_bindings(
+    fetch_osm_feature = function(...) {
+      calls <<- calls + 1L
+      list(osm_points = NULL, osm_lines = "cached", osm_polygons = NULL)
+    },
+    rasterize_osm = function(osm_data, reference_raster) {
+      expect_identical(osm_data$osm_lines, "cached")
+      raster::setValues(reference_raster, 1)
+    },
+    .package = "biomastats"
+  )
+
+  load_osm_data(reference, "highway", use_cache = TRUE)
+  load_osm_data(reference, "highway", use_cache = TRUE)
+
+  expect_equal(calls, 1L)
+  expect_length(list.files(cache_dir, pattern = "[.]rds$"), 1L)
+})
+
+test_that("load_osm_data fails over between Overpass endpoints", {
+  reference <- raster::raster(
+    nrows = 1, ncols = 1,
+    xmn = -48.55, xmx = -48.54, ymn = -23.61, ymx = -23.60,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  reference <- raster::setValues(reference, 1)
+  attempted <- character()
+
+  testthat::local_mocked_bindings(
+    fetch_osm_feature = function(..., endpoint) {
+      attempted <<- c(attempted, endpoint)
+      if (length(attempted) == 1L) stop("endpoint unavailable")
+      list(osm_points = "available", osm_lines = NULL, osm_polygons = NULL)
+    },
+    rasterize_osm = function(osm_data, reference_raster) {
+      raster::setValues(reference_raster, 1)
+    },
+    .package = "biomastats"
+  )
+
+  result <- load_osm_data(
+    reference,
+    "highway",
+    overpass_urls = c(
+      "https://first.example/api/interpreter",
+      "https://second.example/api/interpreter"
+    ),
+    use_cache = FALSE
+  )
+
+  expect_s4_class(result, "RasterLayer")
+  expect_equal(
+    attempted,
+    c(
+      "https://first.example/api/interpreter",
+      "https://second.example/api/interpreter"
+    )
+  )
+})
+
+test_that("load_osm_data uses expired cache when every endpoint fails", {
+  reference <- raster::raster(
+    nrows = 1, ncols = 1,
+    xmn = -48.55, xmx = -48.54, ymn = -23.61, ymx = -23.60,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  reference <- raster::setValues(reference, 1)
+  cache_dir <- tempfile("biomastats-stale-osm-cache-")
+  old_options <- options(biomastats.osm_cache_dir = cache_dir)
+  on.exit(options(old_options), add = TRUE)
+
+  testthat::local_mocked_bindings(
+    fetch_osm_feature = function(...) {
+      list(osm_points = "stale", osm_lines = NULL, osm_polygons = NULL)
+    },
+    rasterize_osm = function(osm_data, reference_raster) {
+      expect_identical(osm_data$osm_points, "stale")
+      raster::setValues(reference_raster, 1)
+    },
+    .package = "biomastats"
+  )
+  load_osm_data(reference, "amenity", use_cache = TRUE)
+
+  cache_file <- list.files(cache_dir, full.names = TRUE, pattern = "[.]rds$")
+  record <- readRDS(cache_file)
+  record$fetched_at <- Sys.time() - 30 * 24 * 60 * 60
+  saveRDS(record, cache_file)
+
+  testthat::local_mocked_bindings(
+    fetch_osm_feature = function(...) stop("network unavailable"),
+    .package = "biomastats"
+  )
+  expect_warning(
+    result <- load_osm_data(
+      reference,
+      "amenity",
+      use_cache = TRUE,
+      cache_ttl_days = 7,
+      overpass_urls = "https://offline.example/api/interpreter"
+    ),
+    "expired OSM cache"
+  )
+  expect_s4_class(result, "RasterLayer")
+})
+
+test_that("load_osm_data accepts data recovered by the XML fallback", {
   reference <- raster::raster(
     nrows = 2, ncols = 2,
     xmn = 0, xmx = 2, ymn = 0, ymx = 2,
@@ -138,13 +237,8 @@ test_that("load_osm_data falls back to OSM XML on metadata parser errors", {
   )
 
   testthat::local_mocked_bindings(
-    opq = function(bbox, ...) list(type = "query"),
-    add_osm_feature = function(query, key, value = NULL) query,
-    osmdata_sf = function(query) {
-      stop("arguments imply differing number of rows: 756, 0")
-    },
-    read_osm_xml_as_sf = function(query) {
-      calls$fallback_query <- query
+    fetch_osm_feature = function(...) {
+      calls$fallback_used <- TRUE
       fallback_data
     },
     rasterize_osm = function(osm_data, reference_raster) {
@@ -157,7 +251,7 @@ test_that("load_osm_data falls back to OSM XML on metadata parser errors", {
   result <- load_osm_data(reference, key_feature = "highway")
 
   expect_s4_class(result, "RasterLayer")
-  expect_identical(calls$fallback_query, list(type = "query"))
+  expect_true(calls$fallback_used)
   expect_identical(calls$osm_data, fallback_data)
   expect_equal(raster::getValues(result), c(0, NA, NA, NA))
 })
@@ -175,12 +269,8 @@ test_that("load_osm_data trims nodata margins before querying OSM", {
   calls <- new.env(parent = emptyenv())
 
   testthat::local_mocked_bindings(
-    opq = function(bbox, ...) {
+    fetch_osm_feature = function(bbox, ...) {
       calls$bbox <- bbox
-      list(type = "query")
-    },
-    add_osm_feature = function(query, key, value = NULL) query,
-    osmdata_sf = function(query) {
       list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
     },
     rasterize_osm = function(osm_data, reference_raster) reference_raster,
@@ -207,12 +297,10 @@ test_that("load_osm_data converts a projected extent to WGS84", {
   calls <- new.env(parent = emptyenv())
 
   testthat::local_mocked_bindings(
-    opq = function(bbox, ...) {
+    fetch_osm_feature = function(bbox, ...) {
       calls$bbox <- bbox
-      list(type = "query")
+      list(osm_points = NULL)
     },
-    add_osm_feature = function(query, key, value = NULL) query,
-    osmdata_sf = function(query) list(osm_points = NULL),
     rasterize_osm = function(osm_data, reference_raster) {
       raster::setValues(reference_raster, c(0, NA, NA, NA))
     },
@@ -290,6 +378,44 @@ test_that("rasterize_osm supports OSM multiline and multipolygon objects", {
   expect_true(any(!is.na(raster::getValues(result))))
 })
 
+test_that("rasterize_osm transforms and clips OSM geometries to projected rasters", {
+  reference <- raster::raster(
+    nrows = 10, ncols = 10,
+    xmn = 500000, xmx = 501000,
+    ymn = 7400000, ymx = 7401000,
+    crs = "+proj=utm +zone=23 +south +datum=WGS84 +units=m"
+  )
+  centre <- sf::st_transform(
+    sf::st_sfc(sf::st_point(c(500500, 7400500)), crs = 31983),
+    4326
+  )
+  centre_coordinates <- sf::st_coordinates(centre)[1, ]
+  line <- sf::st_sfc(
+    sf::st_linestring(rbind(
+      centre_coordinates + c(-0.004, 0),
+      centre_coordinates + c(0.004, 0)
+    )),
+    crs = 4326
+  )
+  outside_line <- sf::st_sfc(
+    sf::st_linestring(matrix(c(-40, -10, -40, -9), ncol = 2, byrow = TRUE)),
+    crs = 4326
+  )
+  osm_data <- list(
+    osm_points = NULL,
+    osm_lines = sf::st_sf(
+      id = c(1, 2),
+      geometry = c(line, outside_line)
+    ),
+    osm_polygons = NULL
+  )
+
+  result <- rasterize_osm(osm_data, reference)
+
+  expect_s4_class(result, "RasterLayer")
+  expect_true(any(!is.na(raster::getValues(result))))
+})
+
 test_that("load_osm_data validates its public arguments", {
   reference <- raster::raster(nrows = 1, ncols = 1)
 
@@ -303,6 +429,13 @@ test_that("load_osm_data validates its public arguments", {
                "Only provider")
   expect_error(load_osm_data(reference, "highway", buffer_distance = -1),
                "buffer_distance")
+  expect_error(load_osm_data(reference, "highway", timeout = 0), "timeout")
+  expect_error(load_osm_data(reference, "highway", overpass_urls = "ftp://x"),
+               "overpass_urls")
+  expect_error(load_osm_data(reference, "highway", use_cache = NA),
+               "use_cache")
+  expect_error(load_osm_data(reference, "highway", cache_ttl_days = -1),
+               "cache_ttl_days")
 })
 
 test_that("distance_to_feature calculates distances and preserves the mask", {
@@ -480,6 +613,14 @@ test_that("distance_to_feature validates CRS and occupied cells", {
   expect_error(
     distance_to_feature(reference, "highway", "primary"),
     "contains no occupied cells"
+  )
+  expect_error(
+    distance_to_feature(
+      reference,
+      "highway",
+      osm_options = list(unsupported = TRUE)
+    ),
+    "Unsupported OSM option"
   )
 })
 
@@ -715,5 +856,13 @@ test_that("integrate_feature validates feature and metric specifications", {
       list(density = list(window_size = 3, unsupported = TRUE))
     ),
     "Unsupported density option"
+  )
+  expect_error(
+    integrate_feature(
+      reference,
+      list(roads = "highway"),
+      osm_options = list(unsupported = TRUE)
+    ),
+    "Unsupported OSM option"
   )
 })

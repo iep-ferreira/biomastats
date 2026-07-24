@@ -49,6 +49,7 @@ stopifnot(identical(tutorial_install_status, 0L))
 .libPaths(c(tutorial_library, .libPaths()))
 suppressPackageStartupMessages(library(biomastats))
 stopifnot(is.function(integrate_feature))
+stopifnot(packageVersion("osmdata") >= package_version("0.4.0"))
 
 bh <- function(level, pt, en) {
   id <- gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(en)))
@@ -145,7 +146,13 @@ remove.packages("biomastats")
 library(devtools)
 ```
 
-`r b('Após carregar o <code>devtools</code>, o usuário deverá instalar e carregar o pacote <code>biomastats</code>.', 'After loading <code>devtools</code>, the user must install and load the <code>biomastats</code> package.')`
+`r b('Antes de instalar o Bioma Stats, atualize o <code>osmdata</code>. A versão 0.4.0 ou superior é obrigatória; o Bioma Stats emite um aviso com o comando de atualização quando encontra uma versão anterior.', 'Before installing Bioma Stats, update <code>osmdata</code>. Version 0.4.0 or newer is required; Bioma Stats issues a warning with the update command when it finds an older version.')`
+
+```{r eval = FALSE, message=FALSE, warning=FALSE}
+install.packages("osmdata")
+```
+
+`r b('Após carregar o <code>devtools</code>, o usuário deverá instalar e carregar a versão mais recente do pacote <code>biomastats</code>.', 'After loading <code>devtools</code>, the user must install and load the latest version of the <code>biomastats</code> package.')`
 
 + `r b('Instalação', 'Installation')`
 
@@ -389,11 +396,16 @@ integrated_features <- integrate_feature(
     distance = list(),
     density = list(window_size = 9, window_shape = "circle")
   ),
+  osm_options = list(
+    timeout = 60,
+    use_cache = TRUE,
+    cache_ttl_days = 7
+  ),
   plot = TRUE
 )
 ```
 
-`r b('Este exemplo requer conexão com a internet e disponibilidade de um servidor Overpass. Informar valores específicos para cada chave reduz o volume das consultas.', 'This example requires an internet connection and an available Overpass server. Providing specific values for each key reduces query volume.')`
+`r b('A consulta usa buffer padrão de 2 km, cache persistente por sete dias e alternância automática entre servidores Overpass globais. Se todos estiverem indisponíveis, um cache expirado ainda pode ser usado como contingência. Informar valores específicos para cada chave reduz o volume das consultas; para processamento intensivo de muitas áreas, recomenda-se uma extração regional PBF.', 'The query uses a default 2 km buffer, a seven-day persistent cache, and automatic failover among global Overpass servers. If all are unavailable, an expired cache may still be used as a fallback. Providing specific values for each key reduces query volume; a regional PBF extract is recommended for intensive processing of many areas.')`
 
 ```{r integrated-features-panel, echo=FALSE, out.width="100%"}
 knitr::include_graphics(

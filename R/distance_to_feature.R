@@ -32,6 +32,9 @@
 #' @param provider Data provider. Only `"osm"` is currently supported.
 #' @param buffer_distance Buffer around the valid reference extent, in metres,
 #'   passed to [load_osm_data()]. Defaults to `2000` (2 km).
+#' @param osm_options Named list of connection options passed to
+#'   [load_osm_data()], such as `timeout`, `overpass_urls`, `use_cache`, and
+#'   `cache_ttl_days`. Ignored when `feature_raster` is supplied.
 #' @param feature_raster Optional rasterized feature returned by
 #'   [load_osm_data()]. When supplied, no OSM request is made.
 #' @param plot Logical; if `TRUE`, return an adaptable `ggplot2` map. Use
@@ -62,6 +65,7 @@
 distance_to_feature <- function(reference_raster, key_feature = NULL,
                                 value_feature = NULL, provider = "osm",
                                 buffer_distance = 2000,
+                                osm_options = list(),
                                 feature_raster = NULL, plot = TRUE) {
   if (!inherits(reference_raster, "RasterLayer")) {
     stop("'reference_raster' must be a raster::RasterLayer.", call. = FALSE)
@@ -90,12 +94,19 @@ distance_to_feature <- function(reference_raster, key_feature = NULL,
       stop("'key_feature' is required when 'feature_raster' is NULL.",
            call. = FALSE)
     }
-    raster_distance <- load_osm_data(
-      reference_raster = reference_raster,
-      key_feature = key_feature,
-      value_feature = value_feature,
-      provider = provider,
-      buffer_distance = buffer_distance
+    osm_options <- normalize_osm_options(osm_options)
+    raster_distance <- do.call(
+      load_osm_data,
+      c(
+        list(
+          reference_raster = reference_raster,
+          key_feature = key_feature,
+          value_feature = value_feature,
+          provider = provider,
+          buffer_distance = buffer_distance
+        ),
+        osm_options
+      )
     )
   } else {
     raster_distance <- feature_raster
