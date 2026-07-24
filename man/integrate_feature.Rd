@@ -9,6 +9,7 @@ integrate_feature(
   features,
   metrics = c("distance", "density"),
   provider = "osm",
+  buffer_distance = 2000,
   plot = TRUE
 )
 }
@@ -25,6 +26,10 @@ are option lists. For example,
 
 \item{provider}{Default data provider for features that do not define their
 own provider. Only \code{"osm"} is currently supported.}
+
+\item{buffer_distance}{Default non-negative buffer around the valid reference
+extent, in metres, used for OSM queries. The default is 2000 (2 km). A
+feature specification can override it with its own \code{buffer_distance}.}
 
 \item{plot}{Logical; if \code{TRUE}, create and return a plot for every
 feature/metric combination. If \code{FALSE}, metric plots and the top-level

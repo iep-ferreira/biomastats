@@ -9,6 +9,7 @@ density_of_feature(
   key_feature = NULL,
   value_feature = NULL,
   provider = "osm",
+  buffer_distance = 2000,
   window_size = 5L,
   window_shape = c("square", "circle"),
   feature_raster = NULL,
@@ -27,6 +28,10 @@ and is otherwise used as a plot label.}
 value for the key; a specific value is recommended for large study areas.}
 
 \item{provider}{Data provider. Only \code{"osm"} is currently supported.}
+
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres, used when the feature must be loaded from OSM. The default is
+2000 (2 km).}
 
 \item{window_size}{Odd positive integer defining the side of the moving
 window in raster cells. For example, \code{5} means a 5 by 5 window.}

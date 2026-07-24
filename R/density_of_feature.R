@@ -26,6 +26,8 @@
 #' @param value_feature An optional OSM value. Use `NULL` to match every value
 #'   for the key; a specific value is recommended for large study areas.
 #' @param provider Data provider. Only `"osm"` is currently supported.
+#' @param buffer_distance Buffer around the valid reference extent, in metres,
+#'   passed to [load_osm_data()]. Defaults to `2000` (2 km).
 #' @param window_size Odd positive integer defining the side of the moving
 #'   window in raster cells. For example, `5` means a 5 by 5 window.
 #' @param window_shape Shape of the moving window: `"square"` or `"circle"`.
@@ -57,6 +59,7 @@
 #' }
 density_of_feature <- function(reference_raster, key_feature = NULL,
                                 value_feature = NULL, provider = "osm",
+                                buffer_distance = 2000,
                                 window_size = 5L,
                                 window_shape = c("square", "circle"),
                                 feature_raster = NULL, plot = TRUE) {
@@ -98,7 +101,8 @@ density_of_feature <- function(reference_raster, key_feature = NULL,
       reference_raster = reference_raster,
       key_feature = key_feature,
       value_feature = value_feature,
-      provider = provider
+      provider = provider,
+      buffer_distance = buffer_distance
     )
   }
   if (!inherits(feature_raster, "RasterLayer")) {

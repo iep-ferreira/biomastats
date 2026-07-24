@@ -3,9 +3,9 @@
 #' Queries OpenStreetMap for a feature inside the extent of a reference
 #' raster, then rasterizes the returned geometries using the same extent and
 #' resolution. The query is reduced to the smallest bounding box containing
-#' valid reference cells, then expanded by a buffer equal to the diagonal
-#' diameter of that box. The buffer brings features crossing the study-area
-#' border into the query and reduces edge effects in the distance raster. The
+#' valid reference cells, then expanded by buffer_distance metres. The default
+#' buffer is 2 km, which brings nearby features crossing the study-area border
+#' into the query without querying an unnecessarily large area. The
 #' OSM query is made with `osmdata::opq()` and therefore may require network
 #' access and an available Overpass provider. If the installed
 #' `osmdata` version cannot assemble the returned feature metadata, the same
@@ -21,6 +21,8 @@
 #' @param value_feature Optional OSM feature value, such as `"primary"` or
 #'   `"water"`. If `NULL`, all values for `key_feature` are queried.
 #' @param provider Data provider. Only `"osm"` is currently supported.
+#' @param buffer_distance Buffer around the valid reference extent, in metres.
+#'   Defaults to `2000` (2 km). Use `0` to disable the buffer.
 #'
 #' @return A `Raster` object with the rasterized OSM feature aligned to
 #'   `reference_raster`. Cells without OSM features are `NA`.
@@ -40,7 +42,7 @@
 #' )
 #' }
 load_osm_data <- function(reference_raster, key_feature, value_feature = NULL,
-                          provider = "osm") {
+                          provider = "osm", buffer_distance = 2000) {
   if (!inherits(reference_raster, "Raster")) {
     stop("'reference_raster' must be a raster::Raster object.", call. = FALSE)
   }
@@ -68,6 +70,12 @@ load_osm_data <- function(reference_raster, key_feature, value_feature = NULL,
     stop("'value_feature' must be NULL or one non-empty character string.",
          call. = FALSE)
   }
+  if (!is.numeric(buffer_distance) || length(buffer_distance) != 1L ||
+      is.na(buffer_distance) || !is.finite(buffer_distance) ||
+      buffer_distance < 0) {
+    stop("'buffer_distance' must be one finite non-negative value in metres.",
+         call. = FALSE)
+  }
 
   reference_values <- raster::getValues(reference_raster)
   valid_cells <- which(!is.na(reference_values))
@@ -89,20 +97,15 @@ load_osm_data <- function(reference_raster, key_feature, value_feature = NULL,
     raster::yFromRow(reference_raster, min(valid_rows)) + raster_resolution[2] / 2
   )
 
-  # Add a buffer equal to the diagonal diameter of the valid raster extent.
-  # Buffering in a projected CRS keeps the distance meaningful for both
-  # projected and longitude/latitude reference rasters.
+  # Buffer in metres after transforming to Web Mercator. This keeps the
+  # public buffer_distance unit independent of the input CRS.
   bbox_geometry <- sf::st_as_sfc(
     sf::st_bbox(valid_extent)
   )
   bbox_geometry <- sf::st_set_crs(bbox_geometry, raster_crs)
-  buffer_crs <- if (raster::isLonLat(reference_raster)) 3857 else raster_crs
+  buffer_crs <- 3857
   bbox_projected <- sf::st_transform(bbox_geometry, buffer_crs)
-  bbox_coordinates <- sf::st_bbox(bbox_projected)
-  bbox_width <- bbox_coordinates[["xmax"]] - bbox_coordinates[["xmin"]]
-  bbox_height <- bbox_coordinates[["ymax"]] - bbox_coordinates[["ymin"]]
-  bbox_diameter <- sqrt(bbox_width^2 + bbox_height^2)
-  bbox_buffered <- sf::st_buffer(bbox_projected, dist = bbox_diameter)
+  bbox_buffered <- sf::st_buffer(bbox_projected, dist = buffer_distance)
 
   # Overpass expects longitude/latitude coordinates.
   bbox <- sf::st_bbox(sf::st_transform(bbox_buffered, 4326))

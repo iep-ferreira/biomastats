@@ -9,6 +9,7 @@ distance_to_feature(
   key_feature = NULL,
   value_feature = NULL,
   provider = "osm",
+  buffer_distance = 2000,
   feature_raster = NULL,
   plot = TRUE
 )
@@ -27,6 +28,10 @@ match every value for the key; a specific value is recommended to avoid very
 large Overpass queries.}
 
 \item{provider}{Data provider. Only \code{"osm"} is currently supported.}
+
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres, used when the feature must be loaded from OSM. The default is
+2000 (2 km).}
 
 \item{feature_raster}{Optional rasterized feature returned by
 \code{load_osm_data()}. When supplied, no OSM request is made.}

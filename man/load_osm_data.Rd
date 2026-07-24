@@ -8,7 +8,8 @@ load_osm_data(
   reference_raster,
   key_feature,
   value_feature = NULL,
-  provider = "osm"
+  provider = "osm",
+  buffer_distance = 2000
 )
 }
 \arguments{
@@ -22,6 +23,10 @@ and the output raster geometry.}
 `"water"`. If `NULL`, all values for `key_feature` are queried.}
 
 \item{provider}{Data provider. Only `"osm"` is currently supported.}
+
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres. The default is 2000 (2 km), which helps include features crossing
+the study-area border without querying an unnecessarily large area.}
 }
 \value{
 A `Raster` object with the rasterized OSM feature aligned to
@@ -31,9 +36,9 @@ A `Raster` object with the rasterized OSM feature aligned to
 Queries OpenStreetMap for a feature inside the extent of a reference
 raster, then rasterizes the returned geometries using the same extent and
 resolution. The query is reduced to the smallest bounding box containing
-valid reference cells, then expanded by a buffer equal to the diagonal
-diameter of that box. The buffer brings features crossing the study-area
-border into the query and reduces edge effects in the distance raster. The
+valid reference cells, then expanded by `buffer_distance` metres. The buffer
+brings features crossing the study-area border into the query and reduces
+edge effects in the distance raster. The
 OSM query is made with `osmdata::opq()` and therefore may require network
 access and an available Overpass provider. If the installed
 `osmdata` version cannot assemble the returned feature metadata, the same

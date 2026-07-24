@@ -38,8 +38,8 @@ cat("manifest hash:", manifest$manifest_hash, "\n")
 
 # Set these three values manually, then run this section in RStudio.
 download_folder <- "C:/Users/Pichau/Documents/teste_download_temp"
-download_fragment <- 500
-download_year <- 1985
+download_fragment <- 127
+download_year <- 1986
 
 stopifnot(
   !is.na(download_folder),

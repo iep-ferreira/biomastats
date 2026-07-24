@@ -89,6 +89,39 @@ test_that("load_osm_data passes a feature value to OSM", {
   expect_equal(calls$value, "water")
 })
 
+test_that("load_osm_data uses an adjustable metric buffer in metres", {
+  reference <- raster::raster(
+    nrows = 1, ncols = 1,
+    xmn = -0.005, xmx = 0.005, ymn = -0.005, ymx = 0.005,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  reference <- raster::setValues(reference, 1)
+  calls <- new.env(parent = emptyenv())
+  calls$boxes <- list()
+
+  testthat::local_mocked_bindings(
+    opq = function(bbox, ...) {
+      calls$boxes[[length(calls$boxes) + 1L]] <- bbox
+      list(type = "query")
+    },
+    add_osm_feature = function(query, key, value = NULL) query,
+    osmdata_sf = function(query) list(
+      osm_points = NULL, osm_lines = NULL, osm_polygons = NULL
+    ),
+    rasterize_osm = function(osm_data, reference_raster) reference_raster,
+    .package = "biomastats"
+  )
+
+  load_osm_data(reference, "highway", buffer_distance = 1000)
+  load_osm_data(reference, "highway", buffer_distance = 2000)
+
+  width_1km <- diff(calls$boxes[[1]][c("xmin", "xmax")])
+  width_2km <- diff(calls$boxes[[2]][c("xmin", "xmax")])
+  expect_gt(width_2km, width_1km)
+  expect_equal(unname(width_2km - width_1km), 2000 / 111320,
+               tolerance = 0.005)
+})
+
 test_that("load_osm_data falls back to OSM XML on metadata parser errors", {
   reference <- raster::raster(
     nrows = 2, ncols = 2,
@@ -268,6 +301,8 @@ test_that("load_osm_data validates its public arguments", {
                "provider")
   expect_error(load_osm_data(reference, "highway", provider = "other"),
                "Only provider")
+  expect_error(load_osm_data(reference, "highway", buffer_distance = -1),
+               "buffer_distance")
 })
 
 test_that("distance_to_feature calculates distances and preserves the mask", {
@@ -281,7 +316,8 @@ test_that("distance_to_feature calculates distances and preserves the mask", {
   calls <- new.env(parent = emptyenv())
 
   mock_load_osm_data <- function(reference_raster, key_feature,
-                                 value_feature = NULL, provider = "osm") {
+                                 value_feature = NULL, provider = "osm",
+                                 buffer_distance = 2000) {
     calls$key <- key_feature
     calls$value <- value_feature
     calls$provider <- provider
@@ -332,7 +368,8 @@ test_that("distance_to_feature accepts an annual biomastats raster", {
   calls <- new.env(parent = emptyenv())
 
   mock_load_osm_data <- function(reference_raster, key_feature,
-                                 value_feature = NULL, provider = "osm") {
+                                 value_feature = NULL, provider = "osm",
+                                 buffer_distance = 2000) {
     calls$reference_raster <- reference_raster
     calls$key <- key_feature
     calls$value <- value_feature
@@ -460,7 +497,8 @@ test_that("density_of_feature calculates local and global coverage", {
 
   calls <- new.env(parent = emptyenv())
   mock_load_osm_data <- function(reference_raster, key_feature,
-                                 value_feature = NULL, provider = "osm") {
+                                 value_feature = NULL, provider = "osm",
+                                 buffer_distance = 2000) {
     calls$key <- key_feature
     calls$value <- value_feature
     calls$provider <- provider
@@ -580,7 +618,8 @@ test_that("integrate_feature loads each feature once and reuses it", {
   calls$keys <- character()
 
   mock_load_osm_data <- function(reference_raster, key_feature,
-                                 value_feature = NULL, provider = "osm") {
+                                 value_feature = NULL, provider = "osm",
+                                 buffer_distance = 2000) {
     calls$total <- calls$total + 1L
     calls$keys <- c(calls$keys, key_feature)
     values <- rep(NA_real_, raster::ncell(reference_raster))

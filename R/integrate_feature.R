@@ -21,6 +21,9 @@
 #'   `list(distance = list(), density = list(window_size = 9))`.
 #' @param provider Default data provider for features that do not define their
 #'   own provider. Only `"osm"` is currently supported.
+#' @param buffer_distance Default buffer around each valid reference extent,
+#'   in metres. Defaults to `2000` (2 km). A feature specification may define
+#'   its own `buffer_distance`.
 #' @param plot Logical; if `TRUE`, create and return a plot for every
 #'   feature/metric combination. If `FALSE`, metric plots are `NULL` and the
 #'   top-level `plots` element is also `NULL`.
@@ -52,7 +55,8 @@
 #' }
 integrate_feature <- function(reference_raster, features,
                               metrics = c("distance", "density"),
-                              provider = "osm", plot = TRUE) {
+                              provider = "osm", buffer_distance = 2000,
+                              plot = TRUE) {
   if (!inherits(reference_raster, "RasterLayer")) {
     stop("'reference_raster' must be a raster::RasterLayer.", call. = FALSE)
   }
@@ -66,6 +70,7 @@ integrate_feature <- function(reference_raster, features,
       is.na(provider) || !nzchar(provider)) {
     stop("'provider' must be one non-empty character string.", call. = FALSE)
   }
+  validate_osm_buffer_distance(buffer_distance)
 
   feature_names <- names(features)
   if (is.null(feature_names)) {
@@ -82,7 +87,9 @@ integrate_feature <- function(reference_raster, features,
   names(features) <- feature_names
 
   feature_specs <- lapply(feature_names, function(feature_name) {
-    normalize_feature_spec(features[[feature_name]], feature_name, provider)
+    normalize_feature_spec(
+      features[[feature_name]], feature_name, provider, buffer_distance
+    )
   })
   names(feature_specs) <- feature_names
   metric_specs <- normalize_metric_specs(metrics)
@@ -100,7 +107,8 @@ integrate_feature <- function(reference_raster, features,
         reference_raster = reference_raster,
         key_feature = specification$key,
         value_feature = specification$value,
-        provider = specification$provider
+        provider = specification$provider,
+        buffer_distance = specification$buffer_distance
       ),
       error = function(error) {
         stop(
@@ -168,7 +176,7 @@ integrate_feature <- function(reference_raster, features,
 }
 
 normalize_feature_spec <- function(specification, feature_name,
-                                   default_provider) {
+                                   default_provider, default_buffer_distance) {
   if (is.character(specification) && length(specification) == 1L) {
     specification <- list(key = specification)
   }
@@ -183,6 +191,10 @@ normalize_feature_spec <- function(specification, feature_name,
   if (is.null(value)) value <- specification$value_feature
   feature_provider <- specification$provider
   if (is.null(feature_provider)) feature_provider <- default_provider
+  feature_buffer_distance <- specification$buffer_distance
+  if (is.null(feature_buffer_distance)) {
+    feature_buffer_distance <- default_buffer_distance
+  }
 
   if (!is.character(key) || length(key) != 1L || is.na(key) || !nzchar(key)) {
     stop(sprintf("Feature '%s' must define one non-empty 'key'.",
@@ -199,8 +211,29 @@ normalize_feature_spec <- function(specification, feature_name,
     stop(sprintf("Feature '%s' has an invalid 'provider'.", feature_name),
          call. = FALSE)
   }
+  validate_osm_buffer_distance(feature_buffer_distance, feature_name)
 
-  list(key = key, value = value, provider = feature_provider)
+  list(
+    key = key,
+    value = value,
+    provider = feature_provider,
+    buffer_distance = feature_buffer_distance
+  )
+}
+
+validate_osm_buffer_distance <- function(buffer_distance,
+                                         feature_name = NULL) {
+  if (!is.numeric(buffer_distance) || length(buffer_distance) != 1L ||
+      is.na(buffer_distance) || !is.finite(buffer_distance) ||
+      buffer_distance < 0) {
+    label <- if (is.null(feature_name)) "'buffer_distance'" else
+      sprintf("buffer_distance for feature '%s'", feature_name)
+    stop(
+      sprintf("%s must be one finite non-negative value in metres.", label),
+      call. = FALSE
+    )
+  }
+  invisible(buffer_distance)
 }
 
 normalize_metric_specs <- function(metrics) {
