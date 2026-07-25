@@ -50,6 +50,38 @@ results$time # Gráfico temporal
 land_vis(mapas, year = 1990) # Mapa para 1990
 land_vis(mapas, year = 2024) # Mapa para 2024
 
+# Integração de feições do OpenStreetMap usando um raster anual
+# Cada feição é carregada uma vez e reutilizada pelas métricas.
+ano_distancia <- 2024
+indice_ano <- ano_distancia - mapas$time_range[1] + 1
+raster_anual <- mapas$raster[[indice_ano]]
+
+feicoes_integradas <- integrate_feature(
+  reference_raster = raster_anual,
+  features = list(
+    roads = list(key = "highway", value = "primary")
+  ),
+  metrics = list(
+    distance = list(),
+    density = list(window_size = 9, window_shape = "circle")
+  ),
+  plot = TRUE
+)
+mapa_distancia_vias <- feicoes_integradas$plots$roads_distance +
+  ggplot2::labs(
+    title = paste("Distance to roads in", ano_distancia)
+  )
+mapa_distancia_vias
+feicoes_integradas$results$roads$density$global
+
+ggplot2::ggsave(
+  filename = "distance-to-roads-2024.png",
+  plot = mapa_distancia_vias,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+
 # Distribuição de Classes
 land_dist(results, year = 2024, type = "barplot") # Gráfico de barras
 land_dist(results, year = 2024, type = "pie")     # Gráfico de pizza

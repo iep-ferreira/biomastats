@@ -1,7 +1,7 @@
 Package: biomastats
 Type: Package
 Title: A package for the analysis of land use and land cover data in Brazilian territory
-Version: 1.0.0
+Version: 2.0.0
 Depends: R (>= 4.0.0)
 Author:
     person("Iuri", "Emmanuel de Paula Ferreira", email = "iuri@ufscar.br", role = c("aut", "ctb"), comment = "Overall coordination"),
@@ -21,7 +21,8 @@ License: Affero GPL 3.0
 Encoding: UTF-8
 LazyData: false
 Reference:... 
-Suggests: 
+Suggests:
+    patchwork,
     testthat (>= 3.1.7)
 Config/testthat/edition: 3
 Imports:
@@ -33,6 +34,7 @@ Imports:
     graphics,
     httr,
     magrittr,
+    osmdata (>= 0.4.0),
     raster,
     readxl,
     rvest,

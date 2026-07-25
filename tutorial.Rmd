@@ -15,6 +15,42 @@ lang: pt-BR
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.show = "asis",
                       fig.width = 7, fig.height = 5, out.width = "70%", fig.align = "center")
 
+# Keep Portuguese text as UTF-8 when R is started with the Windows C locale.
+# Without this setting, rendered inline R text may become <U+....> markers.
+suppressWarnings(Sys.setlocale("LC_CTYPE", "Portuguese_Brazil.65001"))
+
+# Render the tutorial with the current package source, independently of any
+# biomastats version installed in the user's default R library.
+tutorial_package_source <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+tutorial_library <- file.path(tempdir(), "biomastats-tutorial-lib")
+unlink(tutorial_library, recursive = TRUE, force = TRUE)
+dir.create(tutorial_library, recursive = TRUE, showWarnings = FALSE)
+
+if ("package:biomastats" %in% search()) {
+  detach("package:biomastats", unload = TRUE, character.only = TRUE)
+}
+if ("biomastats" %in% loadedNamespaces()) {
+  unloadNamespace("biomastats")
+}
+
+tutorial_install_status <- system2(
+  file.path(R.home("bin"), "R"),
+  c(
+    "CMD", "INSTALL",
+    paste0("--library=", tutorial_library),
+    "--no-multiarch",
+    tutorial_package_source
+  ),
+  stdout = FALSE,
+  stderr = FALSE
+)
+stopifnot(identical(tutorial_install_status, 0L))
+
+.libPaths(c(tutorial_library, .libPaths()))
+suppressPackageStartupMessages(library(biomastats))
+stopifnot(is.function(integrate_feature))
+stopifnot(packageVersion("osmdata") >= package_version("0.4.0"))
+
 bh <- function(level, pt, en) {
   id <- gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(en)))
   sprintf("<h%d id=\"%s\"><span class=\"lang-pt\">%s</span><span class=\"lang-en\">%s</span></h%d>\n\n",
@@ -110,7 +146,13 @@ remove.packages("biomastats")
 library(devtools)
 ```
 
-`r b('Após carregar o <code>devtools</code>, o usuário deverá instalar e carregar o pacote <code>biomastats</code>.', 'After loading <code>devtools</code>, the user must install and load the <code>biomastats</code> package.')`
+`r b('Antes de instalar o Bioma Stats, atualize o <code>osmdata</code>. A versão 0.4.0 ou superior é obrigatória; o Bioma Stats emite um aviso com o comando de atualização quando encontra uma versão anterior.', 'Before installing Bioma Stats, update <code>osmdata</code>. Version 0.4.0 or newer is required; Bioma Stats issues a warning with the update command when it finds an older version.')`
+
+```{r eval = FALSE, message=FALSE, warning=FALSE}
+install.packages("osmdata")
+```
+
+`r b('Após carregar o <code>devtools</code>, o usuário deverá instalar e carregar a versão mais recente do pacote <code>biomastats</code>.', 'After loading <code>devtools</code>, the user must install and load the latest version of the <code>biomastats</code> package.')`
 
 + `r b('Instalação', 'Installation')`
 
@@ -120,7 +162,7 @@ devtools::install_github("iep-ferreira/biomastats")
 
 + `r b('Carregamento', 'Loading')`
 
-```{r message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE}
 library(biomastats)
 ```
 
@@ -195,7 +237,7 @@ cat(bh(2, "Criação de um recorte", "Creating a study area"))
 
 `r b('Outra forma de definir o recorte é a partir das coordenadas centrais. Com as coordenadas centrais, a forma e o tamanho do recorte desejados pelo pesquisador, a função <code>make_polygon</code> do programa Bioma Stats é capaz de criar o <code>.shp</code> automaticamente. Neste caso, o usuário deve informar a latitude (<code>lat</code>), a longitude (<code>lon</code>), o diâmetro (<code>size</code>, em km) e a forma desejada (<code>shape</code> = <code>circle</code>, <code>hexagon</code> ou <code>square</code>), como demonstrado a seguir:', 'Another way to define the study area is from central coordinates. With the central coordinates, shape, and size desired by the researcher, the <code>make_polygon</code> function in Bioma Stats can create the <code>.shp</code> automatically. In this case, the user must provide latitude (<code>lat</code>), longitude (<code>lon</code>), diameter (<code>size</code>, in km), and desired shape (<code>shape</code> = <code>circle</code>, <code>hexagon</code>, or <code>square</code>), as shown below:')`
 
-```{r message=FALSE, warning=FALSE, results='hide'}
+```{r make-polygon-code, eval=FALSE, message=FALSE, warning=FALSE, results='hide'}
 make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 ```
 
@@ -203,7 +245,7 @@ make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")
 
 ```{r toggle-mapa-polygon, echo=FALSE, results='asis'}
 codigo_mapa_polygon <- paste(
-  knitr::knit_code$get("mapa-polygon"), collapse = "\n"
+  knitr::knit_code$get("make-polygon-code"), collapse = "\n"
 )
 cat(
   '<details class="mapa-polygon-code">',
@@ -329,6 +371,58 @@ cat(bh(2, "Mapa da UFSCar Lagoa do Sino, ano de 2024", "UFSCar Lagoa do Sino map
 
 ```{r}
 land_vis(mapas, year = 2024)
+```
+
+```{r echo=FALSE, results='asis'}
+cat(bh(1, "Integração de feições do OpenStreetMap", "OpenStreetMap feature integration"))
+```
+
+`r b('A função <code>integrate_feature</code> recebe um raster anual, uma lista de feições e uma lista de métricas. Cada feição é consultada e rasterizada apenas uma vez; o mesmo raster é então reutilizado pelos cálculos de distância e densidade. Isso reduz chamadas ao servidor Overpass e garante que as métricas usem exatamente a mesma representação espacial da feição.', 'The <code>integrate_feature</code> function receives an annual raster, a feature list, and a metric list. Each feature is queried and rasterized only once; the same raster is then reused for distance and density calculations. This reduces Overpass requests and ensures that all metrics use exactly the same spatial representation of the feature.')`
+
+`r b('No exemplo, as feições são vias principais (<code>highway = primary</code>) e rios (<code>waterway = river</code>). Para ambas são calculadas distância e densidade local, esta última com janela circular de 9 por 9 células. O argumento <code>plot</code> controla se os mapas em padrão <code>ggplot2</code> serão produzidos.', 'In this example, the features are primary roads (<code>highway = primary</code>) and rivers (<code>waterway = river</code>). Distance and local density are calculated for both, with density using a 9 by 9 circular window. The <code>plot</code> argument controls whether standard <code>ggplot2</code> maps are produced.')`
+
+```{r integrate-feature-usage, eval=FALSE}
+ano_distancia <- 2024
+indice_ano <- ano_distancia - mapas$time_range[1] + 1
+raster_anual <- mapas$raster[[indice_ano]]
+
+integrated_features <- integrate_feature(
+  reference_raster = raster_anual,
+  features = list(
+    roads = list(key = "highway", value = "primary"),
+    rivers = list(key = "waterway", value = "river")
+  ),
+  metrics = list(
+    distance = list(),
+    density = list(window_size = 9, window_shape = "circle")
+  ),
+  osm_options = list(
+    timeout = 60,
+    use_cache = TRUE,
+    cache_ttl_days = 7
+  ),
+  plot = TRUE
+)
+```
+
+`r b('A consulta usa buffer padrão de 2 km, cache persistente por sete dias e alternância automática entre servidores Overpass globais. Se todos estiverem indisponíveis, um cache expirado ainda pode ser usado como contingência. Informar valores específicos para cada chave reduz o volume das consultas; para processamento intensivo de muitas áreas, recomenda-se uma extração regional PBF.', 'The query uses a default 2 km buffer, a seven-day persistent cache, and automatic failover among global Overpass servers. If all are unavailable, an expired cache may still be used as a fallback. Providing specific values for each key reduces query volume; a regional PBF extract is recommended for intensive processing of many areas.')`
+
+```{r integrated-features-panel, echo=FALSE, out.width="100%"}
+knitr::include_graphics(
+  "inst/tutorial/integrated-features-panel.png"
+)
+```
+
+`r b('O painel foi gerado com a versão atual do pacote e preservado no tutorial para que a documentação possa ser recompilada mesmo quando os servidores públicos do Overpass estiverem indisponíveis. Os rasters calculados ficam em <code>results</code>, os rasters OSM carregados uma única vez ficam em <code>features</code>, o valor global da densidade fica em <code>results&#36;roads&#36;density&#36;global</code> e os mapas exportáveis ficam em <code>plots</code>.', 'The panel was generated with the current package version and preserved in the tutorial so the documentation can be rebuilt even when public Overpass servers are unavailable. Calculated rasters are stored in <code>results</code>, OSM rasters loaded once are stored in <code>features</code>, global density is stored in <code>results&#36;roads&#36;density&#36;global</code>, and exportable maps are stored in <code>plots</code>.')`
+
+```{r eval=FALSE, echo=FALSE}
+ggplot2::ggsave(
+  filename = "primary-road-density-2024.png",
+  plot = integrated_features$plots$roads_density,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
 ```
 
 ```{r echo=FALSE, results='asis'}
