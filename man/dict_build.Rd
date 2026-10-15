@@ -4,7 +4,10 @@
 \alias{dict_build}
 \title{Construct the dictionary}
 \usage{
-dict_build()
+dict_build(collection = 10)
+}
+\arguments{
+\item{The}{collection version}
 }
 \value{
 A dataframe that serves as a dictionary for a classification scheme.

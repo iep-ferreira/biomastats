@@ -30,6 +30,8 @@
 #'   \item{metrics_table}{A data frame containing the calculated metrics for each year.}
 #'   \item{collection, class_dictionary, metadata}{Inherited collection, selected
 #'   dictionary entries, and source CRS/resolution by year for downstream reuse.}
+#'   \item{boundary}{The inherited study-area shape, when present in the maps
+#'   object, for downstream landscape-area denominators.}
 #'
 #' @details This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
 #'   It checks for valid metric types and generates summary plots for selected metrics.
@@ -325,5 +327,6 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
                "edge_density_plot" = p_edge_density, "egde_lenght_plot" = p_edge_length,
                "frag_avg_area" = p_frag_avg_area, 
                "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end,
-               collection = collection, class_dictionary = class_dictionary, metadata = metadata) )
+               collection = collection, class_dictionary = class_dictionary, metadata = metadata,
+               boundary = rasters_biomastats$shape) )
 }

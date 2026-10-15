@@ -56,6 +56,8 @@ A list containing:
   \item{metrics_table}{A data frame containing the calculated metrics for each year.}
   \item{collection, class_dictionary, metadata}{Inherited collection, selected
   dictionary entries, and source CRS/resolution by year for downstream reuse.}
+  \item{boundary}{The inherited study-area shape, when present in the maps
+  object, for downstream landscape-area denominators.}
 }
 \description{
 This function computes a variety of landscape metrics for a set of raster data over a defined time period. 

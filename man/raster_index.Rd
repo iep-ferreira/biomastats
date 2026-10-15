@@ -4,7 +4,7 @@
 \alias{raster_index}
 \title{Índice de Classes de Uso e Cobertura da Terra (LULC)}
 \usage{
-raster_index(raster_type = "lulc", collection = 7, language = "English")
+raster_index(raster_type = "lulc", collection = 10, language = "English")
 }
 \arguments{
 \item{raster_type}{Tipo de raster. O valor padrão é "lulc". Outros tipos ainda não estão disponíveis.}

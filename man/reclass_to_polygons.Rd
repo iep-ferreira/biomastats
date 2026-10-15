@@ -53,6 +53,7 @@ Codigos preservados pela reclassificacao de uma unica classe sao
   collection e class_dictionary sao herdados do resultado das metricas.
   Os atributos class_dictionary e metadata preservam identidades, paleta,
   selecao temporal, CRS e resolucao de origem, inclusive apos saveRDS/readRDS.
+  O atributo boundary herda o limite da area de estudo quando disponivel nas metricas.
   Para uma classe, code, classe, class e color identificam os poligonos de
   presenca. Para varias classes fundidas, esses campos sao NA: os codigos
   selecionados ficam em classes e no dicionario, sem inventar identidade

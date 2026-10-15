@@ -20,8 +20,10 @@ Description: The biomastat package provides tools for loading, analyzing, and vi
 License: Affero GPL 3.0
 Encoding: UTF-8
 LazyData: false
-Reference:... 
+Reference: ... 
 Suggests:
+    lconnect (>= 0.1.2),
+    future.apply,
     patchwork,
     ggiraph,
     htmlwidgets,
@@ -48,4 +50,4 @@ Imports:
     sf,
     landscapemetrics,
     jsonlite
-RoxygenNote: 7.2.3
+Config/roxygen2/version: 8.1.1

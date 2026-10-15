@@ -98,6 +98,62 @@ personalizacao e exportacao nao mudam os valores calculados.
 
 ## Fluxo espacial existente
 
+### Conectividade de fragmentos: land_connectivity e patch_imp_fast
+
+`land_connectivity()` recebe os sf ou listas temporais de reclass_to_polygons,
+inclusive apos readRDS. Nao procura o ultimo arquivo nem depende de scripts,
+coluna de habitat por posicao ou escrita/releitura de shapefiles. Herda
+identidades, paleta, ano, selecao, CRS e proveniencia. Somente value=1 entra
+quando a coluna existe; varios anos exigem escolha explicita. Fragmentos
+invalidos ou com sobreposicao de interiores sao recusados, sem reparo/dissolucao
+implicitos. IDs sao preservados em tabelas, sf, matrizes e vertices do grafo.
+
+O limite do estudo segue de load_rasters$shape para biomastats_metrics$boundary
+e para o atributo boundary dos poligonos. A conectividade o herda para seus
+denominadores. Sem limite, usa fecho convexo do habitat, identificado como
+aproximacao nos metadados. boundary explicito pode substituir o herdado.
+
+Distancias minimas entre bordas sao calculadas uma vez e reutilizadas nos
+limiares e remocoes. A analise precisa de metros: conserva projecoes metricas
+ou transforma uma copia para UTM local, com limites espaciais documentados.
+source_polygons conserva as geometrias originais; metadados registram CRS
+de origem/analise, area do limite e unidades. Esta copia metrica nao altera o
+contrato da vetorizacao, que continua herdando seu CRS por padrao.
+
+As rotinas internas otimizadas reproduzem os dez indices do lconnect 0.1.2.
+IIC recalcula caminhos em submatrizes, sem recalcular distancias; AWF usa
+operacoes matriciais e diagonal zero, inclusive na contribuicao marginal.
+patch_imp_fast e API publica para objetos lconnect ja existentes e retorna
+pimp sem escrita. Paralelizacao IIC e optativa e herda o plano do usuario.
+
+As convencoes originais devem ficar explicitas: NC usa agrupamento <= limiar;
+LNK e grafo exploratorio usam < limiar; IIC/CPL usam 0 < distancia < limiar e
+descartam isolados. O grafo exploratorio preserva todos os fragmentos e inclui
+contatos de distancia zero. Campos cluster_lconnect, component, iic_included,
+graph_components e isolates distinguem essas interpretacoes em empates/contatos.
+AWF usa todos os pares e seu limiar controla o decaimento. Se o indice inicial
+for zero, a priorizacao por remocao e matematicamente indefinida: patch_imp_fast
+retorna NaN por fragmento e anexa status "undefined_baseline" ao objeto pimp.
+O mesmo status se aplica a uma paisagem de um fragmento, que nao tem ranking
+relativo. O indice basal continua disponivel (IIC=0/AWF=0) para distinguir esse
+caso; CPL sem pares conectados e NA. A matriz de distancias e densa, portanto
+memoria cresce quadraticamente e paisagens muito grandes requerem outro desenho.
+
+O resultado biomastats_connectivity oferece scenarios com objetos lconnect,
+pimp e igraph, sf enriquecido por limiar, matrizes, tabelas e quatro ggplots:
+grafo espacial, componentes, importancia e resposta ao range de distancias.
+Cores de habitat vem do dicionario; componentes usam paleta categorica propria
+e importancias usam escala continua. Nenhuma identidade individual e inventada
+para habitat composto de classes fundidas. O desenho de ligacoes entre pontos
+interiores e apenas ilustrativo, sem inferir corredores ou distancia centroide.
+Os objetos sao serializaveis e salvos por ferramentas padrao do R.
+
+O exemplo executavel esta em
+`ignorados/testes-locais/teste-local-conectividade.Rmd`, com HTML na mesma
+pasta ignorada pelo Git. Testes incluem equivalencia com con_metric/patch_imp
+originais e upload_land, diagonal AWF, isolados, contatos/empates de limiar,
+unidades, heranca de limite, recuperacao RDS e fluxo completo com o recorte.
+
 ### Mudancas temporais: land_change
 
 `land_change(data, years)` recebe diretamente o objeto de load_rasters e
