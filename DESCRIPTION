@@ -23,10 +23,14 @@ LazyData: false
 Reference:... 
 Suggests:
     patchwork,
+    ggiraph,
+    htmlwidgets,
+    rmarkdown,
     testthat (>= 3.1.7)
 Config/testthat/edition: 3
 Imports:
     grid,
+    igraph (>= 1.6.0),
     ggspatial,
     dplyr,
     geosphere,

@@ -9,8 +9,8 @@
 #'   Available options are: \code{"keep.all"}, \code{"aggregation_index"}, \code{"fragments_number"}, 
 #'   \code{"class_area"}, \code{"edge_density"}, \code{"edge_length"}, and \code{"frag_area"}.
 #'   Default is \code{c("keep.all", "aggregation_index", "fragments_number", "class_area", "edge_density", "edge_length", "frag_area")}.
-#' @param start Numeric value indicating the start year for analysis.
-#' @param end Numeric value indicating the end year for analysis.
+#' @param start Numeric start year; NULL inherits the input time_range.
+#' @param end Numeric end year; NULL inherits the input time_range.
 #' @param zone The zone of interest for calculating the metrics.
 #' @param classes A vector of class codes to include in the analysis. If \code{NULL}, all classes are included by default.
 #' @param hemisphere A character string specifying the hemisphere ('north' or 'south').
@@ -28,6 +28,8 @@
 #'   \item{frag_avg_area}{A ggplot object for the average fragment area over time.}
 #'   \item{metrics}{A character vector of metrics calculated.}
 #'   \item{metrics_table}{A data frame containing the calculated metrics for each year.}
+#'   \item{collection, class_dictionary, metadata}{Inherited collection, selected
+#'   dictionary entries, and source CRS/resolution by year for downstream reuse.}
 #'
 #' @details This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
 #'   It checks for valid metric types and generates summary plots for selected metrics.
@@ -47,16 +49,40 @@
 
 biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggregation_index", "fragments_number", 
                                                          "class_area", "edge_density", "edge_length", "frag_area"), 
-                         start, end, zone, classes = NULL, hemisphere,
+                         start = NULL, end = NULL, zone, classes = NULL, hemisphere,
                          line_color = "blue", point_shape = 16, 
                          point_size = 3, export.raster = TRUE) {
    
+  time_range <- rasters_biomastats$time_range
+  if (is.null(start)) start <- time_range[1L]
+  if (is.null(end)) end <- time_range[2L]
+  if (!is.numeric(time_range) || length(time_range) != 2L || anyNA(time_range) ||
+      any(!is.finite(time_range)) || any(time_range != trunc(time_range)) ||
+      time_range[1L] > time_range[2L] ||
+      !is.numeric(start) || length(start) != 1L || !is.finite(start) || start != trunc(start) ||
+      !is.numeric(end) || length(end) != 1L || !is.finite(end) || end != trunc(end) ||
+      start < time_range[1L] || end > time_range[2L] || start > end ||
+      length(rasters_biomastats$raster) != diff(time_range) + 1L) {
+    stop("start, end e time_range devem definir anos inteiros disponiveis nos rasters.")
+  }
+  collection <- rasters_biomastats$collection
+  if (!is.null(collection)) collection <- .biomastats_collection(collection)
   # definir as classes
   if( is.null(classes) ){
+    if (is.null(collection)) stop("collection e necessaria para selecionar classes pelo dicionario.")
     selector_classes <- raster_index(collection = rasters_biomastats$collection)
     classes <- selector_classes$codes
   }
   
+  class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes) else NULL
+  source_rasters <- rasters_biomastats$raster[seq.int(start, end) - time_range[1L] + 1L]
+  source_metadata <- lapply(source_rasters, function(r) list(
+    crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r)))
+  names(source_metadata) <- as.character(seq.int(start, end))
+  metadata <- list(schema_version = "1.0", collection = collection,
+    time_range = c(start, end), classes = classes, source = source_metadata,
+    reclassification = if (length(classes) == 1L) "selected code preserved; background zero"
+      else "selected classes merged as presence; background zero")
   # Defina as opções válidas de métricas
   valid_metrics <- c("keep.all", "aggregation_index", "fragments_number", "class_area", "edge_density", "edge_length", "frag_area")
   
@@ -73,7 +99,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
   
   rec_map <- NULL
   for(i in 1:(end - (start-1))) {
-    t[[i]] <- lulc_metrics(rasters_biomastats$raster[[i]], zone = zone, classe = classes, hemisphere = hemisphere, export.raster = export.raster)
+    t[[i]] <- lulc_metrics(source_rasters[[i]], zone = zone, classe = classes, hemisphere = hemisphere, export.raster = export.raster)
     rec_map[[i]] <- t[[i]]$reclassified_raster 
     }  
   
@@ -298,5 +324,6 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
   return( list("classes" = classes, "ai_plot" = p_ia, "fragments_number" = p_number, "area_plot" = p_area,
                "edge_density_plot" = p_edge_density, "egde_lenght_plot" = p_edge_length,
                "frag_avg_area" = p_frag_avg_area, 
-               "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end) )
+               "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end,
+               collection = collection, class_dictionary = class_dictionary, metadata = metadata) )
 }

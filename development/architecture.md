@@ -1,4 +1,102 @@
-# Arquitetura e vetorizacao
+# Arquitetura e diretrizes de analise
+
+## Regra obrigatoria para toda funcao nova ou refatorada
+
+**Herdar primeiro; pedir somente decisoes que o objeto de entrada nao contem.**
+Esta regra vale para todas as novas funcoes e etapas intermediarias, incluindo
+vetorizacao, redes e objetos destinados a exportacao; nao e uma particularidade de land_to_graph.
+
+> Removemos `plot_options`: a funcao obtem colecao, classes, CRS e resolucao
+> do objeto de mapas e cruza os codigos com `dict_build()` para nomes e cores.
+
+- Cada etapa recebe diretamente os objetos publicos da etapa anterior, sem
+  exigir scripts de adaptacao, duplicacao de metadados ou reconstrucao manual
+  de estatisticas, tabelas, legendas e geometrias. O contrato deve documentar
+  entradas aceitas, campos herdados, perdas de informacao e saidas reutilizaveis.
+- Colecao vem de `load_rasters()` e aceita texto ou numero. Classes sao
+  identificadas por codigo numerico. Nomes pt/en, grupos e paleta vem do
+  dicionario da colecao; nunca de uma nova lista de opcoes de apresentacao.
+  Os mesmos contratos internos de colecao/dicionario sao compartilhados pelas
+  novas funcoes, evitando implementacoes divergentes.
+- CRS, resolucao e anos vem dos rasters/metadados recebidos. A saida espacial
+  conserva o CRS de origem por padrao; reprojecao exige uma escolha explicita.
+  Se um unico ano torna a selecao inequivoca, nao e preciso informa-lo.
+  Uma etapa que aceita intervalos herda os limites quando nao sao informados.
+- Parametros adicionais representam decisoes analiticas (vizinhanca, peso,
+  dissolucao, selecao temporal). Titulos, temas e escalas sao
+  alterados nos objetos ggplot retornados. Nao criar `plot_options` ou APIs
+  paralelas para informacoes ja presentes no objeto ou no dicionario.
+- Cada transformacao preserva colecao, selecao de classes, dicionario e
+  proveniencia (anos, CRS e resolucao de origem, unidades e convencoes), mesmo
+  quando nao conserva os rasters originais. A selecao temporal deve indexar
+  os anos do objeto de entrada, nunca presumir que o primeiro raster corresponde
+  ao primeiro ano solicitado.
+- Reclassificacao binaria de varias classes perde a identidade original por
+  pixel. A vetorizacao registra o conjunto selecionado, mas nao inventa codigo,
+  nome ou cor unicos para um fragmento misto. Fundo nao recebe a identidade da
+  classe selecionada. Objetos legados sem colecao sao explicitamente incompletos;
+  nao presumir uma colecao para preencher nomes ou cores.
+- Preservar tipos padrao (`sf`, `ggplot`, `igraph`, matrizes e data.frames).
+  Serializar e recuperar deve conservar o contrato e permitir exportacao sem
+  refazer a analise. Formatos externos que nao conservam atributos R devem
+  transportar as chaves em colunas e ter as limitacoes documentadas.
+- Testes devem cobrir o encadeamento real entre funcoes, heranca de metadados,
+  cores equivalentes ao dicionario, CRS herdado/reprojetado, selecao temporal e
+  recuperacao RDS/exportacao. Exemplos locais devem demonstrar esse mesmo fluxo
+  usando apenas funcoes publicas e operacoes padrao dos objetos retornados.
+
+## Contratos nativos, dicionario e interoperabilidade
+
+- Toda etapa necessaria ao fluxo analitico deve estar em funcoes do pacote.
+  Exemplos e testes locais apenas chamam a API publica: nao devem corrigir
+  resultados, recalcular estatisticas nem reconstruir visualizacoes que
+  constituem funcionalidades oferecidas pelo pacote.
+- `dict_build(collection)` e a fonte unica para identidades, nomes em portugues
+  (`classe`, `grupo`), nomes em ingles (`class`, `group`) e cores (`color`).
+  O codigo numerico e a chave de ligacao entre rasters, matrizes, tabelas e
+  grafos; rotulos traduzidos nunca devem substituir essa chave.
+- Tabelas e objetos analiticos preservam ambos os idiomas. A escolha de idioma
+  altera a apresentacao. Cores sao herdadas do dicionario da colecao informada
+  por load_rasters; a API analitica nao exige paleta ou rotulos adicionais.
+  A paleta original do dicionario continua registrada. Codigos desconhecidos
+  permanecem identificaveis e recebem fallback explicito, sem inferir classes.
+- Resultados devem ser objetos prontos para reuso (data.frame, matrix, sf,
+  igraph, ggplot e htmlwidget), com metadados de parametros, colecao, CRS,
+  resolucao, unidades e versao do contrato. Serializacao RDS deve permitir
+  recuperar e exportar a analise sem acessar novamente os rasters originais.
+- As funcoes analiticas novas retornam os resultados prontos em memoria;
+  nao criar uma funcao propria de exportacao nem argumentos de formato, caminho
+  e sobrescrita na analise. A escrita usa os metodos padrao dos objetos:
+  `ggplot2::ggsave()` para graficos personalizaveis pela gramatica ggplot2,
+  `saveRDS()/readRDS()` para a analise completa, `utils::write.csv()` para
+  tabelas, `igraph::write_graph()` para redes, `htmlwidgets::saveWidget()` para
+  widgets e `sf::st_write()` para vetores. CSV deve conservar chaves e nomes
+  UTF-8; RDS conserva o contrato completo. O suporte SHP preexistente de
+  reclass_to_polygons continua documentado no seu contrato.
+- Graficos devem aceitar opcoes documentadas de apresentacao e continuar
+  editaveis na gramatica ggplot2. Grafico estatico e widget sao objetos
+  independentes: alteracoes posteriores em um nao alteram automaticamente o
+  outro. Titulos devem ser editaveis com `ggplot2::labs()` apos a analise; nao
+  entram em opcoes especificas da funcao. Todo grafico estatico inclui uma
+  legenda de classes com codigo e nome localizado, para conservar a leitura
+  em impressao quando os nos usam apenas codigos. Amostras de cor devem ter
+  tamanho fixo e visivel, sem imprimir codigos hexadecimais. A exportacao
+  reutiliza os objetos fornecidos.
+
+`land_to_graph()` implementa essas diretrizes com `language`, sem
+`plot_options`: colecao (texto ou numero), classes presentes, CRS e resolucao
+vem do objeto de load_rasters; nomes e cores vem de dict_build. Um unico ano
+e herdado automaticamente; varios anos exigem selecao. Titulos, temas e
+escalas sao personalizaveis nos ggplots retornados.
+Retorna `biomastats_land_graph`, incluindo `class_dictionary`,
+`metadata`, tabelas, matrizes, igraph e quatro visualizacoes prontas. Os
+resultados podem ser personalizados e salvos diretamente pelas ferramentas
+padrao do R, inclusive apos readRDS. A analise nao escreve arquivos.
+O ranking de fronteiras e retornado como `edge_plot`, sem montagem externa.
+Contagens de adjacencia e comprimentos conservam suas convencoes documentadas;
+personalizacao e exportacao nao mudam os valores calculados.
+
+## Fluxo espacial existente
 
 O projeto e um pacote R: `R/` implementa as funcoes, `NAMESPACE` publica a
 API, `man/` documenta os contratos e `tests/testthat/` valida o comportamento.
@@ -10,6 +108,9 @@ com `biomastats_metrics`. Esta ultima organiza os anos e chama `lulc_metrics`
 para cada raster. `lulc_metrics` seleciona classes, projeta uma copia para UTM
 para as metricas e devolve o raster reclassificado no CRS original.
 `biomastats_metrics` agrupa esses rasters em `rec_map`, na ordem start:end.
+Herda start/end de time_range quando omitidos e repassa collection,
+class_dictionary e metadata, com CRS/resolucao de origem por ano. Quando ha
+recorte temporal, seleciona os rasters pelos indices do intervalo original.
 `reclass_map` apenas desenha esse resultado; nao realiza a reclassificacao.
 
 Para uma classe, `lulc_metrics` preserva seu codigo (por exemplo, floresta = 3);
@@ -17,6 +118,12 @@ para varias classes, substitui os codigos selecionados por 1. A nova funcao
 `reclass_to_polygons` aceita ambos os contratos e normaliza a presenca para 1
 sem alterar o objeto original. Usa terra para poligonizar e sf para geometria,
 reprojecao e escrita. units garante hectares mesmo quando o CRS usa pes.
+O padrao `crs = NULL` conserva o CRS de cada raster. Os objetos sf incluem
+code, classe, class, color, collection e classes alem das medidas geometricas;
+class_dictionary e metadata ficam em atributos do sf e da lista temporal.
+Uma unica classe selecionada identifica a presenca; varias classes fundidas
+conservam seus codigos em classes/dicionario e deixam a identidade individual
+como NA. SHP conserva as colunas; RDS conserva tambem os atributos completos.
 Os fragmentos usam conectividade por aresta; as metricas existentes usam oito
 vizinhos, portanto a contagem pode diferir para pixels em contato diagonal.
 
@@ -36,3 +143,11 @@ sem falhas, avisos ou testes pulados (o grupo OSM esta comentado). Dessas,
 38 verificam vetorizacao, topologia, area, selecao temporal, entradas invalidas,
 shapefiles e recuperacao dos pixels originais de floresta por rasterizacao.
 O exemplo executado gerou 26 fragmentos e 99,81147 hectares em 1985.
+
+Validacao dos contratos de heranca em 14/10/2026: suite completa com 254
+verificacoes aprovadas, sem falhas, erros, avisos ou testes pulados. Inclui
+selecao temporal correta nas metricas, paleta/dicionario compartilhados,
+CRS herdado e reprojecao explicita, presenca/fundo, classes fundidas,
+preservacao de partes geometricas e recuperacao por SHP/RDS. Os dois exemplos
+locais (poligonos e adjacencias) sao renderizados pelo Rmd com build e
+instalacao temporaria do pacote.

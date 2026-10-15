@@ -47,10 +47,13 @@ test_that("landscape metrics and reclassified maps use saved maps", {
   expect_named(metrics, c(
     "classes", "ai_plot", "fragments_number", "area_plot",
     "edge_density_plot", "egde_lenght_plot", "frag_avg_area",
-    "metrics", "metrics_table", "rec_map", "start", "end"
+    "metrics", "metrics_table", "rec_map", "start", "end",
+    "collection", "class_dictionary", "metadata"
   ))
   expect_equal(metrics[["start"]], 1985)
   expect_equal(metrics[["end"]], 1986)
   expect_equal(nrow(metrics[["metrics_table"]]), 2)
+  expect_equal(metrics$collection, mapas$collection)
+  expect_equal(metrics$class_dictionary$code, c(3, 4))
   expect_s3_class(biomastats::reclass_map(metrics, year = 1985), "ggplot")
 })

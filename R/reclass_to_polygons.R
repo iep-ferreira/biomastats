@@ -5,12 +5,14 @@
 #' @param years Anos inteiros desejados; NULL seleciona todos os anos.
 #' @param dissolve Dissolver pixels adjacentes de mesma classe (default TRUE).
 #' @param only_class Retornar somente a classe de interesse (default TRUE).
-#' @param crs CRS de saida, por padrao EPSG 4326. O CRS de entrada e respeitado.
+#' @param crs CRS de saida. NULL (padrao) herda o CRS de cada raster;
+#'   um CRS explicito solicita reprojecao.
 #' @param save_shp Salvar um shapefile por ano (default TRUE).
 #' @param output_dir Pasta de saida, por padrao "./source_codes/shp".
 #' @param file_prefix Prefixo dos arquivos, por padrao "reclass_polygons".
 #' @return Lista nomeada por ano ou, para um unico ano, um objeto sf com
-#'   value (0/1), area_ha, year, fragment_id e geometry. O atributo shp_paths
+#'   value (0/1), area_ha, year, fragment_id, code, classe, class, color,
+#'   collection, classes (codigos selecionados) e geometry. O atributo shp_paths
 #'   contem os caminhos salvos. Anos sem pixels selecionados retornam sf vazio.
 #' @details Codigos preservados pela reclassificacao de uma unica classe sao
 #'   convertidos para 1. NA e excluido. Fragmentos conectados somente por um
@@ -18,9 +20,19 @@
 #'   das metricas de paisagem com oito vizinhos. A area e calculada com sf e
 #'   convertida explicitamente para hectares, inclusive em CRS com pes.
 #'   No shapefile, fragment_id e abreviado para frag_id (limite de 10 caracteres).
+#'   collection e class_dictionary sao herdados do resultado das metricas.
+#'   Os atributos class_dictionary e metadata preservam identidades, paleta,
+#'   selecao temporal, CRS e resolucao de origem, inclusive apos saveRDS/readRDS.
+#'   Para uma classe, code, classe, class e color identificam os poligonos de
+#'   presenca. Para varias classes fundidas, esses campos sao NA: os codigos
+#'   selecionados ficam em classes e no dicionario, sem inventar identidade
+#'   por fragmento. O fundo tambem nao recebe identidade de classe selecionada.
+#'   Objetos antigos sem colecao/dicionario continuam aceitos, com identidades
+#'   desconhecidas (NA); nenhuma colecao e presumida. A exportacao SHP conserva
+#'   as colunas, mas os atributos completos do objeto requerem serializacao RDS.
 #' @export
 reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
-                                only_class = TRUE, crs = 4326,
+                                only_class = TRUE, crs = NULL,
                                 save_shp = TRUE, output_dir = "./source_codes/shp",
                                 file_prefix = "reclass_polygons") {
   if (!is.list(obj) || !all(c("rec_map", "start", "end", "classes") %in% names(obj))) {
@@ -49,8 +61,32 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
       stop("dissolve, only_class e save_shp devem ser logicos escalares.")
     }
   }
-  target_crs <- sf::st_crs(crs)
-  if (is.na(target_crs)) stop("crs deve especificar um CRS valido.")
+  target_crs <- if (is.null(crs)) NULL else sf::st_crs(crs)
+  if (!is.null(target_crs) && is.na(target_crs)) stop("crs deve especificar um CRS valido.")
+  collection <- obj$collection
+  if (!is.null(collection)) collection <- .biomastats_collection(collection)
+  dictionary <- obj$class_dictionary
+  if (is.null(dictionary) && !is.null(collection)) {
+    dictionary <- .biomastats_dictionary(collection, obj$classes)
+  }
+  if (!is.null(dictionary)) {
+    fields <- c("code", "classe", "class", "color")
+    if (!is.data.frame(dictionary) || !all(fields %in% names(dictionary)) ||
+        anyDuplicated(dictionary$code) || any(!obj$classes %in% dictionary$code)) {
+      stop("class_dictionary deve identificar todas as classes selecionadas.")
+    }
+    dictionary <- dictionary[match(sort(unique(obj$classes)), dictionary$code), , drop = FALSE]
+  }
+  source <- setNames(lapply(years, function(yr) {
+    r <- obj$rec_map[[yr - obj$start + 1L]]
+    if (!inherits(r, "RasterLayer")) stop("rec_map deve conter objetos RasterLayer.")
+    if (is.na(sf::st_crs(r))) stop("Raster de entrada sem CRS.")
+    list(crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r))
+  }), as.character(years))
+  metadata <- list(schema_version = "1.0", collection = collection,
+    classes = obj$classes, years = years, source = source,
+    dissolve = dissolve, only_class = only_class, connectivity = 4L,
+    area_unit = "ha", upstream = obj$metadata)
   if (save_shp && (!is.character(output_dir) || length(output_dir) != 1L ||
       is.na(output_dir) || !nzchar(output_dir) || !is.character(file_prefix) ||
       length(file_prefix) != 1L || is.na(file_prefix) ||
@@ -61,6 +97,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
     r <- obj$rec_map[[yr - obj$start + 1L]]
     if (!inherits(r, "RasterLayer")) stop("rec_map deve conter objetos RasterLayer.")
     if (is.na(sf::st_crs(r))) stop("Raster de entrada sem CRS.")
+    year_crs <- if (is.null(target_crs)) sf::st_crs(r) else target_crs
     values <- raster::getValues(r)
     allowed <- if (length(obj$classes) == 1L) c(0, 1, obj$classes) else c(0, 1)
     if (any(!is.na(values) & !values %in% allowed)) {
@@ -71,18 +108,42 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
     if (all(is.na(values))) {
       return(sf::st_sf(value = numeric(), area_ha = numeric(), year = numeric(),
                        fragment_id = integer(),
-                       geometry = sf::st_sfc(crs = target_crs)))
+                       geometry = sf::st_sfc(crs = year_crs)))
     }
     r <- raster::setValues(r, values)
     p <- terra::as.polygons(terra::rast(r), aggregate = dissolve, na.rm = TRUE)
     p <- sf::st_as_sf(p)
     names(p)[1L] <- "value"
+    # Homogenize mixed POLYGON/MULTIPOLYGON before splitting fragments.
+    p <- sf::st_cast(p, "MULTIPOLYGON", warn = FALSE)
     p <- sf::st_cast(p, "POLYGON", warn = FALSE)
-    p <- sf::st_transform(p, target_crs)
+    p <- sf::st_transform(p, year_crs)
     p$area_ha <- as.numeric(units::set_units(sf::st_area(p), "ha"))
     p$year <- rep(yr, nrow(p))
     p$fragment_id <- seq_len(nrow(p))
     p[, c("value", "area_ha", "year", "fragment_id", "geometry")]
+  })
+  names(result) <- as.character(years)
+  result <- lapply(names(result), function(yr) {
+    p <- result[[yr]]
+    p$code <- rep(NA_real_, nrow(p))
+    p$classe <- p$class <- p$color <- rep(NA_character_, nrow(p))
+    p$collection <- rep(if (is.null(collection)) NA_real_ else collection, nrow(p))
+    p$classes <- rep(NA_character_, nrow(p))
+    p$classes[p$value == 1] <- paste(sort(unique(obj$classes)), collapse = ",")
+    if (length(unique(obj$classes)) == 1L && !is.null(dictionary)) {
+      presence <- p$value == 1
+      for (field in c("code", "classe", "class", "color")) p[[field]][presence] <- dictionary[[field]][1L]
+    }
+    p <- p[, c("value", "area_ha", "year", "fragment_id", "code", "classe",
+               "class", "color", "collection", "classes", "geometry")]
+    attr(p, "class_dictionary") <- dictionary
+    year_metadata <- metadata
+    year_metadata$years <- as.numeric(yr)
+    year_metadata$source <- source[yr]
+    year_metadata$output_crs_wkt <- sf::st_crs(p)$wkt
+    attr(p, "metadata") <- year_metadata
+    p
   })
   names(result) <- as.character(years)
   shp_paths <- character()
@@ -100,6 +161,10 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
     }, character(1))
   }
   out <- if (length(result) == 1L) result[[1L]] else result
+  if (length(result) > 1L) {
+    attr(out, "class_dictionary") <- dictionary
+    attr(out, "metadata") <- metadata
+  }
   attr(out, "shp_paths") <- shp_paths
   out
 }
