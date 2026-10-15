@@ -1,132 +1,72 @@
 #' Calculate Land Classes Area
 #'
-#' This function calculates the area of land classes over a specified time range.
-#'
-#' @param data A list containing two elements: 
-#' \describe{
-#'   \item{time_range}{A vector of two elements specifying the start and end years.}
-#'   \item{raster}{A list of raster objects for each year in the time range.}
-#' }
-#' @param dec_places An integer indicating the number of decimal places to round the area values.
-#' @param plot_type A character string indicating the type of plot to generate, either "profile" (default) or "areaplot".
-#'
-#' @return A list with four elements:
-#' \describe{
-#'   \item{Years}{A vector of years covered by the time range.}
-#'   \item{Occupied area}{A list with the calculated areas for each land class and year.}
-#'   \item{aggregate_data}{A data frame with the calculated areas for each land class and year.}
-#'   \item{time_series}{A ggplot2 object with the time series of areas, either a line plot or an area plot.}
-#' }
-#' @importFrom ggplot2 ggplot aes scale_color_manual scale_fill_manual geom_line geom_point geom_area theme_minimal theme element_line element_text scale_y_continuous
-#' @importFrom graphics par
-#' @importFrom raster area getValues
-#' @importFrom scales pretty_breaks
+#' Calculates areas in square kilometres and preserves the native analytical
+#' contract on the returned list, table and ggplot. Absent classes in observed
+#' years receive zero; years without valid pixels remain NA.
+#' @param data Native maps object returned by load_rasters.
+#' @param dec_places Decimal places for displayed areas. Statistical analysis
+#'   uses the unrounded area_raw column.
+#' @param plot_type Either "areaplot" (default) or "profile".
+#' @return List with Years, Occupied area, aggregate_data, time_series and
+#'   collection. Attributes metadata and class_dictionary are inherited by the
+#'   list, table and time_series ggplot. Metadata records coverage and units.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' result <- get_area(data = biomastats_raster, plot_type = "areaplot")
-#' }
-
-get_area <- function(data = NULL, dec_places = 3, plot_type = c("areaplot")) {
-
-  # Dictionary
-  dic <- dict_build(data$collection)
-
-  # Time span of study
-  time_span <- (data$time_range[2] - data$time_range[1]) + 1
-  time_start <- data$time_range[1]
-  
-  areas <- NULL
-  for(pos in 1:time_span) {
-    areas_y <- raster::area(data$raster[[pos]])
-    v_r <- raster::getValues(data$raster[[pos]])
-    areas[[pos]] <- tapply(areas_y, v_r, sum)
-  } # fim for
-
-  df <- NULL
-  for(pos in 1:time_span) {
-    aux <-  data.frame( rep(pos + time_start - 1, dim(areas[[pos]])) ,  round(areas[[pos]],dec_places))
-    df <- rbind(df, cbind(names(areas[[pos]]), aux))
-  } # fim for
-  colnames(df) <- c("land_class", "year", "area")
-
-  land_class_name <- NULL
-  land_class_color <- NULL
-  for(j in 1:length(df$land_class)) {
-    aux_2 <- df$land_class[j] == dic$code
-    land_class_name[j] <- dic$class[aux_2]
-    land_class_color[j] <- dic$color[aux_2]
+get_area <- function(data = NULL, dec_places = 3, plot_type = "areaplot") {
+  plot_type <- match.arg(plot_type, c("areaplot", "profile"))
+  if (!is.list(data) || length(data$time_range) != 2L ||
+      any(!is.finite(data$time_range)) || any(data$time_range != trunc(data$time_range)) ||
+      data$time_range[2] < data$time_range[1]) stop("data deve ser um objeto de mapas com time_range valido.")
+  years <- seq.int(data$time_range[1], data$time_range[2])
+  if (length(data$raster) != length(years)) stop("Anos e rasters incompativeis.")
+  if (length(dec_places) != 1L || !is.numeric(dec_places) || !is.finite(dec_places) ||
+      dec_places < 0 || dec_places != trunc(dec_places)) stop("dec_places deve ser inteiro nao negativo.")
+  collection <- .biomastats_collection(data$collection)
+  areas <- coverage <- source <- vector("list", length(years))
+  common_support <- TRUE
+  for (i in seq_along(years)) {
+    r <- terra::rast(data$raster[[i]])
+    if (terra::nlyr(r) != 1L || !nzchar(terra::crs(r))) stop("Cada ano deve ter um raster categorico com CRS.")
+    v <- terra::values(r, mat = FALSE)
+    if (any(!is.na(v) & (!is.finite(v) | v != trunc(v)))) stop("Classes devem ser codigos inteiros.")
+    a <- terra::values(terra::cellSize(r, unit = "km", mask = FALSE), mat = FALSE)
+    ok <- !is.na(v)
+    if (i == 1L) { first_raster <- r; first_mask <- ok } else {
+      common_support <- common_support && isTRUE(terra::compareGeom(first_raster,r,stopOnError=FALSE)) && identical(first_mask,ok)
+    }
+    areas[[i]] <- tapply(a[ok], v[ok], sum)
+    coverage[[i]] <- data.frame(year = years[i], valid_cells = sum(ok),
+      observed_area_km2 = sum(a[ok]), grid_cells = length(v))
+    source[[i]] <- list(crs = terra::crs(r), resolution = terra::res(r))
   }
-  df$land_class_name <- land_class_name
-
-  if(plot_type == "profile"){
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = year, y = area, group = land_class_name, color = land_class_name)) +
-    ggplot2::scale_color_manual(values = land_class_color, limits = land_class_name, name = "Land Use") +
-    ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
-    ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
-    ggplot2::ylab(expression(paste("Area (", km^2, ")"))) +
-    ggplot2::xlab("Years") +
-    
-    # Escala de Y com pelo menos 8 divisões
-    ggplot2::scale_y_continuous(breaks = scales::pretty_breaks(n = 8)) + 
-    
-    # Aumenta a espessura das linhas da grade
-    ggplot2::theme_minimal(base_size = 15) +  # Define o tamanho base dos textos (letras maiores)
-    
-    ggplot2::theme(
-      panel.grid.major = ggplot2::element_line(color = "gray50", linewidth  = 0.3),  # Grade mais evidente
-      panel.grid.minor = ggplot2::element_line(color = "gray100", linewidth = 0.3),  # Grade secundária mais sutil
-      axis.title.x = ggplot2::element_text(size = 18),  # Tamanho maior para o rótulo do eixo X
-      axis.title.y = ggplot2::element_text(size = 18),  # Tamanho maior para o rótulo do eixo Y
-      axis.text.x = ggplot2::element_text(size = 14),   # Tamanho maior para os ticks do eixo X
-      axis.text.y = ggplot2::element_text(size = 14),   # Tamanho maior para os ticks do eixo Y
-      legend.position = "right"
-    )
-  }
-
-  if(plot_type == "areaplot"){
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = year, y = area, group = land_class_name, fill = land_class_name)) +
-    ggplot2::scale_fill_manual(values = land_class_color, limits = land_class_name, name = "Land Use") +
-    
-    # Usar geom_area para criar o gráfico de áreas empilhadas
-    ggplot2::geom_area(alpha = 0.6, linewidth = 0.5, color = "black") +  # Define a transparência e as bordas
-    
-    ggplot2::ylab(expression(paste("Area (", km^2, ")"))) +
-    ggplot2::xlab("Years") +
-    
-    # Escala de Y com pelo menos 8 divisões
-    ggplot2::scale_y_continuous(breaks = scales::pretty_breaks(n = 8)) + 
-    
-    # Aumenta a espessura das linhas da grade
-    ggplot2::theme_minimal(base_size = 15) +  # Define o tamanho base dos textos (letras maiores)
-    
-    ggplot2::theme(
-      panel.grid.major = ggplot2::element_line(color = "gray50", linewidth  = 0.3),  # Grade mais evidente
-      panel.grid.minor = ggplot2::element_line(color = "gray100", linewidth = 0.3),  # Grade secundária mais sutil
-      axis.title.x = ggplot2::element_text(size = 18),  # Tamanho maior para o rótulo do eixo X
-      axis.title.y = ggplot2::element_text(size = 18),  # Tamanho maior para o rótulo do eixo Y
-      axis.text.x = ggplot2::element_text(size = 14),   # Tamanho maior para os ticks do eixo X
-      axis.text.y = ggplot2::element_text(size = 14),   # Tamanho maior para os ticks do eixo Y
-      legend.position = "right"
-    )
-  }
-  
-  if( !plot_type %in% c("profile", "areaplot")  ){ 
-    p <- NULL
-    message("Undefined plot type. Choose 'areaplot' or 'profile'! ")
-  }
-  
-  return(
-    list(
-      "Years" = data$time_range[1]:data$time_range[2],
-      "Occupied area" = areas,
-      "aggregate_data" = df,
-      "time_series" = p, 
-      "collection" = data$collection
-    )
-  )
-
+  codes <- sort(unique(as.numeric(unlist(lapply(areas, names)))))
+  if (!length(codes)) stop("Nenhuma classe observada nos rasters.")
+  dic <- .biomastats_dictionary(collection, codes)
+  df <- do.call(rbind, lapply(seq_along(years), function(i) {
+    a <- as.numeric(areas[[i]][match(as.character(codes), names(areas[[i]]))])
+    if (coverage[[i]]$valid_cells > 0) a[is.na(a)] <- 0
+    data.frame(land_class = as.character(codes), year = years[i], area = round(a, dec_places),
+      area_raw = a, land_class_name = dic$class, classe = dic$classe, color = dic$color)
+  }))
+  palette <- stats::setNames(dic$color, as.character(dic$code))
+  labels <- paste(dic$code, dic$class)
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = year, y = area, group = land_class))
+  if (plot_type == "profile") p <- p +
+    ggplot2::geom_line(ggplot2::aes(colour = land_class)) +
+    ggplot2::geom_point(ggplot2::aes(colour = land_class)) +
+    ggplot2::scale_colour_manual(values = palette, breaks = names(palette), labels = labels, name = "Land use")
+  else p <- p + ggplot2::geom_area(ggplot2::aes(fill = land_class)) +
+    ggplot2::scale_fill_manual(values = palette, breaks = names(palette), labels = labels, name = "Land use")
+  p <- p + ggplot2::theme_minimal() + ggplot2::labs(x = "Year", y = "Area (km2)")
+  metadata <- list(schema_version = "1.0", collection = collection, classes = codes,
+    years = years, area_unit = "km2", source = stats::setNames(source, years),
+    coverage = do.call(rbind, coverage), common_support = common_support, upstream = data$metadata,
+    absent_class = "zero only in years with observed pixels", precision = "area_raw unrounded")
+  attr(df, "metadata") <- attr(p, "metadata") <- metadata
+  attr(df, "class_dictionary") <- attr(p, "class_dictionary") <- dic
+  p$data <- df
+  out <- list(Years = years, "Occupied area" = areas, aggregate_data = df,
+    time_series = p, collection = collection)
+  attr(out, "metadata") <- metadata
+  attr(out, "class_dictionary") <- dic
+  out
 }
-
-

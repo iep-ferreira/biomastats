@@ -16,58 +16,66 @@ distance_to_feature(
 )
 }
 \arguments{
-\item{reference_raster}{A `RasterLayer` defining the analysis extent,
+\item{reference_raster}{A \code{RasterLayer} defining the analysis extent,
 resolution, CRS, and valid-cell mask.}
 
-\item{key_feature}{An OSM key such as `"highway"` or `"waterway"`. It is
-required when `feature_raster` is `NULL` and is otherwise used as a plot
-label.}
+\item{key_feature}{An OSM key such as \code{"highway"} or
+\code{"waterway"}. It is required when \code{feature_raster} is \code{NULL}
+and is otherwise used as a plot label.}
 
-\item{value_feature}{An optional OSM value such as `"primary"`, `"river"`,
-`"water"`, or `"hospital"`. Use `NULL` to match every value for the key;
-a specific value is recommended to avoid very large Overpass queries.}
+\item{value_feature}{An optional OSM value such as \code{"primary"},
+\code{"river"}, \code{"water"}, or \code{"hospital"}. Use \code{NULL} to
+match every value for the key; a specific value is recommended to avoid very
+large Overpass queries.}
 
-\item{provider}{Data provider. Only `"osm"` is currently supported.}
+\item{provider}{Data provider. Only \code{"osm"} is currently supported.}
 
-\item{buffer_distance}{Buffer around the valid reference extent, in metres,
-passed to [load_osm_data()]. Defaults to `2000` (2 km).}
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres, used when the feature must be loaded from OSM. The default is
+2000 (2 km).}
 
 \item{osm_options}{Named list of connection options passed to
-[load_osm_data()], such as `timeout`, `overpass_urls`, `use_cache`, and
-`cache_ttl_days`. Ignored when `feature_raster` is supplied.}
+\code{load_osm_data()}, such as \code{timeout}, \code{overpass_urls},
+\code{use_cache}, and \code{cache_ttl_days}. Ignored when
+\code{feature_raster} is supplied.}
 
 \item{feature_raster}{Optional rasterized feature returned by
-[load_osm_data()]. When supplied, no OSM request is made.}
+\code{load_osm_data()}. When supplied, no OSM request is made.}
 
-\item{plot}{Logical; if `TRUE`, return an adaptable `ggplot2` map. Use
-`FALSE` to calculate only the raster.}
+\item{plot}{Logical; if \code{TRUE}, return an adaptable \code{ggplot2} map.
+Use \code{FALSE} to calculate only the raster.}
 }
 \value{
-A list with two elements: `raster`, a `RasterLayer` of distances to
-  the nearest matching OSM feature, and `plot`, an adaptable `ggplot` map.
+A list with two elements: \code{raster}, a \code{RasterLayer} of distances to
+the nearest matching OSM feature, and \code{plot}, an adaptable \code{ggplot}
+map.
 }
 \description{
 Calculates the straight-line distance from each valid reference cell to the
-nearest occupied cell in a rasterized feature. A feature previously loaded
-by [load_osm_data()] can be supplied through `feature_raster`, avoiding a
-repeated OSM request. If `feature_raster` is `NULL`, the function retains
-its convenient standalone behavior and loads the requested OSM feature.
+nearest occupied feature cell. A raster previously loaded by
+\code{load_osm_data()} can be reused through \code{feature_raster}. If it is
+\code{NULL}, the function loads the requested OSM feature for standalone use.
 }
 \details{
 OSM uses an open key/value tagging system rather than a closed feature list.
-Common keys applicable to distance calculations include `highway`,
-`railway`, `waterway`, `barrier`, and `power` for predominantly linear
-features; `landuse`, `leisure`, `building`, and `natural` for predominantly
-areal features; and `amenity`, `shop`, `tourism`, and `place` for point or
-mixed geometries. Use [osmdata::available_features()] to retrieve current
-keys and [osmdata::available_tags()] to inspect values for a selected key.
-These discovery functions require network access.
+Common keys applicable to distance calculations include \code{highway},
+\code{railway}, \code{waterway}, \code{barrier}, and \code{power} for
+predominantly linear features; \code{landuse}, \code{leisure},
+\code{building}, and \code{natural} for predominantly areal features; and
+\code{amenity}, \code{shop}, \code{tourism}, and \code{place} for point or
+mixed geometries. Use \code{osmdata::available_features()} to retrieve current
+keys and \code{osmdata::available_tags()} to inspect values for a selected
+key. These discovery functions require network access.
+
+For multiple metrics or features, use \code{integrate_feature()}. It loads
+each OSM feature once and passes the resulting raster to this function.
 
 Distances are returned in metres for longitude/latitude rasters and in the
-map units of projected rasters. Cells that are `NA` in `reference_raster`
-remain `NA` in the result. The returned `plot` is a regular `ggplot2`
-object with English labels, so it can be customized with `ggplot2` layers
-and exported with [ggplot2::ggsave()].
+map units of projected rasters. Cells that are \code{NA} in
+\code{reference_raster} remain \code{NA} in the result. The returned
+\code{plot} is a regular \code{ggplot2} object with English labels, so it can
+be customized with \code{ggplot2} layers and exported with
+\code{ggplot2::ggsave()}.
 }
 \examples{
 \dontrun{

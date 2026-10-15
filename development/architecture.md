@@ -255,3 +255,124 @@ CRS herdado e reprojecao explicita, presenca/fundo, classes fundidas,
 preservacao de partes geometricas e recuperacao por SHP/RDS. Os dois exemplos
 locais (poligonos e adjacencias) sao renderizados pelo Rmd com build e
 instalacao temporaria do pacote.
+
+## Series anuais de uso e ocupacao: land_time_series
+
+### Etapas separadas de inferencia serial
+
+Os gráficos seriais avaliam a curva do modelo em uma malha interior densa,
+sem alterar nem imputar observações. Diagnósticos e projeções mantêm um gráfico
+de referência do ajuste. Densidade do limiar probabilístico, faixa de transição
+(quantis 10%–90%) e IC bootstrap do centro são objetos distintos e identificados.
+As tabelas `curve`, `kernels` e `transition_bands` são retornos nativos.
+A correlação permite níveis, diferenças e resíduos de tendências lineares;
+Pearson retorna separadamente o p-valor convencional e a aproximação serial
+AR(1).
+
+`land_time_series()` prepara exclusivamente o objeto temporal nativo, mantendo
+`data`, `class_dictionary` e `metadata` herdados de `get_area()`. Nenhuma
+seleção de modelo, correlação ou projeção deve ser executada implicitamente nessa
+etapa. A API analítica é composta por objetos serializáveis e interoperáveis:
+
+- `series_correlation()` recebe exatamente duas classes escolhidas, plota as duas
+  séries e retorna uma medida de associação com significância.
+- `series_fit_regime()` recebe uma classe e um modelo explícito. `segmented`,
+  `bent_cable`, `prob_bent_uniform` e `prob_bent_logistic` mantêm continuidade;
+  os dois últimos são bent-cables probabilísticos com limiar aleatório.
+- `series_diagnostics()` recebe o ajuste e concentra qualidade, ACF/PACF
+  residual e Ljung--Box.
+- `series_forecast()` recebe o próprio ajuste, uma série por vez, sem promover
+  seleção automática de modelo durante a projeção.
+
+Cada etapa devolve tabelas, metadados, dicionário e ggplots editáveis. Arquivos
+devem ser salvos pelo usuário a partir desses retornos, preservando a gramática
+do ggplot2 e evitando scripts externos ao pacote.
+
+`get_area()` preserva a API preexistente (Years, Occupied area, aggregate_data,
+time_series, collection), acrescentando atributos metadata/class_dictionary no
+resultado, na tabela e no ggplot. A tabela conserva area para apresentacao e
+area_raw sem arredondamento para inferencia. Areas sao km2 calculadas por
+terra::cellSize, incluindo correcao de projecao. Classes ausentes recebem zero
+apenas em anos com pixels observados; anos inteiramente sem dados permanecem NA.
+Metadados registram cobertura e se a grade/mascara espacial e identica entre anos.
+Variacao de suporte espacial gera aviso na analise; nao deve ser confundida com
+mudanca de uso. Colecao, nomes e cores continuam derivados de dict_build.
+
+`land_time_series(get_area(mapas)$time_series)` aceita diretamente o grafico,
+o resultado completo de get_area ou sua tabela. Atributos sao recuperados da
+tabela se a manipulacao de um ggplot os remover. Tabelas externas sem metadados
+usam unidade desconhecida e rotulos neutros: nao presumir colecao. Anos faltantes
+viram NA; nao interpolar nem transformar ausencia de observacao em ausencia de
+classe. Series incompletas ou com menos de oito anos nao recebem modelos, mas
+mantem estatisticas descritivas e status explicitos. Series constantes recebem
+projecoes constantes sem intervalos inferenciais.
+
+O projeto de IC de Beatriz Munari (2022), secoes 4.2-4.3, fundamenta o modelo
+quadratico bent-cable. A implementacao atual usa maxima verossimilhanca Gaussiana
+estacionaria completa, erros independentes ou AR(1), selecao AICc/AIC/BIC e de zero
+a cinco transicoes conforme suporte amostral (padrao maximo dois). Nao implementa
+MCMC, Stan, AR(k) geral ou toda a familia de limiares aleatorios do projeto.
+A otimizacao multistart e deterministica e sujeita a otimos locais. Cada regime
+externo requer min_segment observacoes, transicoes nao se sobrepoem, gamma >=
+0.05 ano e |rho| <= 0.98. Criterios contam coeficientes, centros, larguras, rho
+e variancia; convergencia e solucoes na fronteira sao registradas.
+
+As tabelas retornam resumo descritivo, inclinacao robusta de Sen, variacoes
+anuais, candidatos, modelos completos, coeficientes/covariancia condicional,
+transicoes, residuos/inovacoes, diagnosticos, correlacoes e projecoes. A faixa
+q20-q80 e a regiao transiente do limiar uniforme (tau +/- 0.6*gamma), nao um
+intervalo de confianca do centro. Pearson/Spearman incluem niveis, diferencas e
+residuos; p-valores e ajuste BH sao exploratorios diante da autocorrelacao,
+selecao e natureza composicional das areas. Diferencas de area nao substituem
+as matrizes de transicao espacial de land_change.
+
+Validacao reserva anos finais e refaz selecao/ajuste somente no prefixo de treino,
+comparando RMSE/MAE com referencia ingenua. Projecoes extrapolam o regime final
+com decaimento do residuo AR. Intervalos condicionais incluem inovacao e
+covariancia dos coeficientes, mas excluem incerteza de transicoes, rho e selecao.
+Nao truncar previsoes negativas nem impor conservacao por normalizacao silenciosa;
+retornar flags e totais para inspecao. Ljung-Box e diagnostico indicativo.
+
+Graficos de perfis, transicoes, variacoes, diagnostico e projecoes herdam cores
+e legendas codigo/nome; a matriz de correlacoes usa escala numerica propria e
+rotulos completos. Todas as saidas sao serializaveis por saveRDS/readRDS e os
+graficos personalizaveis via ggplot2. Sem funcao de exportacao ou scripts auxiliares
+no fluxo do usuario. Exemplo local: ignorados/testes-locais/teste-local-series-temporais.Rmd
+com HTML executado na mesma pasta ignorada. Documentacao Rd deve ser gerada de
+forma restrita aos arquivos alterados, evitando reformatar outras paginas.
+
+### Regimes com múltiplas transições e correlação por objetivo
+
+- `series_fit_regime()` ajusta de 0 a `max_breaks` transições (padrão 3) e
+  seleciona por AICc/AIC/BIC; `breaks = k` fixa o número. Mínimos quadrados
+  perfilados: coeficientes lineares exatos dados centros e escalas, refinados por
+  L-BFGS-B a partir de uma grade, com separação mínima entre centros. Todos os
+  candidatos ficam em `model_table`.
+- Para U-BC e L-BC, `kernels` contém a densidade/CDF do limiar de cada transição e
+  `transition_bands` os quantis 10%–90%. Os gráficos sempre mostram a curva
+  ajustada avaliada em malha interior densa, sem criar observações.
+- `change_points` traz estimativa pontual, IC bootstrap percentil (residual ou em
+  blocos), escala, faixa e inclinações antes/depois de cada centro.
+- Textos não ASCII nos gráficos usam escapes `\u` no código-fonte. Cores do
+  dicionário ficam nos preenchimentos; cores muito claras são escurecidas apenas
+  em linhas e contornos.
+
+### Regras de organização e apresentação (obrigatórias)
+
+- **Um arquivo por função exportada.** Cada função pública fica em
+  `R/<nome_da_funcao>.R`, com seu bloco roxygen e os auxiliares internos que só
+  ela usa; o Rd correspondente aponta para esse arquivo. Auxiliares
+  compartilhados por várias funções ficam em arquivos internos nomeados pelo
+  tema (por exemplo, `R/series_presentation.R`). No módulo temporal:
+  `land_time_series.R`, `series_correlation.R`, `series_fit_regime.R`,
+  `series_diagnostics.R` e `series_forecast.R`.
+- **Legendas sempre em pt e en.** Toda função que gera gráficos recebe
+  `language = c("pt", "en")`, e todos os textos (eixos, legendas, subtítulos,
+  notas) passam pelo seletor interno `.tr()`. Funções que recebem um objeto
+  ajustado herdam o idioma dele, mas aceitam `language` explícito.
+- **Associação enxuta.** `series_correlation()` apenas representa as duas séries
+  e uma medida de associação com significância (Pearson, Spearman ou Kendall
+  sobre níveis, diferenças ou resíduos sem tendência; `p_serial` AR(1) para
+  Pearson). Análises adicionais ficam a cargo do usuário, a partir de `data`.
+- **Somente R.** Edições, testes, documentação e renderização usam R e
+  ferramentas do pacote; não introduzir scripts em outras linguagens.

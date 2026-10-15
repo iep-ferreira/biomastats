@@ -22,15 +22,15 @@ load_rasters(
 
 \item{end}{A numeric value indicating the end year for raster data.}
 
-\item{method}{Raster source: `"download"` or `"library"`.}
+\item{method}{Raster source: \code{"download"} or \code{"library"}.}
 
 \item{export_folder_path}{Directory where downloaded raster files are stored.}
 
 \item{import_folder_path}{Directory containing an existing raster library.}
 
-\item{type}{Data type requested from the Biomastats API. Default is "cover".}
+\item{type}{Data type requested from the Biomastats API. Default is \code{"cover"}.}
 
-\item{collection}{The collection version. Default is "10".}
+\item{collection}{Collection version. Default is \code{"10"}.}
 }
 \value{
 A list containing the shapefile, time range, and masked raster data.

@@ -14,23 +14,15 @@ download_maps(
 }
 \arguments{
 \item{fragment}{Fragment identifier.}
-
 \item{type}{Data type used by the manifest cache.}
-
-\item{collection}{Collection requested from the API and used to identify
-local files and the manifest cache.}
-
+\item{collection}{Collection requested from the API and used to identify local files and the manifest cache.}
 \item{year}{One or more years to select from the manifest.}
-
 \item{export_folder_path}{Directory where the raster file will be stored.}
 }
-\value{
-Invisibly returns the local file paths in the same order as `year`.
-}
+\value{Invisibly returns the local file paths in the same order as \code{year}.}
 \description{
 Reuses valid local files before reading the cached tile manifest. For each
-missing year, one of the available links is selected at random and
-downloaded.
+missing year, one of the available links is selected at random and downloaded.
 }
 \examples{
 \dontrun{

@@ -28,23 +28,24 @@ and the output raster geometry.}
 
 \item{provider}{Data provider. Only `"osm"` is currently supported.}
 
-\item{buffer_distance}{Buffer around the valid reference extent, in metres.
-Defaults to `2000` (2 km). Use `0` to disable the buffer.}
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres. The default is 2000 (2 km), which helps include features crossing
+the study-area border without querying an unnecessarily large area.}
 
 \item{timeout}{Positive number of seconds allowed by each Overpass query.
-Defaults to `60`.}
+Defaults to 60.}
 
 \item{overpass_urls}{Optional character vector of Overpass interpreter URLs,
-tried in order. When `NULL`, the endpoint configured in `osmdata` is tried
-first, followed by global fallback instances.}
+tried in order. When \code{NULL}, the endpoint configured in \code{osmdata}
+is tried first, followed by global fallback instances.}
 
-\item{use_cache}{Logical. If `TRUE`, reuse a successful query with the same
-rounded bounding box, key, and value. An expired entry is only used when
+\item{use_cache}{Logical. If \code{TRUE}, reuse a successful query with the
+same rounded bounding box, key, and value. An expired entry is only used when
 every Overpass endpoint fails.}
 
-\item{cache_ttl_days}{Non-negative cache validity period in days. Defaults
-to `7`. The cache directory can be customized with the
-`biomastats.osm_cache_dir` option.}
+\item{cache_ttl_days}{Non-negative cache validity period in days. Defaults to
+7. The cache directory can be customized with the
+\code{biomastats.osm_cache_dir} option.}
 }
 \value{
 A `Raster` object with the rasterized OSM feature aligned to
@@ -54,21 +55,22 @@ A `Raster` object with the rasterized OSM feature aligned to
 Queries OpenStreetMap for a feature inside the extent of a reference
 raster, then rasterizes the returned geometries using the same extent and
 resolution. The query is reduced to the smallest bounding box containing
-valid reference cells, then expanded by buffer_distance metres. The default
-buffer is 2 km, which brings nearby features crossing the study-area border
-into the query without querying an unnecessarily large area. The
+valid reference cells, then expanded by `buffer_distance` metres. The buffer
+brings features crossing the study-area border into the query and reduces
+edge effects in the distance raster. The
 OSM query is made with `osmdata::opq()` and therefore may require network
 access and an available Overpass provider. Successful responses are cached
-for seven days by default. If the preferred Overpass endpoint fails, the
-function tries alternative global endpoints and can use an expired cache
-entry as a final availability fallback. If the installed
+for seven days by default. If the preferred endpoint fails, alternative
+global endpoints are tried, and an expired cache entry can be used as a final
+availability fallback. If the installed
 `osmdata` version cannot assemble the returned feature metadata, the same
 query is read from OSM XML through the GDAL driver used by `sf`.
 }
 \details{
 The current implementation supports OpenStreetMap through `osmdata` only.
-For repeated large-area or batch processing, a regional PBF extract remains
-more appropriate than public Overpass instances.
+Version 0.4.0 or newer is required. For repeated large-area or batch
+processing, a regional PBF extract is more appropriate than public Overpass
+instances.
 }
 \examples{
 \dontrun{

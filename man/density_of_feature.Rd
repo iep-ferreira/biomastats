@@ -18,61 +18,62 @@ density_of_feature(
 )
 }
 \arguments{
-\item{reference_raster}{A `RasterLayer` defining the analysis extent,
+\item{reference_raster}{A \code{RasterLayer} defining the analysis extent,
 resolution, CRS, and valid-cell mask.}
 
-\item{key_feature}{An OSM key such as `"highway"` or `"waterway"`. It is
-required when `feature_raster` is `NULL` and is otherwise used as a plot
-label.}
+\item{key_feature}{An OSM key such as \code{"highway"} or
+\code{"waterway"}. It is required when \code{feature_raster} is \code{NULL}
+and is otherwise used as a plot label.}
 
-\item{value_feature}{An optional OSM value. Use `NULL` to match every value
-for the key; a specific value is recommended for large study areas.}
+\item{value_feature}{An optional OSM value. Use \code{NULL} to match every
+value for the key; a specific value is recommended for large study areas.}
 
-\item{provider}{Data provider. Only `"osm"` is currently supported.}
+\item{provider}{Data provider. Only \code{"osm"} is currently supported.}
 
-\item{buffer_distance}{Buffer around the valid reference extent, in metres,
-passed to [load_osm_data()]. Defaults to `2000` (2 km).}
+\item{buffer_distance}{Non-negative buffer around the valid reference extent,
+in metres, used when the feature must be loaded from OSM. The default is
+2000 (2 km).}
 
 \item{osm_options}{Named list of connection options passed to
-[load_osm_data()], such as `timeout`, `overpass_urls`, `use_cache`, and
-`cache_ttl_days`. Ignored when `feature_raster` is supplied.}
+\code{load_osm_data()}, such as \code{timeout}, \code{overpass_urls},
+\code{use_cache}, and \code{cache_ttl_days}. Ignored when
+\code{feature_raster} is supplied.}
 
 \item{window_size}{Odd positive integer defining the side of the moving
-window in raster cells. For example, `5` means a 5 by 5 window.}
+window in raster cells. For example, \code{5} means a 5 by 5 window.}
 
-\item{window_shape}{Shape of the moving window: `"square"` or `"circle"`.}
+\item{window_shape}{Shape of the moving window: \code{"square"} or
+\code{"circle"}.}
 
 \item{feature_raster}{Optional rasterized feature returned by
-[load_osm_data()]. When supplied, no OSM request is made.}
+\code{load_osm_data()}. When supplied, no OSM request is made.}
 
-\item{plot}{Logical; if `TRUE`, return an adaptable `ggplot2` map. Use
-`FALSE` to calculate only the raster and global value.}
+\item{plot}{Logical; if \code{TRUE}, return an adaptable \code{ggplot2} map.
+Use \code{FALSE} to calculate only the raster and global value.}
 }
 \value{
-A list with `raster`, a `RasterLayer` of local feature density,
-  `plot`, an adaptable `ggplot2` map with English labels, and `global`, the
-  feature coverage proportion across all valid cells in the reference
-  raster.
+A list with \code{raster}, a \code{RasterLayer} of local feature density,
+\code{plot}, an adaptable \code{ggplot2} map with English labels, and
+\code{global}, the feature coverage proportion across all valid cells in the
+reference raster.
 }
 \description{
-Calculates the proportion of feature cells within a moving window. A
-feature previously loaded by [load_osm_data()] can be supplied through
-`feature_raster`, avoiding a repeated OSM request. If `feature_raster` is
-`NULL`, the function loads the requested OSM feature for standalone use.
-The same window is used at every valid cell, while the denominator is
-adjusted near the border and around `NA` cells to avoid treating nodata as
-part of the landscape.
-If the loaded feature has no occupied cell inside the valid study-area
-mask, local density and global density are returned as zero rather than as
-an error.
+Calculates the proportion of feature cells within a moving window. A raster
+previously loaded by \code{load_osm_data()} can be reused through
+\code{feature_raster}. If it is \code{NULL}, the function loads the requested
+OSM feature for standalone use. If no feature cell occurs inside the valid
+study-area mask, local and global densities are returned as zero.
 }
 \details{
-This is a cell-coverage density. It is especially useful for comparing the
-local concentration of roads, waterways, built-up areas, or other mapped
-features at the resolution of the reference raster. For linear features,
-it should not be interpreted as physical line length per area unless the
-raster resolution and the rasterization method are explicitly accounted
-for.
+This is a cell-coverage density. For linear features, it should not be
+interpreted as physical line length per area unless raster resolution and the
+rasterization method are explicitly accounted for. The \code{global} value is
+the proportion of occupied valid cells in the complete reference raster.
+The returned \code{plot} is a regular \code{ggplot2} object and can be
+customized and exported with \code{ggplot2::ggsave()}.
+
+For multiple metrics or features, use \code{integrate_feature()}. It loads
+each OSM feature once and passes the resulting raster to this function.
 }
 \examples{
 \dontrun{
