@@ -98,6 +98,54 @@ personalizacao e exportacao nao mudam os valores calculados.
 
 ## Fluxo espacial existente
 
+### Mudancas temporais: land_change
+
+`land_change(data, years)` recebe diretamente o objeto de load_rasters e
+compara dois ou tres momentos. Reutiliza os contratos internos de colecao e
+dicionario; nao recebe paletas, rotulos, CRS ou resolucao duplicados. Dois ou
+tres anos totais sao herdados quando years e NULL; intervalos maiores exigem
+escolha explicita. Grades diferentes sao recusadas, sem reamostragem implicita.
+
+Os resultados usam uma unica mascara de pixels validos em todos os anos
+selecionados. zero e classe, NA e ausencia. Areas geograficas sao estimadas por
+celula e faixa de latitude com sf; areas projetadas representam a grade com
+conversao explicita das unidades do CRS. A convencao de area, o motor geografico,
+o CRS, resolucao, anos e cobertura constam no resultado serializavel.
+
+O contrato `biomastats_land_change` retorna trajectories (caminhos completos
+observados), transitions, matrices (pixels, area_ha, probability), class_metrics,
+interval_metrics, trajectory_metrics, coverage, node_metrics, graph, plot_data,
+plot e change_plot, alem de years, class_dictionary e metadata. Com tres anos,
+inclui comparacoes consecutivas e primeiro-ultimo na mesma mascara. Categorias
+de trajetoria distinguem persistencia, mudanca unica, retorno e duas mudancas.
+Nao inferir trajetorias multiplicando matrizes de pares.
+
+Persistencia, ganhos, perdas, saldo, troca e componentes de quantidade e
+alocacao sao medidas descritivas, nao testes de causalidade, previsoes ou
+estimativas de erro de classificacao. Linhas de probability sem origem sao NA.
+Saldo anual e uma media aritmetica sobre o intervalo, sem inferir eventos anuais.
+
+O grafico bipartite/tripartite usa faixas proporcionais a area de cada trajetoria,
+coloridas pela classe inicial, e blocos pela classe de cada ano. Cores e nomes
+vem do dicionario; legendas usam codigos e nomes sem hexadecimais impressos.
+Os ggplots aceitam labs, temas e escalas. A rede temporal e um igraph dirigido,
+com atributos de classes/anos e pesos em hectares; plot_data torna os dados do
+desenho acessiveis. Nenhum arquivo e escrito pela funcao. saveRDS/readRDS,
+ggsave, write.csv e write_graph atuam nos objetos retornados.
+
+O exemplo de build e analise esta em
+`ignorados/testes-locais/teste-local-mudancas.Rmd`, com HTML na mesma pasta
+ignorada pelo Git. Os testes automatizados cobrem matrizes conhecidas,
+conservacao de areas e fluxos, trajetorias de retorno, mascara comum, grade,
+unidades projetadas/geograficas, paleta, serializacao e recorte real do pacote.
+Validacao em 14/10/2026: 328 verificacoes na suite completa, incluindo 87 para
+land_change, sem falhas, erros, avisos ou testes pulados. O Rmd foi executado
+com build/instalacao temporaria e gerou HTML, RDS, PNG, CSV e GraphML pelos
+metodos padrao dos objetos. A rede registra partition por ano; com dois anos,
+inclui tambem o atributo type usado pelas rotinas bipartites do igraph.
+
+### Demais etapas
+
 O projeto e um pacote R: `R/` implementa as funcoes, `NAMESPACE` publica a
 API, `man/` documenta os contratos e `tests/testthat/` valida o comportamento.
 `inst/` distribui mapas de exemplo, dicionarios e shapefiles.
