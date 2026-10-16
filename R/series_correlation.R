@@ -27,8 +27,8 @@ series_correlation <- function(object, series_x, series_y,
   if (identical(as.character(series_x), as.character(series_y))) stop("series_x e series_y devem ser classes distintas.")
   data <- merge(.series_one(obj, series_x), .series_one(obj, series_y), by = "year", suffixes = c("_x", "_y"))
   if (any(!is.finite(as.matrix(data))) || any(diff(data$year) != 1))
-    stop("As séries devem ter anos consecutivos e completos.")
-  if (nrow(data) < 6) stop("São necessários pelo menos seis pares anuais.")
+    stop("As s\u00e9ries devem ter anos consecutivos e completos.")
+  if (nrow(data) < 6) stop("S\u00e3o necess\u00e1rios pelo menos seis pares anuais.")
   paired <- data
   if (transformation == "difference")
     paired <- data.frame(year = data$year[-1], area_x = diff(data$area_x), area_y = diff(data$area_y))
@@ -76,13 +76,13 @@ series_correlation <- function(object, series_x, series_y,
     .series_theme() +
     ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .series_area_label(out$metadata, language))
 
-  coef <- c(pearson = "r", spearman = "ρ", kendall = "τ")[a$method]
-  tr <- c(level = .tr(language, "níveis", "levels"),
-          difference = .tr(language, "primeiras diferenças", "first differences"),
-          detrended = .tr(language, "resíduos sem tendência linear", "linearly detrended residuals"))[a$transformation]
-  stat <- sprintf("%s %s = %.2f · p = %.3g", tools::toTitleCase(a$method), coef, a$estimate, a$p_value)
+  coef <- c(pearson = "r", spearman = "\u03c1", kendall = "\u03c4")[a$method]
+  tr <- c(level = .tr(language, "n\u00edveis", "levels"),
+          difference = .tr(language, "primeiras diferen\u00e7as", "first differences"),
+          detrended = .tr(language, "res\u00edduos sem tend\u00eancia linear", "linearly detrended residuals"))[a$transformation]
+  stat <- sprintf("%s %s = %.2f \u00b7 p = %.3g", tools::toTitleCase(a$method), coef, a$estimate, a$p_value)
   if (is.finite(a$p_serial)) stat <- paste0(stat, sprintf(.tr(language,
-    " · p serial = %.3g (n efetivo = %.1f)", " · serial p = %.3g (effective n = %.1f)"), a$p_serial, a$n_effective))
+    " \u00b7 p serial = %.3g (n efetivo = %.1f)", " \u00b7 serial p = %.3g (effective n = %.1f)"), a$p_serial, a$n_effective))
   p <- out$paired
   association <- ggplot2::ggplot(p, ggplot2::aes(area_x, area_y)) +
     ggplot2::geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "grey30", fill = "grey85",
@@ -91,9 +91,9 @@ series_correlation <- function(object, series_x, series_y,
     ggplot2::scale_fill_viridis_c(name = .tr(language, "Ano", "Year")) +
     .series_theme() + ggplot2::theme(legend.key.width = ggplot2::unit(3, "lines")) +
     ggplot2::labs(x = lab[[1]], y = lab[[2]],
-      subtitle = paste0(.tr(language, "Associação entre ", "Association between "), tr, "\n", stat),
+      subtitle = paste0(.tr(language, "Associa\u00e7\u00e3o entre ", "Association between "), tr, "\n", stat),
       caption = .tr(language,
-        "p assume anos independentes; p serial corrige a autocorrelação AR(1) (Pearson). Reta apenas descritiva.",
+        "p assume anos independentes; p serial corrige a autocorrela\u00e7\u00e3o AR(1) (Pearson). Reta apenas descritiva.",
         "p assumes independent years; serial p corrects AR(1) autocorrelation (Pearson). Line is descriptive only."))
   list(series = series, association = association)
 }

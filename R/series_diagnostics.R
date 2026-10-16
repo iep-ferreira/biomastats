@@ -59,21 +59,21 @@ series_diagnostics <- function(fit, max_lag = 10L, language = NULL, build_plot =
   colour <- .series_identity(out, language = language)$colour %||% "#346675"
   r <- out$residuals
   qq <- data.frame(theoretical = stats::qnorm(stats::ppoints(nrow(r))), sample = sort(r$residual))
-  band <- .tr(language, "Faixa cinza: ±1,96/√n (ruído branco).", "Grey band: ±1.96/√n (white noise).")
+  band <- .tr(language, "Faixa cinza: \u00b11,96/\u221an (ru\u00eddo branco).", "Grey band: \u00b11.96/\u221an (white noise).")
   list(
     residuals = ggplot2::ggplot(r, ggplot2::aes(year, residual)) +
       ggplot2::geom_hline(yintercept = 0, colour = "grey40") +
       ggplot2::geom_segment(ggplot2::aes(xend = year, yend = 0), colour = colour, alpha = .5) +
       ggplot2::geom_point(shape = 21, fill = colour, colour = "grey15", size = 2) +
-      .series_theme() + ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .tr(language, "Resíduo", "Residual")),
-    acf = .series_lollipop(out$acf, "acf", .tr(language, "Autocorrelação residual", "Residual autocorrelation"), colour, language) +
+      .series_theme() + ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .tr(language, "Res\u00edduo", "Residual")),
+    acf = .series_lollipop(out$acf, "acf", .tr(language, "Autocorrela\u00e7\u00e3o residual", "Residual autocorrelation"), colour, language) +
       ggplot2::labs(caption = band),
-    pacf = .series_lollipop(out$pacf, "pacf", .tr(language, "Autocorrelação parcial residual", "Residual partial autocorrelation"), colour, language) +
+    pacf = .series_lollipop(out$pacf, "pacf", .tr(language, "Autocorrela\u00e7\u00e3o parcial residual", "Residual partial autocorrelation"), colour, language) +
       ggplot2::labs(caption = band),
     qq = ggplot2::ggplot(qq, ggplot2::aes(theoretical, sample)) +
       ggplot2::geom_abline(intercept = mean(r$residual), slope = stats::sd(r$residual), colour = "grey40", linetype = "22") +
       ggplot2::geom_point(shape = 21, fill = colour, colour = "grey15", size = 2) + .series_theme() +
-      ggplot2::labs(x = .tr(language, "Quantis normais", "Normal quantiles"), y = .tr(language, "Resíduos ordenados", "Ordered residuals")),
+      ggplot2::labs(x = .tr(language, "Quantis normais", "Normal quantiles"), y = .tr(language, "Res\u00edduos ordenados", "Ordered residuals")),
     observed_fitted = ggplot2::ggplot(r, ggplot2::aes(fitted, observed)) +
       ggplot2::geom_abline(colour = "grey40", linetype = "22") +
       ggplot2::geom_point(shape = 21, fill = colour, colour = "grey15", size = 2) + .series_theme() +

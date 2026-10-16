@@ -19,8 +19,8 @@
 
 .series_area_label <- function(metadata, language) {
   unit <- metadata$area_unit %||% "km2"
-  unit <- if (unit == "km2") "km²" else unit
-  paste0(.tr(language, "Área", "Area"), " (", unit, ")")
+  unit <- if (unit == "km2") "km\u00b2" else unit
+  paste0(.tr(language, "\u00c1rea", "Area"), " (", unit, ")")
 }
 
 .series_identity <- function(out, code = out$series, language = "pt") {
@@ -31,11 +31,11 @@
 
 .series_model_label <- function(model, language) {
   switch(model,
-    linear = .tr(language, "Tendência linear", "Linear trend"),
-    segmented = .tr(language, "Segmentado contínuo", "Continuous segmented"),
-    bent_cable = .tr(language, "Bent-cable quadrático", "Quadratic bent-cable"),
-    prob_bent_uniform = .tr(language, "Bent-cable probabilístico uniforme (U-BC)", "Probabilistic bent-cable, uniform (U-BC)"),
-    prob_bent_logistic = .tr(language, "Bent-cable probabilístico logístico (L-BC)", "Probabilistic bent-cable, logistic (L-BC)"),
+    linear = .tr(language, "Tend\u00eancia linear", "Linear trend"),
+    segmented = .tr(language, "Segmentado cont\u00ednuo", "Continuous segmented"),
+    bent_cable = .tr(language, "Bent-cable quadr\u00e1tico", "Quadratic bent-cable"),
+    prob_bent_uniform = .tr(language, "Bent-cable probabil\u00edstico uniforme (U-BC)", "Probabilistic bent-cable, uniform (U-BC)"),
+    prob_bent_logistic = .tr(language, "Bent-cable probabil\u00edstico log\u00edstico (L-BC)", "Probabilistic bent-cable, logistic (L-BC)"),
     model)
 }
 
@@ -85,7 +85,7 @@
 
 .series_fit_plot <- function(out, language = "pt", xlim = range(out$fitted$year)) {
   id <- .series_identity(out, language = language)
-  keys <- c(fit = paste(.tr(language, "Ajuste", "Fit"), "—", .series_model_label(out$model, language)),
+  keys <- c(fit = paste(.tr(language, "Ajuste", "Fit"), "\u2014", .series_model_label(out$model, language)),
             kernel = .tr(language, "Kernel recuperado do limiar", "Recovered threshold kernel"))
   cp <- out$change_points
   p <- ggplot2::ggplot()
@@ -93,8 +93,8 @@
     ggplot2::geom_rect(data = out$transition_bands,
       ggplot2::aes(xmin = lower, xmax = upper, ymin = -Inf, ymax = Inf, fill = "band"), alpha = .16) +
     ggplot2::scale_fill_manual(values = c(band = id$colour), name = NULL,
-      labels = .tr(language, "Faixa de transição (quantis 10%–90% do limiar)",
-                   "Transition band (threshold quantiles 10%–90%)"))
+      labels = .tr(language, "Faixa de transi\u00e7\u00e3o (quantis 10%\u201390% do limiar)",
+                   "Transition band (threshold quantiles 10%\u201390%)"))
   if (nrow(cp)) p <- p + ggplot2::geom_vline(xintercept = cp$estimate, linetype = "22", colour = "grey25", linewidth = .45)
   sec <- ggplot2::waiver()
   if (nrow(out$kernels)) {
@@ -120,10 +120,10 @@
                     linetype = ggplot2::guide_legend(order = 2), fill = ggplot2::guide_legend(order = 3)) +
     .series_theme() + ggplot2::theme(legend.box = "vertical", legend.spacing.y = ggplot2::unit(0, "pt")) +
     ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .series_area_label(out$metadata, language),
-      subtitle = paste0(id$label, " · ", out$breaks, .tr(language, " transição(ões)", " transition(s)"),
-                        if (nrow(cp)) paste0(" · τ = ", paste(sprintf("%.1f", cp$estimate), collapse = "; "))),
+      subtitle = paste0(id$label, " \u00b7 ", out$breaks, .tr(language, " transi\u00e7\u00e3o(\u00f5es)", " transition(s)"),
+                        if (nrow(cp)) paste0(" \u00b7 \u03c4 = ", paste(sprintf("%.1f", cp$estimate), collapse = "; "))),
       caption = if (nrow(cp)) .tr(language,
-        "Linhas verticais: centros estimados. A faixa descreve o limiar aleatório, não é intervalo de confiança.",
+        "Linhas verticais: centros estimados. A faixa descreve o limiar aleat\u00f3rio, n\u00e3o \u00e9 intervalo de confian\u00e7a.",
         "Vertical lines: estimated centres. The band describes the random threshold; it is not a confidence interval."))
   p
 }
@@ -131,11 +131,11 @@
 .series_interval_plot <- function(out, language = "pt") {
   d <- out$change_points
   if (!nrow(d)) return(NULL)
-  d$label <- factor(paste0("τ", d$transition), levels = rev(paste0("τ", d$transition)))
+  d$label <- factor(paste0("\u03c4", d$transition), levels = rev(paste0("\u03c4", d$transition)))
   b <- out$bootstrap
   p <- ggplot2::ggplot(d, ggplot2::aes(y = label))
   if (nrow(b)) {
-    b$label <- factor(paste0("τ", b$transition), levels = levels(d$label))
+    b$label <- factor(paste0("\u03c4", b$transition), levels = levels(d$label))
     p <- p + ggplot2::geom_jitter(data = b, ggplot2::aes(year, label), height = .12, width = 0,
                                   size = .9, alpha = .18, colour = "grey45")
   }
@@ -144,12 +144,12 @@
     ggplot2::geom_point(ggplot2::aes(x = estimate), shape = 21, size = 3.2, stroke = .9,
                         fill = .series_identity(out)$colour, colour = "grey10") +
     .series_theme() +
-    ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .tr(language, "Transição", "Transition"),
-      subtitle = paste0(.series_model_label(out$model, language), " — ",
+    ggplot2::labs(x = .tr(language, "Ano", "Year"), y = .tr(language, "Transi\u00e7\u00e3o", "Transition"),
+      subtitle = paste0(.series_model_label(out$model, language), " \u2014 ",
                         .tr(language, "IC bootstrap ", "Bootstrap CI "), 100 * out$level, "% (",
                         out$bootstrap_type, ")"),
       caption = .tr(language,
-        "Ponto: estimativa pontual. Barra: IC percentil. Pontos cinza: réplicas bootstrap.",
+        "Ponto: estimativa pontual. Barra: IC percentil. Pontos cinza: r\u00e9plicas bootstrap.",
         "Point: estimate. Bar: percentile CI. Grey dots: bootstrap replicates."))
 }
 

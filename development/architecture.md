@@ -376,3 +376,21 @@ forma restrita aos arquivos alterados, evitando reformatar outras paginas.
   Pearson). Análises adicionais ficam a cargo do usuário, a partir de `data`.
 - **Somente R.** Edições, testes, documentação e renderização usam R e
   ferramentas do pacote; não introduzir scripts em outras linguagens.
+
+## Diversidade das classes: class_diversity
+
+`class_diversity()` (arquivo `R/class_diversity.R`) recebe a saída de
+`get_area()` — resultado completo, `time_series` ou `aggregate_data` — pelo
+mesmo contrato de entrada das séries (`.series_input`), herdando dicionário,
+cores, unidade e metadados. Classes são tratadas como espécies e áreas
+(`area_raw`, sem arredondamento) como abundâncias. Por ano, retorna riqueza,
+entropia de Shannon e seu máximo, equitabilidade de Pielou, entropia relativa ao
+total de classes da série, números de Hill (q = 0, 1, 2), Simpson (D, 1 − D,
+1/D e equitabilidade), Berger-Parker com a classe dominante e a dominância
+log(S) − H'. A tabela `contributions` decompõe a entropia em −p log p por classe
+e soma exatamente `shannon`. `base` define a unidade das entropias (nats, bits
+ou dits); números de Hill são sempre em classes efetivas. `min_area` descarta
+classes residuais e `classes` restringe o conjunto antes do cálculo das
+proporções. Anos sem pixels válidos ficam NA. Gráficos (`indices`, `hill`,
+`contribution`, `dominance`) seguem as cores do dicionário e têm legendas pt/en.
+Exemplo local: `ignorados/testes-locais/teste-local-diversidade.Rmd`.

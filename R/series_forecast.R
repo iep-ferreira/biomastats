@@ -11,7 +11,7 @@
 #' @export
 series_forecast <- function(fit, horizon = 5L, level = .95, language = NULL, build_plot = TRUE) {
   if (!inherits(fit, "biomastats_series_fit")) stop("fit deve ser retornado por series_fit_regime().")
-  if (!is.numeric(horizon) || length(horizon) != 1L || horizon < 0) stop("horizon deve ser inteiro não negativo.")
+  if (!is.numeric(horizon) || length(horizon) != 1L || horizon < 0) stop("horizon deve ser inteiro n\u00e3o negativo.")
   if (!is.numeric(level) || level <= 0 || level >= 1) stop("level deve estar entre zero e um.")
   language <- language %||% fit$language %||% "pt"
   yrs <- if (horizon) max(fit$fitted$year) + seq_len(as.integer(horizon)) else numeric()
@@ -41,8 +41,8 @@ series_forecast <- function(fit, horizon = 5L, level = .95, language = NULL, bui
     ggplot2::geom_line(data = curve, ggplot2::aes(year, fitted), colour = colour, linetype = "42", linewidth = 1.1) +
     ggplot2::geom_point(data = out$projection, ggplot2::aes(year, prediction), colour = colour, size = 1.8) +
     ggplot2::labs(caption = .tr(language,
-      paste0("Área sombreada: projeção. Faixa: intervalo preditivo condicional de ", 100 * out$level,
-             "%; não inclui a incerteza das transições nem da escolha do modelo."),
+      paste0("\u00c1rea sombreada: proje\u00e7\u00e3o. Faixa: intervalo preditivo condicional de ", 100 * out$level,
+             "%; n\u00e3o inclui a incerteza das transi\u00e7\u00f5es nem da escolha do modelo."),
       paste0("Shaded area: projection. Ribbon: ", 100 * out$level,
              "% conditional prediction interval; excludes transition and model-selection uncertainty.")))
 }

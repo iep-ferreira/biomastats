@@ -40,7 +40,7 @@ land_time_series <- function(data, classes = NULL, language = c("pt", "en"), bui
 
 .series_one <- function(obj, code) {
   z <- obj$data[obj$data$code == as.numeric(code), c("year", "area")]
-  if (!nrow(z)) stop("Série não encontrada no objeto.")
+  if (!nrow(z)) stop("S\u00e9rie n\u00e3o encontrada no objeto.")
   z[order(z$year), ]
 }
 
@@ -52,14 +52,14 @@ land_time_series <- function(data, classes = NULL, language = c("pt", "en"), bui
   cc <- if ("code" %in% names(x)) "code" else if ("land_class" %in% names(x)) "land_class" else stop("data deve conter land_class ou code.")
   ac <- if ("area_raw" %in% names(x)) "area_raw" else if ("area" %in% names(x)) "area" else stop("data deve conter area.")
   d <- data.frame(code = as.numeric(as.character(x[[cc]])), year = as.integer(x$year), area = as.numeric(x[[ac]]))
-  if (anyDuplicated(d[c("code", "year")])) stop("Cada combinação de classe e ano deve ser única; há duplicado.")
+  if (anyDuplicated(d[c("code", "year")])) stop("Cada combina\u00e7\u00e3o de classe e ano deve ser \u00fanica; h\u00e1 duplicado.")
   md <- attr(x, "metadata") %||% list()
   collection <- md$collection %||% attr(x, "collection") %||% 10
   dic <- attr(x, "class_dictionary") %||% .biomastats_dictionary(collection, sort(unique(d$code)))
   years <- seq(min(d$year), max(d$year)); codes <- sort(unique(d$code))
   d <- merge(expand.grid(code = codes, year = years), d, all.x = TRUE, sort = TRUE)
   if (!is.null(classes)) {
-    if (!all(classes %in% codes)) stop("classes contém código ausente.")
+    if (!all(classes %in% codes)) stop("classes cont\u00e9m c\u00f3digo ausente.")
     d <- d[d$code %in% classes, ]
   }
   list(data = d, dictionary = dic[dic$code %in% unique(d$code), ],

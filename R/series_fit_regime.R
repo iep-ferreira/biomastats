@@ -40,14 +40,14 @@ series_fit_regime <- function(object, series,
                               language = c("pt", "en"), build_plot = TRUE) {
   model <- match.arg(model); criterion <- match.arg(criterion)
   bootstrap_type <- match.arg(bootstrap_type); language <- match.arg(language)
-  if (!is.numeric(bootstrap) || length(bootstrap) != 1L || bootstrap < 0) stop("bootstrap deve ser inteiro não negativo.")
+  if (!is.numeric(bootstrap) || length(bootstrap) != 1L || bootstrap < 0) stop("bootstrap deve ser inteiro n\u00e3o negativo.")
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) stop("level deve estar entre zero e um.")
-  if (!is.null(breaks) && (!is.numeric(breaks) || length(breaks) != 1L || breaks < 0)) stop("breaks deve ser NULL ou inteiro não negativo.")
-  if (!is.numeric(max_breaks) || length(max_breaks) != 1L || max_breaks < 0) stop("max_breaks deve ser inteiro não negativo.")
+  if (!is.null(breaks) && (!is.numeric(breaks) || length(breaks) != 1L || breaks < 0)) stop("breaks deve ser NULL ou inteiro n\u00e3o negativo.")
+  if (!is.numeric(max_breaks) || length(max_breaks) != 1L || max_breaks < 0) stop("max_breaks deve ser inteiro n\u00e3o negativo.")
   obj <- .as_series_object(object)
   d <- .series_one(obj, series); d <- d[is.finite(d$area), ]
-  if (nrow(d) < 6) stop("A série precisa de pelo menos seis observações completas.")
-  if (stats::var(d$area) == 0) stop("A série é constante; não há modelo de mudança para ajustar.")
+  if (nrow(d) < 6) stop("A s\u00e9rie precisa de pelo menos seis observa\u00e7\u00f5es completas.")
+  if (stats::var(d$area) == 0) stop("A s\u00e9rie \u00e9 constante; n\u00e3o h\u00e1 modelo de mudan\u00e7a para ajustar.")
 
   origin <- min(d$year); t <- d$year - origin
   models <- if (model == "auto") c("segmented", "bent_cable", "prob_bent_uniform", "prob_bent_logistic") else model
