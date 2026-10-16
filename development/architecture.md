@@ -394,3 +394,36 @@ classes residuais e `classes` restringe o conjunto antes do cálculo das
 proporções. Anos sem pixels válidos ficam NA. Gráficos (`indices`, `hill`,
 `contribution`, `dominance`) seguem as cores do dicionário e têm legendas pt/en.
 Exemplo local: `ignorados/testes-locais/teste-local-diversidade.Rmd`.
+
+## Métricas de fragmentos na grade nativa: fragment_metrics
+
+Regra obrigatória: **métricas espaciais são calculadas na grade de origem, sem
+reprojetar rasters.** Reprojetar reamostra pixels e altera área e topologia dos
+fragmentos (no recorte de exemplo, floresta 1985: 99,58 ha e 20 fragmentos na
+grade nativa contra 97,71 ha e 21 fragmentos após reprojeção para UTM).
+
+- Motor interno em `R/landscape_geometry.R`: área de cada pixel por
+  `terra::cellSize` (geodésica em grades geográficas; área verdadeira em grades
+  projetadas); bordas medidas no elipsoide WGS84 (arcos de paralelo e meridiano
+  de cada linha) em grades geográficas e, em grades projetadas, pelo tamanho do
+  pixel em metros corrigido pelo fator de escala local (exato em projeções
+  conformes). Unidades lineares do CRS (pés, metros) são convertidas a metros.
+- Zona UTM e hemisfério são detectados do centro da grade (`.utm_from_raster`),
+  apenas para registro em `metadata`. Os argumentos `zone` e `hemisphere` de
+  `lulc_metrics()` e `biomastats_metrics()` ficam obsoletos e são ignorados.
+- `fragment_metrics()` (arquivo próprio) identifica fragmentos com
+  `terra::patches` (8 vizinhos por padrão) e retorna, por fragmento, área,
+  perímetro, área núcleo, índices de forma (incluindo o `shape` do
+  landscapemetrics, 0,25 P/√A), dimensão fractal, centroide ponderado pela área
+  (CRS herdado e lon/lat), raio de giração, alongamento e orientação do eixo
+  principal, extensão e distância borda a borda ao vizinho mais próximo; e, por
+  classe e ano, estatísticas distribucionais (quantis, assimetria, Gini, LPI,
+  mesh, densidades). Métricas do landscapemetrics podem ser anexadas na mesma
+  grade; as padrão (AI, coesão, clumpy) não dependem de unidade.
+- A vetorização usa a rotina compartilhada `.vectorize_raster()` (a mesma de
+  `reclass_to_polygons()`), apenas quando necessária: distância entre
+  fragmentos (geodésica via s2 em grades geográficas) e geometrias de saída.
+- `lulc_metrics()` usa o mesmo motor e mantém o formato de tabela do
+  landscapemetrics; `biomastats_metrics()` herda as melhorias sem mudar a API.
+- Transformações de coordenadas ficam restritas a pontos (centroides para
+  lon/lat; centro da grade para a zona UTM).

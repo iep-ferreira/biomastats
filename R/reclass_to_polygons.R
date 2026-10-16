@@ -112,8 +112,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
                        geometry = sf::st_sfc(crs = year_crs)))
     }
     r <- raster::setValues(r, values)
-    p <- terra::as.polygons(terra::rast(r), aggregate = dissolve, na.rm = TRUE)
-    p <- sf::st_as_sf(p)
+    p <- .vectorize_raster(r, dissolve)
     names(p)[1L] <- "value"
     # Homogenize mixed POLYGON/MULTIPOLYGON before splitting fragments.
     p <- sf::st_cast(p, "MULTIPOLYGON", warn = FALSE)
@@ -170,4 +169,10 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
   }
   attr(out, "shp_paths") <- shp_paths
   out
+}
+
+# Shared vectorization routine: cells with equal values become polygons
+# (dissolved per value when dissolve = TRUE), in the raster's own CRS.
+.vectorize_raster <- function(r, dissolve = TRUE) {
+  sf::st_as_sf(terra::as.polygons(.as_terra(r), aggregate = dissolve, na.rm = TRUE))
 }

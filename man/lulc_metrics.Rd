@@ -2,55 +2,48 @@
 % Please edit documentation in R/lulc_metrics.R
 \name{lulc_metrics}
 \alias{lulc_metrics}
-\title{Métricas de Land Use and Land Cover (LULC)}
+\title{Land use and land cover (LULC) metrics on the native grid}
 \usage{
 lulc_metrics(
   biomastats_raster,
   classe,
-  zone = c("18", "19", "20", "21", "22", "23", "24", "25"),
-  hemisphere = c("south", "north"),
+  zone = NULL,
+  hemisphere = NULL,
   export.raster = FALSE
 )
 }
 \arguments{
-\item{biomastats_raster}{Raster de entrada que será utilizado para o cálculo das métricas.}
+\item{biomastats_raster}{Raster of land-cover classes.}
 
-\item{classe}{Classe ou classes de LULC para análise. Pode ser um valor ou um vetor de valores representando as classes no raster.}
+\item{classe}{Class code or codes; several codes are merged into class 1.}
 
-\item{zone}{Vetor de zonas UTM, com valores padrão entre "18" e "25". Define a zona UTM usada na projeção do raster.}
+\item{zone, hemisphere}{Deprecated and ignored: the UTM zone and hemisphere
+are detected from the raster and reported in \code{utm}.}
 
-\item{hemisphere}{Hemisfério para a projeção UTM. Pode ser "south" (padrão) ou "north".}
-
-\item{export.raster}{Lógico. Se \code{TRUE}, o raster reclassificado será retornado na saída. O padrão é \code{FALSE}.}
+\item{export.raster}{If \code{TRUE}, returns the reclassified raster.}
 }
 \value{
-Retorna uma lista com as seguintes métricas:
-\itemize{
-  \item \code{classe}: A classe ou classes selecionadas.
-  \item \code{proj}: A projeção UTM utilizada.
-  \item \code{total_area}: Área total da paisagem.
-  \item \code{area_dos_fragmentos}: Área dos fragmentos calculados.
-  \item \code{edge_length}: Comprimento total da borda.
-  \item \code{edge_density}: Densidade da borda (metros por hectare).
-  \item \code{total_area_for_the_class}: Área total da(s) classe(s) selecionada(s).
-  \item \code{average_area}: Área média dos fragmentos.
-  \item \code{coeficient_of_variation}: Coeficiente de variação das áreas dos fragmentos.
-  \item \code{standard_deviation}: Desvio padrão das áreas dos fragmentos.
-  \item \code{area_of_the_patches}: Tamanho de cada mancha para a(s) classe(s) selecionada(s).
-  \item \code{index_of_aggregation}: Índice de agregação da classe.
-  \item \code{reclassified_raster}: O raster reclassificado, se \code{export.raster = TRUE}.
-  \item \code{reclassified}: Indica se o raster foi reclassificado para múltiplas classes ("Yes" ou "No").
-}
+A list with \code{classe}, \code{proj} (native CRS WKT), \code{utm} (detected zone,
+hemisphere and EPSG), \code{total_area} (ha), \code{area_dos_fragmentos} (ha per
+patch, background included), \code{edge_length} (m, edges between different
+classes, landscape boundary excluded), \code{edge_density} (m/ha),
+\code{total_area_for_the_class} (ha), \code{average_area}, \code{coeficient_of_variation},
+\code{standard_deviation} (ha), \code{area_of_the_patches} (selected class),
+\code{index_of_aggregation} (\%), \code{fragments} (detailed patch table of the
+selected class), \code{reclassified_raster} and \code{reclassified}.
 }
 \description{
-Esta função calcula várias métricas de paisagem (Land Use and Land Cover - LULC) com base em um raster de entrada e uma classe de interesse. 
-As métricas incluem área total da paisagem, área de fragmentos, borda, densidade de borda, e índice de agregação, entre outras. A função 
-permite a reprojeção do raster para coordenadas métricas UTM e oferece a opção de exportar o raster reclassificado.
+Reclassifies a raster to the class(es) of interest and computes landscape,
+class and patch metrics directly on its native grid: no reprojection, CRS
+inherited, UTM zone and hemisphere detected automatically. Areas use
+geodesic cell areas and edges use ellipsoidal (geographic grids) or
+scale-factor corrected (projected grids) lengths; see \code{\link[=fragment_metrics]{fragment_metrics()}}.
+The aggregation index uses landscapemetrics on the same grid (it depends
+only on cell adjacencies). Tables keep the landscapemetrics layout
+(\code{layer}, \code{level}, \code{class}, \code{id}, \code{metric}, \code{value}).
 }
 \examples{
 \dontrun{
-# Exemplo de uso:
-# Calcular métricas para a classe 3 no raster de entrada:
-lulc_metrics(biomastats_raster, classe = 3, zone = "23", hemisphere = "south")
+lulc_metrics(biomastats_raster, classe = 3)
 }
 }

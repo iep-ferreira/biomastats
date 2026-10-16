@@ -1,119 +1,74 @@
-#' Métricas de Land Use and Land Cover (LULC)
+#' Land use and land cover (LULC) metrics on the native grid
 #'
-#' Esta função calcula várias métricas de paisagem (Land Use and Land Cover - LULC) com base em um raster de entrada e uma classe de interesse. 
-#' As métricas incluem área total da paisagem, área de fragmentos, borda, densidade de borda, e índice de agregação, entre outras. A função 
-#' permite a reprojeção do raster para coordenadas métricas UTM e oferece a opção de exportar o raster reclassificado.
+#' Reclassifies a raster to the class(es) of interest and computes landscape,
+#' class and patch metrics directly on its native grid: no reprojection, CRS
+#' inherited, UTM zone and hemisphere detected automatically. Areas use
+#' geodesic cell areas and edges use ellipsoidal (geographic grids) or
+#' scale-factor corrected (projected grids) lengths; see [fragment_metrics()].
+#' The aggregation index uses landscapemetrics on the same grid (it depends
+#' only on cell adjacencies). Tables keep the landscapemetrics layout
+#' (`layer`, `level`, `class`, `id`, `metric`, `value`).
 #'
-#' @param biomastats_raster Raster de entrada que será utilizado para o cálculo das métricas.
-#' @param classe Classe ou classes de LULC para análise. Pode ser um valor ou um vetor de valores representando as classes no raster.
-#' @param zone Vetor de zonas UTM, com valores padrão entre "18" e "25". Define a zona UTM usada na projeção do raster.
-#' @param hemisphere Hemisfério para a projeção UTM. Pode ser "south" (padrão) ou "north".
-#' @param export.raster Lógico. Se \code{TRUE}, o raster reclassificado será retornado na saída. O padrão é \code{FALSE}.
-#'
-#' @return Retorna uma lista com as seguintes métricas:
-#' \itemize{
-#'   \item \code{classe}: A classe ou classes selecionadas.
-#'   \item \code{proj}: A projeção UTM utilizada.
-#'   \item \code{total_area}: Área total da paisagem.
-#'   \item \code{area_dos_fragmentos}: Área dos fragmentos calculados.
-#'   \item \code{edge_length}: Comprimento total da borda.
-#'   \item \code{edge_density}: Densidade da borda (metros por hectare).
-#'   \item \code{total_area_for_the_class}: Área total da(s) classe(s) selecionada(s).
-#'   \item \code{average_area}: Área média dos fragmentos.
-#'   \item \code{coeficient_of_variation}: Coeficiente de variação das áreas dos fragmentos.
-#'   \item \code{standard_deviation}: Desvio padrão das áreas dos fragmentos.
-#'   \item \code{area_of_the_patches}: Tamanho de cada mancha para a(s) classe(s) selecionada(s).
-#'   \item \code{index_of_aggregation}: Índice de agregação da classe.
-#'   \item \code{reclassified_raster}: O raster reclassificado, se \code{export.raster = TRUE}.
-#'   \item \code{reclassified}: Indica se o raster foi reclassificado para múltiplas classes ("Yes" ou "No").
-#' }
-#'
-#' @importFrom dplyr filter mutate
-#' @importFrom raster projectRaster getValues setValues
-#' @importFrom landscapemetrics lsm_l_ta lsm_p_area lsm_l_te lsm_l_ed lsm_c_ca lsm_c_area_mn lsm_c_area_cv lsm_c_area_sd lsm_c_ai
+#' @param biomastats_raster Raster of land-cover classes.
+#' @param classe Class code or codes; several codes are merged into class 1.
+#' @param zone,hemisphere Deprecated and ignored: the UTM zone and hemisphere
+#'   are detected from the raster and reported in `utm`.
+#' @param export.raster If `TRUE`, returns the reclassified raster.
+#' @return A list with `classe`, `proj` (native CRS WKT), `utm` (detected zone,
+#'   hemisphere and EPSG), `total_area` (ha), `area_dos_fragmentos` (ha per
+#'   patch, background included), `edge_length` (m, edges between different
+#'   classes, landscape boundary excluded), `edge_density` (m/ha),
+#'   `total_area_for_the_class` (ha), `average_area`, `coeficient_of_variation`,
+#'   `standard_deviation` (ha), `area_of_the_patches` (selected class),
+#'   `index_of_aggregation` (%), `fragments` (detailed patch table of the
+#'   selected class), `reclassified_raster` and `reclassified`.
 #' @examples
 #' \dontrun{
-#' # Exemplo de uso:
-#' # Calcular métricas para a classe 3 no raster de entrada:
-#' lulc_metrics(biomastats_raster, classe = 3, zone = "23", hemisphere = "south")
+#' lulc_metrics(biomastats_raster, classe = 3)
 #' }
 #' @export
+lulc_metrics <- function(biomastats_raster, classe, zone = NULL, hemisphere = NULL, export.raster = FALSE) {
+  values <- raster::getValues(biomastats_raster)
+  values[(!values %in% classe) & !is.na(values)] <- 0
+  if (length(classe) > 1) values[values %in% classe] <- 1
+  aux_raster <- raster::setValues(biomastats_raster, values)
+  target <- if (length(classe) == 1) classe else 1
 
-lulc_metrics <- function(biomastats_raster, classe, zone = c("18", "19", "20", "21", "22", "23", "24", "25"), 
-hemisphere = c("south", "north"), export.raster = FALSE)
-{
-  
-  ##Definindo a projeção
-  proj_raster <- paste0("+proj=utm +zone=", zone, " +", hemisphere, " +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-  
-  ##Selecionando a classe de lulc para análise
-  braster_selected <- biomastats_raster
-  braster_values <- raster::getValues(braster_selected)
-  
-  # Selecionando os valores que estão na classe
-  braster_values[(!braster_values %in% classe) & !is.na(braster_values)] <- 0
-  
-  # Se classe tiver mais de um valor, atribui 1 para os que estão em classe
-  if(length(classe) > 1) {
-    braster_values[braster_values %in% classe] <- 1
-  }
-  
-  # Atribuindo os valores de volta ao raster
-  braster_selected <- aux_raster <- raster::setValues(braster_selected, braster_values)
-  
-  braster_selected  <- raster::projectRaster(braster_selected, crs = proj_raster, method="ngb")
-  
-  ##Calculando a área da paisagem
-  total_area<-  landscapemetrics::lsm_l_ta(braster_selected, directions=8)
-  
-  ## Calculando a área total da classificação 3
-  area_frag <- landscapemetrics::lsm_p_area(braster_selected, directions=8)
-  
-  ## Calculando a área de borda
-  
-  total_edge <- landscapemetrics::lsm_l_te(braster_selected, count_boundary=FALSE)
-  
-  ## Calculando a densidade da borda. Importante, aqui o resultado nos é dado em metros por hectare.
-  
-  edge_density <- landscapemetrics::lsm_l_ed(braster_selected, count_boundary = FALSE, directions = 8)
-  
-  ##Área total da classe
-  
-  class_area <- landscapemetrics::lsm_c_ca(braster_selected, directions = 8)
-  
-  
-  ##Estatística de resumo dos fragmentos
-  mean_frag <- landscapemetrics::lsm_c_area_mn(braster_selected, directions = 8)
-  cv_frag <- landscapemetrics::lsm_c_area_cv(braster_selected, directions = 8)
-  sd_frag <- landscapemetrics::lsm_c_area_sd(braster_selected, directions = 8)
-  
-  ## Métricas para as manchas
-  ##Calculando o tamanho de cada mancha agora, utilizando a regra de ligação dos 8.
-  aux_sizes <- landscapemetrics::lsm_p_area(braster_selected, directions = 8)
-  if(length(classe) == 1){
-    frag_sizes<-aux_sizes %>% dplyr::filter(class == classe)
-  } else{ frag_sizes<-aux_sizes %>% dplyr::filter(class == 1)}
-  
-  
-  #Índice de agregação
-  ai <- landscapemetrics::lsm_c_ai (braster_selected)
-  
-  rec_raster <- NULL
-  if(export.raster == TRUE){rec_raster <- aux_raster}
-  
-  return( list(classe = classe, 
-               proj=proj_raster, 
-               total_area=total_area, 
-               area_dos_fragmentos=area_frag,
-               edge_length=total_edge,
-               edge_density=edge_density,
-               total_area_for_the_class=class_area,
-               average_area=mean_frag,
-               coeficient_of_variation=cv_frag,
-               standard_deviation=sd_frag,
-               area_of_the_patches=frag_sizes,
-               index_of_aggregation=ai,
-               reclassified_raster=rec_raster,  
-               reclassified=ifelse(length(classe) == 1, "No", "Yes") 
-  ) )
+  r <- .as_terra(aux_raster); geom <- .grid_geometry(r)
+  v <- matrix(terra::values(r, mat = FALSE), geom$nrow, geom$ncol, byrow = TRUE)
+  land_ha <- sum(geom$area[!is.na(v)]) / 1e4
+  tib <- function(level, class, id, metric, value)
+    dplyr::tibble(layer = 1L, level = level, class = as.integer(class), id = as.integer(id), metric = metric, value = value)
+
+  classes <- intersect(c(0, target), unique(v[!is.na(v)]))
+  frag <- lapply(classes, function(k) .fragment_patches(r, v, k, geom, 8L, FALSE)$patches)
+  offset <- cumsum(c(0, vapply(frag, nrow, 1L)))
+  area_frag <- do.call(rbind, lapply(seq_along(classes), function(i)
+    tib("patch", classes[i], offset[i] + frag[[i]]$patch_id, "area", frag[[i]]$area_ha)))
+  per_class <- function(metric, f) do.call(rbind, lapply(seq_along(classes), function(i)
+    tib("class", classes[i], NA, metric, f(frag[[i]]$area_ha))))
+
+  # Landscape edge: shared edges between different classes, each counted once.
+  right <- .shift(v, 0, 1); down <- .shift(v, 1, 0)
+  te <- sum(geom$edge_ew[!is.na(v) & !is.na(right) & v != right]) +
+        sum(geom$edge_s[!is.na(v) & !is.na(down) & v != down])
+
+  ai <- withCallingHandlers(landscapemetrics::lsm_c_ai(aux_raster),
+    warning = function(w) if (grepl("projected|units|degree|meter|check_landscape", conditionMessage(w), ignore.case = TRUE)) invokeRestart("muffleWarning"))
+  frag_sizes <- area_frag[area_frag$class == target, ]
+
+  list(classe = classe, proj = geom$crs_wkt, utm = .utm_from_raster(r),
+       total_area = tib("landscape", NA, NA, "ta", land_ha),
+       area_dos_fragmentos = area_frag,
+       edge_length = tib("landscape", NA, NA, "te", te),
+       edge_density = tib("landscape", NA, NA, "ed", te / land_ha),
+       total_area_for_the_class = per_class("ca", sum),
+       average_area = per_class("area_mn", mean),
+       coeficient_of_variation = per_class("area_cv", function(a) if (length(a) > 1) 100 * stats::sd(a) / mean(a) else NA_real_),
+       standard_deviation = per_class("area_sd", function(a) if (length(a) > 1) stats::sd(a) else NA_real_),
+       area_of_the_patches = frag_sizes,
+       index_of_aggregation = ai,
+       fragments = frag[[match(target, classes)]],
+       reclassified_raster = if (isTRUE(export.raster)) aux_raster else NULL,
+       reclassified = ifelse(length(classe) == 1, "No", "Yes"))
 }

@@ -11,9 +11,10 @@
 #'   Default is \code{c("keep.all", "aggregation_index", "fragments_number", "class_area", "edge_density", "edge_length", "frag_area")}.
 #' @param start Numeric start year; NULL inherits the input time_range.
 #' @param end Numeric end year; NULL inherits the input time_range.
-#' @param zone The zone of interest for calculating the metrics.
+#' @param zone,hemisphere Deprecated and ignored. Metrics are computed on the
+#'   native grid (no reprojection); the UTM zone and hemisphere are detected
+#'   from each raster and recorded in `metadata$source`.
 #' @param classes A vector of class codes to include in the analysis. If \code{NULL}, all classes are included by default.
-#' @param hemisphere A character string specifying the hemisphere ('north' or 'south').
 #' @param line_color Color of the lines in the generated plots. Default is \code{"blue"}.
 #' @param point_shape Shape of the points in the plots. Default is 16.
 #' @param point_size Size of the points in the plots. Default is 3.
@@ -40,7 +41,7 @@
 #' \dontrun{
 #' rasters_data <- list(raster = list_of_rasters, time_range = c(2000, 2020))
 #' biomastats_metrics(rasters_data, start = 2000, end = 2020,
-#'                    zone = "Zone1", hemisphere = "north")
+#'                    classes = 3)
 #' }
 #'
 #' @import ggplot2
@@ -51,7 +52,7 @@
 
 biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggregation_index", "fragments_number", 
                                                          "class_area", "edge_density", "edge_length", "frag_area"), 
-                         start = NULL, end = NULL, zone, classes = NULL, hemisphere,
+                         start = NULL, end = NULL, zone = NULL, classes = NULL, hemisphere = NULL,
                          line_color = "blue", point_shape = 16, 
                          point_size = 3, export.raster = TRUE) {
    
@@ -79,10 +80,11 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
   class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes) else NULL
   source_rasters <- rasters_biomastats$raster[seq.int(start, end) - time_range[1L] + 1L]
   source_metadata <- lapply(source_rasters, function(r) list(
-    crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r)))
+    crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r), utm = .utm_from_raster(r)))
   names(source_metadata) <- as.character(seq.int(start, end))
   metadata <- list(schema_version = "1.0", collection = collection,
     time_range = c(start, end), classes = classes, source = source_metadata,
+    method = "native grid, no reprojection; geodesic cell areas and ellipsoidal edges (see fragment_metrics)",
     reclassification = if (length(classes) == 1L) "selected code preserved; background zero"
       else "selected classes merged as presence; background zero")
   # Defina as opções válidas de métricas
@@ -101,7 +103,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
   
   rec_map <- NULL
   for(i in 1:(end - (start-1))) {
-    t[[i]] <- lulc_metrics(source_rasters[[i]], zone = zone, classe = classes, hemisphere = hemisphere, export.raster = export.raster)
+    t[[i]] <- lulc_metrics(source_rasters[[i]], classe = classes, export.raster = export.raster)
     rec_map[[i]] <- t[[i]]$reclassified_raster 
     }  
   
