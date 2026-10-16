@@ -14,7 +14,7 @@
 #'
 #' @return A list containing the shapefile, time range, and masked raster data.
 #' @importFrom sf st_read st_crs
-#' @importFrom raster crop mask crs
+#' @importFrom raster crs
 #' @export
 #'
 #' @examples
@@ -40,7 +40,7 @@ load_rasters <- function(shape_path = NULL,
   }
 
   # Load the shapefile
-  s <- sf::st_read(shape_path)
+  s <- sf::st_read(shape_path, quiet = TRUE)
   s <- sf::st_transform(s, crs=4326)
 
   s_utm <- sf::st_crs(s)$proj4string
@@ -67,7 +67,7 @@ load_rasters <- function(shape_path = NULL,
     if (is.null(import_folder_path)) {
       stop("Error! Path for the import maps library is undefined.")
     }
-    biome_rasters <- load_rasters_from_folder(start, end, import_folder_path)
+    biome_rasters <- lapply(load_rasters_from_folder(start, end, import_folder_path), .as_terra)
   }
 
     biome_utm <- sf::st_crs(biome_rasters[[1]])$proj4string
@@ -77,15 +77,22 @@ load_rasters <- function(shape_path = NULL,
     stop("Error. CRSs differed from shp and rasters. CRS must be identical!")
   }
 
-  maps <- NULL
+  # Crop and mask raster data using the shapefile (cell-centre rule, as raster::mask).
+  # Maps are returned as RasterLayer, the public map type of the package.
+  # raster::raster(SpatRaster) calls gc() on every conversion, so the RasterLayer
+  # is built directly from the cropped grid and its values.
+  area <- terra::vect(s)
   map <- NULL
-  
-  # Crop and mask raster data using the shapefile
   for (i in start:end) {
-    maps[[i - (start - 1)]] <- raster::crop(biome_rasters[[i - (start - 1)]], s)
-    map[[i - (start - 1)]] <- raster::mask(maps[[i - (start - 1)]], s)
+    r <- terra::mask(terra::crop(biome_rasters[[i - (start - 1)]], area), area, touches = FALSE)
+    e <- terra::ext(r)
+    out <- raster::raster(nrows = terra::nrow(r), ncols = terra::ncol(r), xmn = e$xmin, xmx = e$xmax,
+                          ymn = e$ymin, ymx = e$ymax, crs = terra::crs(r))
+    out <- raster::setValues(out, as.numeric(terra::values(r, mat = FALSE)))
+    names(out) <- names(r)
+    map[[i - (start - 1)]] <- out
   }
-  
+
   return(list("shape" = s, "time_range" = c(start, end), "raster" = map, "collection" = collection))
 }
 

@@ -41,7 +41,8 @@
 #'     CRS, area-weighted), `lon`, `lat`, `gyration_m` (radius of gyration),
 #'     `elongation` (1 - minor/major axis of the area-weighted second moments),
 #'     `orientation_deg` (azimuth of the major axis), bounding box and
-#'     `enn_m` (edge-to-edge distance to the nearest fragment of the same class).
+#'     `enn_m` (edge-to-edge geodesic distance to the nearest fragment of the
+#'     same class, found with the s2 spatial index).
 #'   \item `summary`: one row per year and class with landscape and class area,
 #'     `pland`, `n_patches`, `patch_density` (per 100 ha), `edge_m` and
 #'     `edge_density` (m/ha, edges with other classes), area mean, median, SD,
@@ -140,8 +141,9 @@ fragment_metrics <- function(maps, classes = NULL, years = NULL, merge_classes =
   mask <- !is.na(v) & v %in% codes
   if (!any(mask)) return(NULL)
   m <- r; terra::values(m) <- as.vector(t(ifelse(mask, 1, NA)))
-  pr <- terra::patches(m, directions = directions, zeroAsNA = TRUE)
-  P <- matrix(terra::values(pr, mat = FALSE), geom$nrow, geom$ncol, byrow = TRUE)
+  # Connected components by the C++ labelling of landscapemetrics: same partition
+  # as terra::patches, orders of magnitude faster on large grids.
+  P <- landscapemetrics::get_patches(m, class = 1, directions = directions, return_raster = FALSE)[[1]][[1]]
   cells <- which(!is.na(P)); id <- P[cells]
   ids <- sort(unique(id)); idx <- match(id, ids)
   sumby <- function(z) as.numeric(rowsum(as.numeric(z), idx, reorder = TRUE))
@@ -192,16 +194,11 @@ fragment_metrics <- function(maps, classes = NULL, years = NULL, merge_classes =
   }
   polygons <- NULL
   if (vectorize) {
-    terra::values(pr) <- as.vector(t(matrix(match(P, ids), geom$nrow, geom$ncol)))
+    pr <- m; terra::values(pr) <- as.vector(t(matrix(match(P, ids), geom$nrow, geom$ncol)))
     polygons <- .vectorize_raster(pr, dissolve = TRUE)
     names(polygons)[1] <- "patch_id"
     polygons <- polygons[order(polygons$patch_id), ]
-    if (nrow(polygons) > 1) {
-      d <- sf::st_distance(polygons)
-      d <- matrix(as.numeric(units::set_units(d, "m")), nrow(polygons))
-      diag(d) <- Inf
-      patches$enn_m[polygons$patch_id] <- apply(d, 1, min)
-    }
+    if (nrow(polygons) > 1) patches$enn_m[polygons$patch_id] <- .nearest_distance(polygons)
     polygons <- merge(polygons, patches, by = "patch_id", sort = TRUE)
   }
   list(patches = patches, class_edge = class_edge, polygons = polygons)
@@ -318,4 +315,24 @@ fragment_metrics <- function(maps, classes = NULL, years = NULL, merge_classes =
       ggplot2::labs(x = .tr(language, "Ano", "Year"), y = NULL)
   }
   list(size_distribution = size_distribution, rank_size = rank_size, shape = shape, map = map, trend = trend)
+}
+
+# Edge-to-edge geodesic distance (sphere) from each polygon to its nearest other
+# polygon. Candidates come from the s2 index within a growing radius, so only
+# nearby pairs are measured (no pairwise distance matrix); the result is exact.
+.nearest_distance <- function(polygons, start = 250) {
+  g <- sf::st_as_s2(sf::st_transform(sf::st_geometry(polygons), 4326))
+  out <- rep(NA_real_, length(g)); todo <- seq_along(g); radius <- start
+  while (length(todo) && radius < 4e7) {
+    cand <- s2::s2_dwithin_matrix(g[todo], g, radius)
+    from <- rep(todo, lengths(cand)); to <- unlist(cand)
+    keep <- from != to
+    if (any(keep)) {
+      d <- s2::s2_distance(g[from[keep]], g[to[keep]])
+      best <- tapply(d, from[keep], min)
+      out[as.integer(names(best))] <- best
+    }
+    todo <- todo[is.na(out[todo])]; radius <- radius * 4
+  }
+  out
 }

@@ -6,8 +6,8 @@
 #' @param export_folder_path Directory used to store downloaded raster files.
 #' @param type Data type passed to `download_maps()`.
 #' @param collection Collection passed to `download_maps()`.
-#' @return A list containing one merged raster for each year.
-#' @importFrom raster raster merge
+#' @return A list containing one merged `SpatRaster` for each year.
+#' @importFrom raster raster
 #' @export
 #'
 #' @examples
@@ -72,8 +72,8 @@ check_maps <- function(
 
   for (index in seq_along(years)) {
     local_paths <- requirements$local_path[requirements$year == years[[index]]]
-    fragment_rasters <- lapply(local_paths, raster::raster)
-    maps[[index]] <- Reduce(raster::merge, fragment_rasters)
+    fragment_rasters <- lapply(local_paths, terra::rast)
+    maps[[index]] <- if (length(fragment_rasters) > 1L) do.call(terra::merge, unname(fragment_rasters)) else fragment_rasters[[1]]
   }
 
   maps

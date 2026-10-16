@@ -17,3 +17,4 @@
 ^ignorados$
 ^preview.*
 ^tutorial.*
+^tests/testthat/test-local-.*\.R$

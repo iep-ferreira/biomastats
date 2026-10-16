@@ -47,6 +47,7 @@ Imports:
     readxl,
     rvest,
     scales,
+    s2,
     sf,
     landscapemetrics,
     jsonlite

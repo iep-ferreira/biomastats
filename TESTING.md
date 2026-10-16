@@ -60,7 +60,26 @@ projeto, pois o `R CMD build` pode copiar checkpoints longos do diretorio
 
 Os testes automatizados carregam `inst/examples/mapa_exemplo.Rdata` e
 reproduzem etapas de analise do tutorial. A funcao `load_rasters()` nao e
-chamada pelos testes automatizados, para evitar download e dependencia externa.
+chamada pelos testes que rodam no CI, para evitar download e dependencia externa.
+
+### Testes locais com download
+
+Arquivos `tests/testthat/test-local-*.R` baixam dados reais e rodam apenas na
+maquina do desenvolvedor. Eles ficam fora do pacote construido (`.Rbuildignore`),
+de modo que o `R CMD check` do GitHub Actions nao os executa; tambem usam
+`skip_on_ci()`, `skip_on_cran()` e `skip_if_offline()`.
+
+`test-local-itapetininga.R` baixa as duas tiles (93 e 94) de Itapetininga - SP
+para 2023-2024 em uma pasta temporaria e confere `load_rasters()`, o recorte e a
+compatibilidade com `get_area()`, `class_diversity()` e `fragment_metrics()`:
+
+```r
+devtools::test(filter = "local-itapetininga")
+```
+
+O fluxo completo de 1985-2024 esta em
+`ignorados/testes-locais/teste-local-itapetininga.Rmd` (cache local em
+`ignorados/testes-locais/itapetininga-cache`, ignorado pelo Git).
 
 ## Sandbox Linux com Docker
 

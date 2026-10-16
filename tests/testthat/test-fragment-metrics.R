@@ -25,7 +25,7 @@ test_that("projected grids give exact fragment geometry", {
   expect_equal(p$elongation[2], 0, tolerance = 1e-6)
   expect_equal(p$centroid_x, c(500025, 500080))
   expect_equal(p$centroid_y, c(7400060, 7400050))
-  expect_equal(p$enn_m, c(20, 20))
+  expect_equal(p$enn_m, c(20, 20), tolerance = 1e-2)
   expect_equal(f$metadata$source[[1]]$utm$zone, "22")
   expect_equal(f$metadata$source[[1]]$utm$hemisphere, "south")
 })
