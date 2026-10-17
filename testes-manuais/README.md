@@ -1,6 +1,6 @@
 # Testes manuais do biomastats
 
-Dois relatórios R Markdown que conferem o pacote de ponta a ponta e geram um
+Três relatórios R Markdown que conferem o pacote de ponta a ponta e geram um
 HTML para inspeção visual. Complementam os testes automatizados
 (`tests/testthat`), que rodam no GitHub Actions; estes rodam só na sua máquina.
 
@@ -8,6 +8,7 @@ HTML para inspeção visual. Complementam os testes automatizados
 |:--|:--|:--|:--|
 | `teste-manual-integrado.Rmd` | Todas as funções de análise sobre o exemplo da Lagoa do Sino (Coleção 10, 1985–2024): mapas, áreas, diversidade, séries temporais, mudanças, adjacências, métricas da paisagem, fragmentos e conectividade, com tabelas dinâmicas e o tempo de cada função | não | 1 a 2 min |
 | `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisição seletiva de tiles, sem cache: Lagoa do Sino (1 tile) e Itapetininga - SP (2 tiles) | sim | 3 a 5 min |
+| `teste-manual-biblioteca.Rmd` | `load_rasters(method = "library")`: recorte a partir da coleção nacional já gravada no computador (`collection_10`, 1985–2024), com o tempo de cada etapa, para a Lagoa do Sino e Itapetininga; confere que o recorte coincide com o exemplo do pacote | não (exige a coleção local, ~28 GB) | 3 a 4 min |
 
 ## Antes de rodar
 
@@ -27,6 +28,7 @@ do código-fonte atual em uma biblioteca temporária.
 ```r
 rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd")
 ```
 
 O HTML é criado ao lado do `.Rmd`, com o mesmo nome, e fica fora do Git.
@@ -72,3 +74,20 @@ rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd",
   `Sys.setlocale("LC_CTYPE", ".UTF-8")`.
 - **Falha na construção do pacote:** rode `devtools::document()` e os testes
   automatizados (`devtools::test()`) para localizar o erro.
+
+## Teste do método library
+
+O relatório procura a pasta `collection_10` (arquivos
+`brasil_coverage_<ano>.tif`) na pasta pessoal e em `Documentos`. Para outro
+local ou período:
+
+```r
+rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd",
+                  params = list(pasta_colecao = "D:/mapbiomas/collection_10",
+                                inicio = 2000, fim = 2024))
+```
+
+A renderização para com erro se o recorte do método library divergir do exemplo
+do pacote (gerado por download de tiles com o mesmo limite). A tabela "Tempo de
+cada etapa" separa leitura do limite, abertura dos mapas nacionais, recorte,
+máscara, chamada completa de `load_rasters()` e `get_area()`.

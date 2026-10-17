@@ -79,17 +79,19 @@ devtools::test(filter = "local-itapetininga")
 
 ### Testes manuais (relatorios HTML)
 
-A pasta `testes-manuais/` tem dois relatorios R Markdown para inspecao visual,
+A pasta `testes-manuais/` tem tres relatorios R Markdown para inspecao visual,
 fora do pacote construido. Guia completo em `testes-manuais/README.md`.
 
 | Relatorio | Uso | Internet |
 |:--|:--|:--|
 | `teste-manual-integrado.Rmd` | todas as funcoes de analise sobre o exemplo da Lagoa do Sino, com tabelas dinamicas e tempo por funcao | nao |
 | `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisicao seletiva, sem cache, Lagoa do Sino e Itapetininga | sim |
+| `teste-manual-biblioteca.Rmd` | `load_rasters(method = "library")` a partir da colecao nacional local, com tempo por etapa | nao (colecao local) |
 
 ```r
 rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd")
 ```
 
 O HTML e criado ao lado do `.Rmd` e fica fora do Git.
