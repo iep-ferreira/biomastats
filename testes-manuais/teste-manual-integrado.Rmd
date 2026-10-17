@@ -1,0 +1,277 @@
+---
+title: "biomastats — teste manual integrado"
+subtitle: "UFSCar Lagoa do Sino, dados de exemplo do pacote (MapBiomas Coleção 10, 1985–2024)"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    number_sections: true
+    self_contained: true
+    code_folding: hide
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 110, fig.retina = 2)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária.
+execucao <- tempfile("biomastats-integrado-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+t0 <- Sys.time()
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+
+cronometro <- data.frame(modulo = "Preparação", funcao = "R CMD INSTALL",
+                         segundos = as.numeric(difftime(Sys.time(), t0, units = "secs")))
+etapa <- function(modulo, funcao, expr) {
+  t0 <- Sys.time(); valor <- suppressMessages(force(expr))
+  cronometro[nrow(cronometro) + 1, ] <<- list(modulo, funcao,
+    as.numeric(difftime(Sys.time(), t0, units = "secs")))
+  valor
+}
+tabela <- function(x, digits = 2, ...) knitr::kable(x, digits = digits, row.names = FALSE,
+  format.args = list(decimal.mark = ",", big.mark = "."), ...)
+# Tabela dinâmica (filtro, ordenação e busca); sem o pacote DT, tabela estática.
+dinamica <- function(x, digits = 3) {
+  x <- as.data.frame(x)
+  if (inherits(x, "sf") || "geometry" %in% names(x)) x$geometry <- NULL
+  # Round only columns with fractional values (years, codes and ids stay integer).
+  num <- vapply(x, function(v) is.numeric(v) && any(is.finite(v) & v != round(v)), TRUE)
+  if (!requireNamespace("DT", quietly = TRUE)) return(tabela(utils::head(x, 50), digits))
+  DT::formatRound(DT::datatable(x, rownames = FALSE, filter = "top",
+    options = list(pageLength = 10, scrollX = TRUE)), columns = names(x)[num], digits = digits)
+}
+```
+
+# Dados
+
+Recorte da UFSCar Lagoa do Sino distribuído com o pacote, carregado como no
+tutorial (objeto `mapas` salvo em `.Rdata`). Nenhum arquivo é baixado: todas as
+análises partem do mesmo objeto de mapas.
+
+```{r dados}
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"))
+anos <- seq(mapas$time_range[1], mapas$time_range[2])
+meio <- anos[ceiling(length(anos) / 2)]
+c(inicio = min(anos), fim = max(anos), anos = length(anos),
+  linhas = nrow(mapas$raster[[1]]), colunas = ncol(mapas$raster[[1]]))
+```
+
+```{r mapas, fig.width=9, fig.height=5, out.width="49%", fig.show="hold"}
+invisible(lapply(etapa("Mapas", "land_vis", list(land_vis(mapas, year = min(anos)), land_vis(mapas, year = max(anos)))), print))
+```
+
+# Áreas e composição
+
+```{r areas, fig.height=6}
+areas <- etapa("Áreas", "get_area", get_area(mapas, plot_type = "areaplot"))
+perfil <- get_area(mapas, plot_type = "profile")
+areas$time_series
+perfil$time_series
+media <- sort(tapply(areas$aggregate_data$area_raw, areas$aggregate_data$land_class, mean), decreasing = TRUE)
+principais <- as.numeric(names(media))
+dicionario <- attr(areas, "class_dictionary")
+tabela(cbind(dicionario[match(principais, dicionario$code), c("code", "classe", "class")],
+             area_media_km2 = as.numeric(media)), 3)
+```
+
+```{r distribuicao, fig.width=7, fig.height=5, out.width="49%", fig.show="hold"}
+invisible(lapply(etapa("Áreas", "land_dist", list(land_dist(areas, year = max(anos), type = "barplot"),
+                                 land_dist(areas, year = max(anos), type = "pie"))), print))
+```
+
+# Diversidade e entropia
+
+```{r diversidade, fig.height=6}
+diversidade <- etapa("Diversidade", "class_diversity", class_diversity(areas))
+diversidade$plots$indices
+diversidade$plots$hill
+diversidade$plots$contribution
+diversidade$plots$dominance
+tabela(diversidade$change, 3)
+```
+
+# Séries temporais
+
+```{r series, fig.height=6}
+series <- etapa("Séries temporais", "land_time_series",
+                land_time_series(areas$time_series, classes = principais[1:3]))
+series$plot
+correlacao <- etapa("Séries temporais", "series_correlation",
+                    series_correlation(series, principais[1], principais[2], transformation = "difference"))
+correlacao$plots$series
+correlacao$plots$association
+tabela(correlacao$association, 4)
+```
+
+```{r regime, fig.height=6.5}
+ajuste <- etapa("Séries temporais", "series_fit_regime",
+                series_fit_regime(series, principais[1], model = "prob_bent_logistic",
+                                  bootstrap = 200, seed = 1))
+ajuste$plot
+ajuste$interval_plot
+tabela(ajuste$change_points)
+comparacao <- etapa("Séries temporais", "series_fit_regime (auto)",
+                    series_fit_regime(series, principais[1], model = "auto", bootstrap = 0, build_plot = FALSE))
+tabela(comparacao$model_table[order(comparacao$model_table$AICc), ], 3)
+```
+
+```{r diagnostico, fig.width=6, fig.height=4.5, out.width="49%", fig.show="hold"}
+diagnostico <- etapa("Séries temporais", "series_diagnostics", series_diagnostics(ajuste))
+diagnostico$plots$residuals
+diagnostico$plots$acf
+diagnostico$plots$qq
+diagnostico$plots$observed_fitted
+```
+
+```{r projecao, fig.height=6}
+tabela(diagnostico$quality, 4)
+projecao <- etapa("Séries temporais", "series_forecast", series_forecast(ajuste, horizon = 5))
+projecao$plot
+```
+
+# Mudanças entre datas
+
+```{r mudancas, fig.height=7}
+bipartite <- etapa("Mudanças", "land_change (2 datas)", land_change(mapas, years = c(min(anos), max(anos))))
+bipartite$plot
+bipartite$change_plot
+tripartite <- etapa("Mudanças", "land_change (3 datas)", land_change(mapas, years = c(min(anos), meio, max(anos))))
+tripartite$plot
+tabela(tripartite$interval_metrics, 3)
+tabela(tripartite$trajectory_metrics, 3)
+```
+
+# Adjacências entre classes
+
+```{r grafo, fig.height=7}
+rede <- etapa("Adjacências", "land_to_graph", land_to_graph(mapas, year = max(anos)))
+rede$plot
+rede$heatmap
+rede$edge_plot
+tabela(rede$node_metrics[, intersect(c("code", "label", "degree", "strength", "betweenness",
+                                       "boundary_m", "neighbor_entropy"), names(rede$node_metrics))], 3)
+```
+
+# Métricas da paisagem e reclassificação
+
+```{r metricas, fig.width=7, fig.height=4.5, out.width="49%", fig.show="hold"}
+metricas <- etapa("Métricas da paisagem", "biomastats_metrics",
+                  biomastats_metrics(mapas, classes = c(3, 4), metrics = "keep.all"))
+metricas$area_plot
+metricas$ai_plot
+metricas$fragments_number
+metricas$edge_density_plot
+```
+
+```{r reclassificacao, fig.width=7, fig.height=5.5, out.width="49%", fig.show="hold"}
+invisible(lapply(etapa("Métricas da paisagem", "reclass_map",
+      list(reclass_map(obj = metricas, year = min(anos)), reclass_map(obj = metricas, year = max(anos)))), print))
+```
+
+```{r metricas-tabela}
+tabela(utils::head(metricas$metrics_table, 8))
+um_ano <- etapa("Métricas da paisagem", "lulc_metrics", lulc_metrics(mapas$raster[[length(anos)]], classe = 3))
+tabela(rbind(um_ano$total_area, um_ano$edge_length, um_ano$edge_density))
+```
+
+# Fragmentos na grade nativa
+
+```{r fragmentos, fig.height=6.5}
+fragmentos <- etapa("Fragmentos", "fragment_metrics",
+                    fragment_metrics(mapas, classes = c(3, 15), years = c(min(anos), meio, max(anos))))
+fragmentos$plots$map
+fragmentos$plots$size_distribution
+fragmentos$plots$rank_size
+fragmentos$plots$shape
+fragmentos$plots$trend
+tabela(fragmentos$summary[, c("year", "code", "n_patches", "class_area_ha", "pland", "area_mean",
+                              "area_gini", "lpi", "mesh_ha", "edge_density", "enn_median")], 2)
+tabela(fragmentos$lsm, 3)
+```
+
+## Fragmentos individuais
+
+Uma linha por fragmento (classe, ano): área, perímetro, núcleo, forma,
+centroide, dispersão e distância ao vizinho mais próximo. Use os filtros no
+topo das colunas para selecionar classe, ano ou faixas de valores.
+
+```{r fragmentos-individuais}
+dinamica(fragmentos$patches)
+```
+
+## Métricas por classe e ano
+
+```{r fragmentos-resumo}
+dinamica(fragmentos$summary)
+```
+
+# Vetorização e conectividade
+
+```{r conectividade, fig.height=6.5}
+floresta <- etapa("Conectividade", "biomastats_metrics (floresta)",
+                  biomastats_metrics(mapas, start = max(anos), end = max(anos), classes = 3))
+poligonos <- etapa("Conectividade", "reclass_to_polygons",
+                   reclass_to_polygons(floresta, save_shp = FALSE))
+ggplot2::ggplot(poligonos) +
+  ggplot2::geom_sf(ggplot2::aes(fill = area_ha), colour = "grey25", linewidth = .15) +
+  ggplot2::scale_fill_viridis_c(name = "Área (ha)", trans = "log10",
+    labels = function(x) format(x, decimal.mark = ",", drop0trailing = TRUE, scientific = FALSE)) +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(title = sprintf("Fragmentos de formação florestal vetorizados (%d)", max(anos)))
+conectividade <- etapa("Conectividade", "land_connectivity",
+                       land_connectivity(poligonos, max_dist = c(100, 300, 600)))
+conectividade$plot
+conectividade$cluster_plot
+conectividade$importance_plot
+if (!is.null(conectividade$range_plot)) conectividade$range_plot
+tabela(conectividade$metrics, 4)
+prioridade <- etapa("Conectividade", "patch_imp_fast",
+                    patch_imp_fast(conectividade$scenarios[["300"]]$land, metric = "IIC"))
+tabela(data.frame(t(as.matrix(summary(prioridade$prioritization)))), 3)
+```
+
+## Métricas de conectividade por fragmento
+
+Uma linha por fragmento vetorizado e limiar de distância (`max_dist`), com
+cluster, componente e importância para a conectividade (dIIC, dAWF).
+
+```{r conectividade-individuais}
+dinamica(conectividade$patch_metrics)
+```
+
+## Métricas anuais da paisagem
+
+```{r metricas-anuais}
+dinamica(metricas$metrics_table, 2)
+```
+
+# Tempo de computação
+
+```{r tempos, fig.height=7}
+cronometro[nrow(cronometro) + 1, ] <- list("Total", "renderização completa",
+  as.numeric(difftime(Sys.time(), inicio_total, units = "secs")))
+tabela(cronometro, 2)
+grafico <- cronometro[cronometro$modulo != "Total", ]
+ggplot2::ggplot(grafico, ggplot2::aes(segundos, stats::reorder(funcao, segundos), fill = modulo)) +
+  ggplot2::geom_col() +
+  ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f s", segundos)), hjust = -.1, size = 3) +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0, .18))) +
+  ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom") +
+  ggplot2::labs(x = "Segundos", y = NULL, fill = NULL)
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

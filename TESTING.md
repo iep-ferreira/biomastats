@@ -77,9 +77,22 @@ compatibilidade com `get_area()`, `class_diversity()` e `fragment_metrics()`:
 devtools::test(filter = "local-itapetininga")
 ```
 
-O fluxo completo de 1985-2024 esta em
-`ignorados/testes-locais/teste-local-itapetininga.Rmd` (cache local em
-`ignorados/testes-locais/itapetininga-cache`, ignorado pelo Git).
+### Testes manuais (relatorios HTML)
+
+A pasta `testes-manuais/` tem dois relatorios R Markdown para inspecao visual,
+fora do pacote construido. Guia completo em `testes-manuais/README.md`.
+
+| Relatorio | Uso | Internet |
+|:--|:--|:--|
+| `teste-manual-integrado.Rmd` | todas as funcoes de analise sobre o exemplo da Lagoa do Sino, com tabelas dinamicas e tempo por funcao | nao |
+| `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisicao seletiva, sem cache, Lagoa do Sino e Itapetininga | sim |
+
+```r
+rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
+```
+
+O HTML e criado ao lado do `.Rmd` e fica fora do Git.
 
 ## Sandbox Linux com Docker
 

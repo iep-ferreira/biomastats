@@ -14,7 +14,7 @@ test_that("saved maps reproduce the analysis workflow", {
   mapas <- example_maps()
 
   expect_named(mapas, c("shape", "time_range", "raster", "collection"))
-  expect_equal(mapas[["time_range"]], c(1985, 2021))
+  expect_equal(mapas[["time_range"]], c(1985, 2024))
   expect_length(mapas[["raster"]], diff(mapas[["time_range"]]) + 1)
   expect_s3_class(mapas[["shape"]], "sf")
 
@@ -53,7 +53,7 @@ test_that("landscape metrics and reclassified maps use saved maps", {
   expect_equal(metrics[["start"]], 1985)
   expect_equal(metrics[["end"]], 1986)
   expect_equal(nrow(metrics[["metrics_table"]]), 2)
-  expect_equal(metrics$collection, mapas$collection)
+  expect_equal(metrics$collection, as.numeric(mapas$collection))
   expect_equal(metrics$class_dictionary$code, c(3, 4))
   expect_s3_class(biomastats::reclass_map(metrics, year = 1985), "ggplot")
 })

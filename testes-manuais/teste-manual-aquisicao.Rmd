@@ -1,0 +1,219 @@
+---
+title: "biomastats — teste manual de aquisição (load_rasters)"
+params:
+  inicio: 2015
+  fim: 2024
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = TRUE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 110, fig.retina = 2)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+
+# Nada em cache: biblioteca do pacote, manifestos da API e tiles em pastas novas.
+execucao <- tempfile("biomastats-load-rasters-"); dir.create(execucao)
+Sys.setenv(R_USER_CACHE_DIR = file.path(execucao, "cache-api"))
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+t0 <- Sys.time()
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+library(biomastats, lib.loc = library_dir)
+tempo_build <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+anos <- seq(params$inicio, params$fim)
+tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, format.args = list(decimal.mark = ","))
+grade <- sf::st_read(system.file("shp", "brasil_cortado.shp", package = "biomastats"), quiet = TRUE)
+grade$id <- seq_len(nrow(grade))
+segundos <- function(expr) {
+  t0 <- Sys.time(); valor <- force(expr)
+  list(valor = valor, s = as.numeric(difftime(Sys.time(), t0, units = "secs")))
+}
+```
+
+# Objetivo
+
+Verificar, sem nenhum arquivo em cache, que `load_rasters(method = "download")`:
+
+1. identifica pelo shapefile apenas as tiles necessárias;
+2. consulta a API e baixa somente essas tiles, para os anos pedidos;
+3. combina as tiles e recorta o resultado exatamente ao limite da área;
+4. gera a mesma grade em todos os anos;
+5. reproduz célula a célula a junção, o recorte e a máscara feitos diretamente com `raster`.
+
+São testadas uma área pequena (Lagoa do Sino, shapefile do pacote, uma tile) e uma
+grande (município de Itapetininga - SP, obtido com o `geobr`, duas tiles), no
+período `r params$inicio`–`r params$fim` (`r length(anos)` anos).
+
+```{r rotina}
+# Executa a aquisição de uma área em pastas novas e reúne as evidências.
+aquisicao <- function(shape) {
+  pasta <- tempfile("tiles-", tmpdir = execucao); dir.create(pasta)
+  manifestos_antes <- length(list.files(Sys.getenv("R_USER_CACHE_DIR"), recursive = TRUE))
+  sel <- segundos(sort(unique(compare_shapefiles(shape))))
+  carga <- segundos(load_rasters(shape, start = params$inicio, end = params$fim,
+                                 method = "download", export_folder_path = pasta, collection = "10"))
+  recorte <- segundos(load_rasters(shape, start = params$inicio, end = params$fim,
+                                   method = "download", export_folder_path = pasta, collection = "10"))
+  arquivos <- list.files(pasta, pattern = "[.]tif$")
+  baixados <- data.frame(
+    tile = as.integer(sub(".*-frag-([0-9]+)-year-.*", "\\1", arquivos)),
+    ano = as.integer(sub(".*-year-([0-9]+)[.]tif$", "\\1", arquivos)),
+    mb = file.size(file.path(pasta, arquivos)) / 2^20)
+  mapas <- carga$valor
+  ultimo <- terra::rast(mapas$raster[[length(anos)]])
+  pixels <- sapply(sel$valor, function(i) {
+    janela <- terra::crop(ultimo, terra::vect(sf::st_transform(grade[i, ], 4326)))
+    sum(!is.na(terra::values(janela, mat = FALSE)))
+  })
+  grades <- unique(t(vapply(mapas$raster, function(r) round(c(raster::extent(r)[], dim(r)[1:2]), 9), numeric(6))))
+  # Referência: junção, recorte e máscara feitos diretamente com raster.
+  legado <- segundos({
+    fontes <- lapply(file.path(pasta, arquivos[baixados$ano == params$fim]), raster::raster)
+    inteiro <- if (length(fontes) > 1) Reduce(raster::merge, fontes) else fontes[[1]]
+    raster::mask(raster::crop(inteiro, mapas$shape), mapas$shape)
+  })
+  areas <- get_area(mapas)
+  list(mapas = mapas, tiles = sel$valor, baixados = baixados, pixels = pixels, grades = grades,
+       manifestos = list.files(Sys.getenv("R_USER_CACHE_DIR"), recursive = TRUE),
+       manifestos_novos = length(list.files(Sys.getenv("R_USER_CACHE_DIR"), recursive = TRUE)) - manifestos_antes,
+       identico = identical(as.numeric(raster::getValues(legado$valor)),
+                            as.numeric(raster::getValues(mapas$raster[[length(anos)]]))),
+       area_classificada = sum(areas$aggregate_data$area_raw[areas$aggregate_data$year == params$fim]),
+       area_limite = sum(as.numeric(sf::st_area(mapas$shape))) / 1e6,
+       tempos = c(selecao = sel$s, download_recorte = carga$s, recorte = recorte$s, legado_1_ano = legado$s))
+}
+
+mapa_tiles <- function(res, titulo) {
+  limite <- sf::st_transform(res$mapas$shape, sf::st_crs(grade))
+  vizinhas <- grade[sf::st_intersects(grade, sf::st_buffer(sf::st_union(grade[res$tiles, ]), 0.3), sparse = FALSE)[, 1], ]
+  rotulos <- data.frame(id = vizinhas$id, sf::st_coordinates(sf::st_centroid(sf::st_geometry(vizinhas))))
+  ggplot2::ggplot() +
+    ggplot2::geom_sf(data = vizinhas, fill = "grey96", colour = "grey65") +
+    ggplot2::geom_sf(data = grade[res$tiles, ], fill = "#9ecae1", colour = "#2171b5", linewidth = .7) +
+    ggplot2::geom_text(data = rotulos, ggplot2::aes(X, Y, label = id), size = 3.2, colour = "grey25") +
+    ggplot2::geom_sf(data = limite, fill = "#e6550d", alpha = .6, colour = "#a63603") +
+    ggplot2::theme_minimal() + ggplot2::labs(title = titulo, x = NULL, y = NULL,
+      caption = "Azul: tiles selecionadas e baixadas. Cinza: tiles vizinhas, não baixadas. Laranja: área de estudo.")
+}
+
+relatorio <- function(res) {
+  tabela(merge(aggregate(cbind(arquivos = ano) ~ tile, res$baixados, length),
+               aggregate(mb ~ tile, res$baixados, sum)), 2)
+}
+```
+
+# Área pequena: Lagoa do Sino (UFSCar)
+
+```{r pequena}
+shape_pequena <- system.file("shp", "UFSCar.shp", package = "biomastats")
+c(arquivos_em_cache = 0, manifestos_em_cache = length(list.files(Sys.getenv("R_USER_CACHE_DIR"), recursive = TRUE)))
+pequena <- aquisicao(shape_pequena)
+pequena$tiles
+relatorio(pequena)
+```
+
+```{r pequena-mapas, fig.height=5}
+mapa_tiles(pequena, "Área pequena: tile selecionada")
+land_vis(pequena$mapas, year = params$fim)
+```
+
+# Área grande: Itapetininga (SP) pelo `geobr`
+
+```{r grande}
+limite <- geobr::read_municipality(code_muni = 3522307, year = 2020, showProgress = FALSE)
+shape_grande <- file.path(execucao, "itapetininga.shp")
+sf::st_write(limite[, c("code_muni", "name_muni")], shape_grande, quiet = TRUE)
+grande <- aquisicao(shape_grande)
+grande$tiles
+relatorio(grande)
+tabela(data.frame(tile = grande$tiles, pixels = grande$pixels,
+                  percentual = 100 * grande$pixels / sum(grande$pixels)), 1)
+```
+
+Cada tile contribui com parte dos pixels do recorte, o que confirma que as duas
+foram baixadas e combinadas.
+
+```{r grande-mapas, fig.height=6}
+mapa_tiles(grande, "Itapetininga: tiles selecionadas")
+limites_tiles <- sf::st_transform(sf::st_boundary(grade[grande$tiles, ]), 4326)
+bb <- sf::st_bbox(grande$mapas$shape)
+land_vis(grande$mapas, year = params$fim) +
+  ggplot2::geom_sf(data = limites_tiles, colour = "black", linewidth = .6, inherit.aes = FALSE) +
+  ggplot2::coord_sf(xlim = bb[c(1, 3)], ylim = bb[c(2, 4)]) +
+  ggplot2::labs(caption = "Linha preta: limite entre as tiles 93 e 94.")
+```
+
+# Verificações
+
+```{r verificacoes}
+verifica <- function(res) c(
+  tiles = length(res$tiles),
+  arquivos = nrow(res$baixados),
+  esperado = length(res$tiles) * length(anos),
+  todas_tiles_baixadas = setequal(unique(res$baixados$tile), res$tiles),
+  todos_anos_por_tile = all(table(res$baixados$tile) == length(anos)),
+  manifestos_consultados = res$manifestos_novos,
+  grade_unica_entre_anos = nrow(res$grades) == 1,
+  identico_a_referencia = res$identico,
+  area_classificada_km2 = res$area_classificada,
+  area_limite_km2 = res$area_limite)
+resultado <- rbind(pequena = verifica(pequena), grande = verifica(grande))
+tabela(t(resultado), 2)
+stopifnot(
+  identical(pequena$tiles, 93L), identical(grande$tiles, c(93L, 94L)),
+  all(resultado[, "arquivos"] == resultado[, "esperado"]),
+  all(resultado[, "todas_tiles_baixadas"] == 1), all(resultado[, "todos_anos_por_tile"] == 1),
+  all(resultado[, "grade_unica_entre_anos"] == 1), all(resultado[, "identico_a_referencia"] == 1),
+  abs(grande$area_classificada / grande$area_limite - 1) < .01)
+```
+
+Manifestos da API gravados nesta execução (um por tile consultada):
+
+```{r manifestos}
+basename(grande$manifestos)
+```
+
+# Tempo de cada processo
+
+```{r tempos}
+tempos <- rbind(pequena = pequena$tempos, grande = grande$tempos)
+tempos <- data.frame(area = rownames(tempos), tempos, row.names = NULL)
+tempos$download <- tempos$download_recorte - tempos$recorte
+tempos$recorte_por_ano <- tempos$recorte / length(anos)
+tabela(tempos, 1)
+c(build_pacote_s = round(tempo_build, 1),
+  total_s = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r tempos-grafico, fig.height=4.5}
+longo <- data.frame(area = rep(tempos$area, 3),
+  etapa = factor(rep(c("Seleção de tiles", "Download", "Recorte e máscara"), each = 2),
+                 levels = c("Seleção de tiles", "Download", "Recorte e máscara")),
+  segundos = c(tempos$selecao, tempos$download, tempos$recorte))
+ggplot2::ggplot(longo, ggplot2::aes(segundos, area, fill = etapa)) +
+  ggplot2::geom_col() + ggplot2::scale_fill_manual(values = c("#9ecae1", "#2171b5", "#e6550d")) +
+  ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom") +
+  ggplot2::labs(x = "Segundos", y = NULL, fill = NULL,
+                title = sprintf("load_rasters, %d anos", length(anos)))
+```
+
+`download` é a diferença entre a primeira chamada (com download) e a segunda
+(arquivos já baixados nesta execução). `legado_1_ano` é o tempo do método
+anterior para um único ano; o novo recorte faz os `r length(anos)` anos.
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```
