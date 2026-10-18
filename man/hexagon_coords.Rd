@@ -4,24 +4,26 @@
 \alias{hexagon_coords}
 \title{Hexagon Coordinates}
 \usage{
-hexagon_coords(lat = lat, lon = lon, adj_size = adj_size)
+hexagon_coords(lat = lat, lon = lon, size = size)
 }
 \arguments{
 \item{lat}{Latitude of the center of the hexagon. Default is 'lat'.}
 
 \item{lon}{Longitude of the center of the hexagon. Default is 'lon'.}
 
-\item{adj_size}{Adjustment size for the hexagon. This will affect the size of the hexagon. Default is 'adj_size'.}
+\item{size}{Distance between opposite vertices of the hexagon, in kilometers. Default is 'size'.}
 }
 \value{
 A Polygon object representing the hexagon.
 }
 \description{
-This function generates the coordinates for a regular hexagon given a center (latitude and longitude) and an adjustment size.
-The hexagon's vertices are calculated based on the geometric properties of a regular hexagon.
+This function generates the coordinates for a regular hexagon given a center (latitude and longitude) and a size.
+The vertices are placed at half the size from the center, on the WGS84 ellipsoid, every 60 degrees of
+bearing starting due east (\code{geosphere::destPoint}), so the hexagon has the same size and stays
+regular on the ground at any latitude.
 }
 \examples{
 \dontrun{
-hexagon_coords(lat = 40.7128, lon = -74.0060, adj_size = 1)
+hexagon_coords(lat = 40.7128, lon = -74.0060, size = 2)
 }
 }

@@ -16,7 +16,8 @@ make_polygon(
 
 \item{lon}{A numeric longitude value of the center of the polygon.}
 
-\item{size}{A numeric polygon size in kilometers.}
+\item{size}{Total width of the shape, in kilometers: diameter of the circle,
+side of the square or distance between opposite vertices of the hexagon.}
 
 \item{shape}{A character string specifying the shape of the polygon, either "circle", "square", or "hexagon".}
 }
@@ -26,8 +27,14 @@ The created polygon
 \description{
 Create a Geographical Polygon with Specified Size and Shape
 }
+\details{
+The vertices are placed on the WGS84 ellipsoid by
+\code{\link[=circle_coords]{circle_coords()}}, \code{\link[=square_coords]{square_coords()}} and \code{\link[=hexagon_coords]{hexagon_coords()}}, so the
+polygon has the same size and proportions on the ground at any latitude.
+It is returned and written in WGS84 (EPSG:4326).
+}
 \examples{
 \dontrun{
-make_polygon(lat = 40.7128, lon = 74.0060, size = 10, shape = "circle")
+make_polygon(lat = 40.7128, lon = -74.0060, size = 10, shape = "circle")
 }
 }

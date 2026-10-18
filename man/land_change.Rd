@@ -52,10 +52,11 @@ zero e uma classe. Um codigo deve ter o mesmo significado entre anos.
 Codigo desconhecido fica identificado no dicionario com known=FALSE e
 cor neutra. Colecao, classes, CRS e resolucao sao herdados de data.
 
-Areas projetadas usam a area da celula na grade, com conversao explicita
-das unidades do CRS para hectares; nao corrigem distorcao da projecao.
-Em CRS geografico, sf::st_area estima a area geodesica de uma celula por
-faixa de latitude. area_method e as convencoes constam em metadata.
+A area de cada pixel vem de terra::cellSize, como em \code{\link[=get_area]{get_area()}}: e a
+area geodesica da celula em CRS geografico; em CRS projetado, o terra
+transforma as celulas para longitude/latitude e corrige a distorcao da
+projecao. Assim, initial_ha e final_ha de cada classe coincidem com
+100 * area_raw de get_area. area_method e as convencoes constam em metadata.
 
 As comparacoes incluem intervalos consecutivos e, para tres anos, tambem
 o primeiro versus o ultimo. Todas usam a mesma mascara comum. A rede e o

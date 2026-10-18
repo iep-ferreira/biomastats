@@ -1,3 +1,37 @@
+# biomastats (development version)
+
+## Correções
+
+* `land_change()`: a coluna `valid_area_ha` de `coverage` trazia o número de
+  pixels válidos, e não a área em hectares, porque o `!` se aplicava ao produto
+  `is.na(values) * area`. No mapa de exemplo (1985 e 2024), ela valia 15130 em
+  vez de ~1242 ha.
+* `land_change()` calcula a área de cada pixel com `terra::cellSize()`, como
+  `get_area()`. Antes, polígonos de célula medidos com `sf::st_area()` davam
+  áreas um pouco diferentes: no mapa de exemplo, formação florestal em 1985
+  tinha 200,21 ha em `land_change()` e 199,74 ha em `get_area()`; agora as duas
+  dão 199,74 ha. Em CRS projetado, a área da célula deixa de ser a nominal da
+  grade e passa a corrigir a distorção da projeção, como em `get_area()` (uma
+  célula de 10 m no meridiano central UTM tem 0,010008 ha). `metadata$area_method`
+  registra o novo método, e o campo `metadata$geographic_s2` foi removido.
+* `make_polygon()` gerava formas com tamanho e proporções dependentes da
+  latitude: o tamanho era multiplicado por cos(lat) e usado como o mesmo raio
+  em graus de latitude e de longitude. Um círculo com `size = 2` em
+  Liechtenstein (latitude 47,16) media ~2,7 km N–S por ~1,8 km L–O. Agora os
+  vértices são posicionados no elipsoide WGS84 com `geosphere::destPoint()`, e
+  `size` é a largura total da forma, em km: diâmetro do círculo, lado do
+  quadrado ou distância entre vértices opostos do hexágono, em qualquer
+  latitude.
+* **Mudança incompatível.** A mesma chamada de `make_polygon()` gera áreas
+  diferentes das versões anteriores. Por exemplo, um hexágono com `size = 2.5`
+  a 23,6° S tinha 12,5 km² e agora tem 4,1 km². Em `circle_coords()`,
+  `square_coords()` e `hexagon_coords()`, o argumento `adj_size` (raio em
+  graus) foi substituído por `size`, com o mesmo significado e unidade de
+  `make_polygon()`.
+* O exemplo `inst/examples/mapa_exemplo.Rdata` não muda. Ele foi criado com
+  `make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")`
+  nas versões anteriores e continua com 12,465 km².
+
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o

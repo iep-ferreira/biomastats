@@ -4,24 +4,25 @@
 \alias{circle_coords}
 \title{Circle Coordinates}
 \usage{
-circle_coords(lat = lat, lon = lon, adj_size = adj_size)
+circle_coords(lat = lat, lon = lon, size = size)
 }
 \arguments{
 \item{lat}{Latitude of the center of the circle. Default is 'lat'.}
 
 \item{lon}{Longitude of the center of the circle. Default is 'lon'.}
 
-\item{adj_size}{Adjustment size for the circle. This will affect the radius of the circle. Default is 'adj_size'.}
+\item{size}{Diameter of the circle, in kilometers. Default is 'size'.}
 }
 \value{
 A Polygon object representing the circle.
 }
 \description{
-This function generates the coordinates for a circle given a center (latitude and longitude) and an adjustment size.
-The circle is defined using the parametric representation, x = rcos(theta) and y = rsin(theta).
+This function generates the coordinates for a circle given a center (latitude and longitude) and a size.
+The 100 vertices are placed at the radius, on the WGS84 ellipsoid, every 3.6 degrees of bearing
+(\code{geosphere::destPoint}), so the circle has the same size and stays round on the ground at any latitude.
 }
 \examples{
 \dontrun{
-circle_coords(lat = 40.7128, lon = -74.0060, adj_size = 1)
+circle_coords(lat = 40.7128, lon = -74.0060, size = 2)
 }
 }
