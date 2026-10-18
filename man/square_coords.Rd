@@ -4,24 +4,26 @@
 \alias{square_coords}
 \title{Square Coordinates}
 \usage{
-square_coords(lat = lat, lon = lon, adj_size = adj_size)
+square_coords(lat = lat, lon = lon, size = size)
 }
 \arguments{
 \item{lat}{Latitude of the center of the square. Default is 'lat'.}
 
 \item{lon}{Longitude of the center of the square. Default is 'lon'.}
 
-\item{adj_size}{Adjustment size for the square. This will affect the size of the square. Default is 'adj_size'.}
+\item{size}{Side of the square, in kilometers. Default is 'size'.}
 }
 \value{
 A Polygon object representing the square.
 }
 \description{
-This function generates the coordinates for a square given a center (latitude and longitude) and an adjustment size.
-The square's vertices are calculated based on the geometric properties of a square.
+This function generates the coordinates for a square given a center (latitude and longitude) and a size.
+The corners are placed at half the diagonal from the center, on the WGS84 ellipsoid, at bearings
+45, 135, 225 and 315 degrees (\code{geosphere::destPoint}), so the square has the same size and
+stays square on the ground at any latitude.
 }
 \examples{
 \dontrun{
-square_coords(lat = 40.7128, lon = -74.0060, adj_size = 1)
+square_coords(lat = 40.7128, lon = -74.0060, size = 2)
 }
 }

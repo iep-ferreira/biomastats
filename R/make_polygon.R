@@ -2,17 +2,21 @@
 #'
 #' @param lat A numeric latitude value of the center of the polygon.
 #' @param lon A numeric longitude value of the center of the polygon.
-#' @param size A numeric polygon size in kilometers.
+#' @param size Total width of the shape, in kilometers: diameter of the circle,
+#'   side of the square or distance between opposite vertices of the hexagon.
 #' @param shape A character string specifying the shape of the polygon, either "circle", "square", or "hexagon".
 #'
 #' @return The created polygon
+#' @details The vertices are placed on the WGS84 ellipsoid by
+#'   [circle_coords()], [square_coords()] and [hexagon_coords()], so the
+#'   polygon has the same size and proportions on the ground at any latitude.
+#'   It is returned and written in WGS84 (EPSG:4326).
 #' @importFrom sf st_crs st_write st_set_crs
-#' @importFrom geosphere distHaversine
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' make_polygon(lat = 40.7128, lon = 74.0060, size = 10, shape = "circle")
+#' make_polygon(lat = 40.7128, lon = -74.0060, size = 10, shape = "circle")
 #' }
 make_polygon <- function(lat = NULL, lon = NULL, size = NULL, shape = c("circle", "square", "hexagon") ){
   # Check if latitude and longitude are provided
@@ -30,14 +34,11 @@ make_polygon <- function(lat = NULL, lon = NULL, size = NULL, shape = c("circle"
     stop("Invalid buffer shape. Please enter 'circle', 'square', or 'hexagon'.")
   }
 
-  # Convert buffer size from kilometers to decimal degrees
-  adj_size <- geosphere::distHaversine(c(lon, lat), c(lon + size*1000/111320, lat))/111320
-
-  # Create polygons based on the specified size and geometry options
+  # Create polygons based on the specified size (total width, in km) and geometry options
   poly_sf <- switch(shape,
-                        "circle" = circle_coords(lat, lon, adj_size),
-                        "square" = square_coords(lat, lon, adj_size),
-                        "hexagon" = hexagon_coords(lat, lon, adj_size),
+                        "circle" = circle_coords(lat, lon, size),
+                        "square" = square_coords(lat, lon, size),
+                        "hexagon" = hexagon_coords(lat, lon, size),
                         stop("Invalid geometry. Please enter 'circle', 'square', or 'hexagon'.")
   )
 

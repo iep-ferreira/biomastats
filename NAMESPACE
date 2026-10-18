@@ -50,7 +50,7 @@ importFrom(dplyr,
   filter,
   mutate
 )
-importFrom(geosphere,distHaversine)
+importFrom(geosphere,destPoint)
 importFrom(ggplot2,
   aes,
   coord_polar,

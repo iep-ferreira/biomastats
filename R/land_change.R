@@ -38,10 +38,11 @@
 #'   Codigo desconhecido fica identificado no dicionario com known=FALSE e
 #'   cor neutra. Colecao, classes, CRS e resolucao sao herdados de data.
 #'
-#'   Areas projetadas usam a area da celula na grade, com conversao explicita
-#'   das unidades do CRS para hectares; nao corrigem distorcao da projecao.
-#'   Em CRS geografico, sf::st_area estima a area geodesica de uma celula por
-#'   faixa de latitude. area_method e as convencoes constam em metadata.
+#'   A area de cada pixel vem de terra::cellSize, como em [get_area()]: e a
+#'   area geodesica da celula em CRS geografico; em CRS projetado, o terra
+#'   transforma as celulas para longitude/latitude e corrige a distorcao da
+#'   projecao. Assim, initial_ha e final_ha de cada classe coincidem com
+#'   100 * area_raw de get_area. area_method e as convencoes constam em metadata.
 #'
 #'   As comparacoes incluem intervalos consecutivos e, para tres anos, tambem
 #'   o primeiro versus o ultimo. Todas usam a mesma mascara comum. A rede e o
@@ -125,11 +126,11 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
   }
   common <- rowSums(is.na(values)) == 0L
   if (!any(common)) stop("Nenhum pixel valido comum aos anos selecionados.")
-  area <- .land_change_cell_area(template, crs)
+  area <- .land_change_cell_area(template)
   coverage <- data.frame(year = years, total_pixels = nrow(values),
     valid_pixels = colSums(!is.na(values)), common_pixels = sum(common),
     excluded_valid_pixels = colSums(!is.na(values)) - sum(common),
-    valid_area_ha = colSums(!is.na(values) * area), common_area_ha = sum(area[common]))
+    valid_area_ha = colSums((!is.na(values)) * area), common_area_ha = sum(area[common]))
   selected <- values[common, , drop = FALSE]
   codes <- sort(unique(as.vector(selected)))
   dictionary <- .biomastats_dictionary(collection, codes)
@@ -201,12 +202,10 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
     collection = collection, years = years, language = language, crs_wkt = crs$wkt,
     resolution = raster::res(template), extent = as.vector(raster::extent(template)),
     nrows = raster::nrow(template), ncols = raster::ncol(template), area_unit = "ha",
-    area_method = if (sf::st_is_longlat(crs)) "geodesic cell polygon by latitude (sf)"
-      else "projected grid cell area; CRS units converted to hectares",
+    area_method = "terra::cellSize(unit = \"ha\", mask = FALSE), as in get_area()",
     mask = "complete cases across all selected years; NA excluded; zero is a class",
     source = "observed trajectories, no temporal interpolation or resampling",
     flow_colour = "first-year class", node_colour = "class at each year",
-    geographic_s2 = if (sf::st_is_longlat(crs)) sf::sf_use_s2() else NA,
     comparison = "adjacent intervals and first-last; shared complete-case mask")
   for (field in c("collection", "crs_wkt", "area_unit", "mask")) {
     graph <- igraph::set_graph_attr(graph, field, metadata[[field]])
@@ -220,20 +219,11 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
     class = c("biomastats_land_change", "list"))
 }
 
-.land_change_cell_area <- function(r, crs) {
-  sizes <- raster::res(r)
-  if (!sf::st_is_longlat(crs)) {
-    if (is.null(crs$ud_unit)) stop("Unidades do CRS projetado desconhecidas.")
-    metres <- as.numeric(units::set_units(units::set_units(sizes, crs$ud_unit, mode = "standard"), "m"))
-    return(rep(prod(metres) / 10000, raster::ncell(r)))
-  }
-  x <- raster::xmin(r)
-  top <- raster::ymax(r) - (seq_len(raster::nrow(r)) - 1) * sizes[2]
-  cells <- lapply(top, function(y) sf::st_polygon(list(rbind(c(x, y), c(x + sizes[1], y),
-    c(x + sizes[1], y - sizes[2]), c(x, y - sizes[2]), c(x, y)))))
-  area <- as.numeric(units::set_units(sf::st_area(sf::st_sfc(cells, crs = crs)), "ha"))
-  if (any(!is.finite(area) | area <= 0)) stop("Nao foi possivel calcular areas geograficas validas.")
-  rep(area, each = raster::ncol(r))
+# Same cell areas as get_area(), in the cell order of raster::getValues().
+.land_change_cell_area <- function(r) {
+  area <- terra::values(terra::cellSize(.as_terra(r), unit = "ha", mask = FALSE), mat = FALSE)
+  if (any(!is.finite(area) | area <= 0)) stop("Nao foi possivel calcular areas de celula validas.")
+  area
 }
 
 .land_change_interval <- function(paths, start, end, dictionary, total, language) {
