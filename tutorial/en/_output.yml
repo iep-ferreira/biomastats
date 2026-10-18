@@ -1,0 +1,24 @@
+bookdown::bs4_book:
+  theme:
+    version: 4
+    primary: "#2c5f8a"
+    secondary: "#3b7d3a"
+    success: "#3b7d3a"
+    info: "#2c5f8a"
+    warning: "#b7791f"
+    bg: "#fcf8ee"
+    fg: "#22302a"
+    font-size-base: "1rem"
+    base_font:
+      google: "Source Serif 4"
+    heading_font:
+      google: "Source Sans 3"
+    code_font:
+      google: "JetBrains Mono"
+  css: ../estilo.css
+  includes:
+    in_header: ../idioma.html
+  repo:
+    base: https://github.com/iep-ferreira/biomastats
+    branch: main
+    subdir: tutorial/en

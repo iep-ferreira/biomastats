@@ -5,9 +5,7 @@ export(check_maps)
 export(circle_coords)
 export(class_diversity)
 export(compare_shapefiles)
-export(density_of_feature)
 export(dict_build)
-export(distance_to_feature)
 export(distance_to_nearest)
 export(download_mapbiomas)
 export(download_maps)
@@ -19,7 +17,6 @@ export(get_api_values)
 export(get_area)
 export(get_gdrive_filename)
 export(hexagon_coords)
-export(integrate_feature)
 export(land_change)
 export(land_connectivity)
 export(land_dist)
@@ -29,7 +26,6 @@ export(land_vis)
 export(layer_catalog)
 export(load_features)
 export(load_lulc)
-export(load_osm_data)
 export(load_physical)
 export(load_rasters)
 export(load_rasters_from_folder)
@@ -38,7 +34,6 @@ export(make_polygon)
 export(patch_imp_fast)
 export(post_to_biomastats)
 export(raster_index)
-export(rasterize_osm)
 export(reclass_map)
 export(reclass_to_polygons)
 export(series_correlation)
@@ -88,25 +83,13 @@ importFrom(httr,
 )
 importFrom(jsonlite,fromJSON)
 importFrom(magrittr,"%>%")
-importFrom(osmdata,
-  add_osm_feature,
-  opq,
-  osmdata_sf
-)
 importFrom(raster,
-  cover,
   crop,
   crs,
-  distance,
-  extent,
-  focal,
   getValues,
   mask,
   merge,
-  projection,
-  raster,
-  rasterize,
-  setValues
+  raster
 )
 importFrom(rvest,
   html_attr,
@@ -115,8 +98,6 @@ importFrom(rvest,
 )
 importFrom(scales,pretty_breaks)
 importFrom(sf,
-  st_as_sfc,
-  st_bbox,
   st_crs,
   st_intersection,
   st_polygon,

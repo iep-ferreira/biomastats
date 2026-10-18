@@ -1,0 +1,42 @@
+# Composição e diversidade {#lagoa-diversidade}
+
+A ecologia oferece boas ferramentas para descrever a composição de uma
+paisagem. `class_diversity()` trata as classes como espécies e suas áreas como
+abundâncias e, para cada ano, calcula riqueza, entropia de Shannon,
+equitabilidade de Pielou, índices de Simpson, números de Hill e dominância:
+
+```{r diversidade, fig.height=5.5}
+diversidade <- class_diversity(areas)
+diversidade$plots$indices
+```
+
+```{r include=FALSE}
+ind <- diversidade$indices
+i85 <- ind[ind$year == 1985, ]; i24 <- ind[ind$year == 2024, ]
+dic <- attr(areas, "class_dictionary")
+nome <- function(code) dic$classe[match(code, dic$code)]
+```
+
+A tabela `diversidade$change` resume a diferença entre o primeiro e o último ano:
+
+```{r echo=FALSE}
+mudanca <- diversidade$change[diversidade$change$index %in% c("richness", "shannon", "pielou", "hill_1", "berger_parker"), ]
+mudanca$index <- c(richness = "Riqueza (classes)", shannon = "Shannon (H')", pielou = "Pielou (J')",
+                   hill_1 = "Hill, q = 1 (classes efetivas)", berger_parker = "Berger-Parker (dominância)")[mudanca$index]
+tabela(setNames(mudanca[, c("index", "first", "last", "net_change")], c("Índice", "1985", "2024", "Variação")), 2)
+```
+
+À primeira vista, a paisagem ficou mais variada, pois passou de
+`r i85$richness` para `r i24$richness` classes. Mas a diversidade efetiva quase
+não mudou: a entropia de Shannon ficou estável e a equitabilidade caiu de
+`r num(i85$pielou, 2)` para `r num(i24$pielou, 2)`. As classes novas ocupam
+pouco espaço, enquanto a área se concentra em uma única classe dominante, que
+era `r tolower(nome(i85$dominant_class))` em 1985 e passou a ser
+`r tolower(nome(i24$dominant_class))` em 2024.
+
+A decomposição da entropia mostra quanto cada classe contribui para a
+diversidade ao longo do tempo:
+
+```{r contribuicao, fig.height=5.5}
+diversidade$plots$contribution
+```

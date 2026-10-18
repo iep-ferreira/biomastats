@@ -1,0 +1,24 @@
+book_filename: "biomastats-livro"
+output_dir: "../docs"
+delete_merged_file: true
+before_chapter_script: "_common.R"
+language:
+  label:
+    fig: "Figura "
+    tab: "Tabela "
+  ui:
+    chapter_name: "Capítulo "
+rmd_files:
+  - index.Rmd
+  - 01-instalacao.Rmd
+  - 02-funcoes.Rmd
+  - 03-dados.Rmd
+  - 04-aquisicao.Rmd
+  - 05-lagoa-areas.Rmd
+  - 06-lagoa-diversidade.Rmd
+  - 07-lagoa-series.Rmd
+  - 08-lagoa-mudancas.Rmd
+  - 09-lagoa-paisagem.Rmd
+  - 10-lagoa-conectividade.Rmd
+  - 11-camadas.Rmd
+  - 12-sobre.Rmd

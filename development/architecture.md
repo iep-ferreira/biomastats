@@ -231,11 +231,11 @@ como NA. SHP conserva as colunas; RDS conserva tambem os atributos completos.
 Os fragmentos usam conectividade por aresta; as metricas existentes usam oito
 vizinhos, portanto a contagem pode diferir para pixels em contato diagonal.
 
-O ramo OSM (`load_osm_data`, `rasterize_osm`, `distance_to_feature`,
-`density_of_feature`, `integrate_feature`) e independente dessa vetorizacao.
-Os testes desse ramo foram comentados a pedido, incluindo os testes com mocks,
-assim como a consulta real no roteiro manual. Nenhuma consulta externa e
-necessaria para testar ou executar o exemplo de floresta.
+O antigo ramo de consultas ao Overpass (`load_osm_data`, `rasterize_osm`,
+`distance_to_feature`, `density_of_feature`, `integrate_feature`) foi removido
+do pacote em 2026-10-18. Feicoes do OpenStreetMap vem de `load_features()`, por
+extratos regionais; nenhuma consulta externa e necessaria para testar ou
+executar o exemplo de floresta.
 
 Execute `devtools::test(filter = "reclass-to-polygons")` para testar.
 O exemplo executavel de build, analise e visualizacao esta em

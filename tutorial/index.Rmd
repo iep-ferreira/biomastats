@@ -1,0 +1,71 @@
+---
+title: "Bioma Stats"
+subtitle: "Uso e cobertura da terra em R: guia do usuário"
+author: "Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+site: bookdown::bookdown_site
+lang: pt-BR
+description: "Livro do usuário do pacote R biomastats: aquisição de mapas do MapBiomas, áreas, diversidade, séries temporais, mudanças, métricas da paisagem, fragmentos, conectividade e camadas externas."
+cover-image: imagens/capa.jpg
+---
+
+# Apresentação {-}
+
+::: {.capa}
+```{r capa, echo=FALSE}
+knitr::include_graphics("imagens/capa.jpg")
+```
+:::
+
+<span class="versao">versão `r packageVersion("biomastats")`</span>
+
+O **Bioma Stats** (`biomastats`) é um pacote R que acompanha o estudo do uso e
+da cobertura da terra do começo ao fim. Você indica uma área, e o pacote busca
+nos mapas anuais do [MapBiomas](https://mapbiomas.org) apenas o trecho
+necessário. A partir daí, cada função responde a uma pergunta sobre a
+paisagem: quanto ocupa cada classe, quão diversa ela é, quando ocorreram as
+grandes mudanças, como os fragmentos de vegetação se organizam e se ainda estão
+conectados. Camadas abertas de infraestrutura, relevo e solos, inclusive fora do
+Brasil, podem ser trazidas para a mesma área e a mesma grade.
+
+::: {.cartoes}
+::: {.cartao}
+**Aquisição seletiva**
+
+Baixa só os recortes do MapBiomas que cobrem a área, ou recorta uma coleção nacional já guardada no computador.
+:::
+::: {.cartao}
+**Fluxo encadeado**
+
+Cada função recebe o resultado da anterior e herda classes, cores, unidades e período.
+:::
+::: {.cartao}
+**Paisagem na grade nativa**
+
+Métricas e fragmentos são calculados sem reprojetar os mapas, com áreas e bordas geodésicas.
+:::
+::: {.cartao}
+**Camadas abertas**
+
+ESA WorldCover, OpenStreetMap, Overture, Copernicus DEM e SoilGrids, alinhados à grade da análise.
+:::
+:::
+
+## Como ler este livro {-}
+
+O livro tem três partes. **Primeiros passos** cobre a instalação, apresenta
+todas as funções e as bases de dados consultadas, e mostra as duas maneiras de
+obter os mapas do MapBiomas. **Fluxo completo: Lagoa do Sino** aplica todas as
+análises, em sequência, ao campus Lagoa do Sino da UFSCar, em Buri (SP), e
+comenta o que cada resultado revela. **Além do MapBiomas** traz as camadas
+externas, com um exemplo no Brasil e outro no exterior.
+
+Todos os resultados da Parte II foram calculados na geração deste livro, a
+partir dos mapas de exemplo que acompanham o pacote. Ao copiar o código, você
+obtém as mesmas figuras e tabelas.
+
+::: {.logos}
+```{r logos, echo=FALSE, out.width="auto"}
+knitr::include_graphics(c("imagens/logo_ufscar.png", "imagens/logo_cnpq.png"))
+```
+:::

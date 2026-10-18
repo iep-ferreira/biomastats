@@ -1,0 +1,86 @@
+/* Bioma Stats — identidade visual do livro (ver development/identidade-visual-livro.md) */
+:root {
+  --bs-azul: #2c5f8a;
+  --bs-azul-escuro: #1c4e6e;
+  --bs-verde: #3b7d3a;
+  --bs-verde-claro: #e6efdc;
+  --bs-agua: #2a7f8a;
+  --bs-ambar: #b7791f;
+  --bs-papel: #fcf8ee;
+  --bs-papel-escuro: #f3ecdc;
+  --bs-tinta: #22302a;
+  --bs-cinza: #5c6670;
+  --bs-borda: #e3dccb;
+}
+
+body { line-height: 1.65; }
+main p, main li { hyphens: auto; }
+
+h1, h2, h3, h4 { color: var(--bs-azul-escuro); font-weight: 600; letter-spacing: -0.01em; }
+h1 { border-bottom: 3px solid var(--bs-verde); padding-bottom: .3rem; }
+h2 { margin-top: 2.2rem; }
+a { color: var(--bs-azul); }
+a:hover { color: var(--bs-verde); }
+
+/* Títulos das partes do livro na barra lateral */
+.book-toc .part, .sidebar-chapter .part { color: var(--bs-verde); text-transform: uppercase;
+  font-size: .78rem; letter-spacing: .08em; font-weight: 700; margin-top: 1rem; }
+
+/* Código: bloco claro, borda verde à esquerda */
+pre, div.sourceCode { background: #f6f1e4; border: 1px solid var(--bs-borda);
+  border-left: 4px solid var(--bs-verde); border-radius: 6px; }
+pre code { font-size: .86rem; }
+code { color: var(--bs-azul-escuro); background: var(--bs-papel-escuro); border-radius: 3px; padding: 0 .2em; }
+pre code { background: transparent; padding: 0; }
+
+/* Tabelas compactas */
+table { font-size: .9rem; margin: 1rem 0 1.5rem; }
+table thead th { background: var(--bs-verde-claro); color: var(--bs-tinta);
+  border-bottom: 2px solid var(--bs-verde) !important; font-weight: 600; }
+table td, table th { padding: .35rem .6rem !important; }
+table tbody tr:nth-child(even) { background: rgba(59, 125, 58, .04); }
+
+/* Telas estreitas: tabelas largas rolam na horizontal em vez de cortar colunas */
+@media (max-width: 767px) {
+  main table { display: block; overflow-x: auto; }
+  main table td:first-child, main table th:first-child { white-space: nowrap; }
+}
+
+/* Figuras */
+.figure, figure { margin: 1.5rem 0; }
+.caption, figcaption { color: var(--bs-cinza); font-size: .9rem; text-align: center; }
+img { border-radius: 4px; }
+
+/* Caixas de destaque: ::: {.dica}, ::: {.nota}, ::: {.atencao} */
+.dica, .nota, .atencao { border-radius: 8px; padding: .8rem 1rem .8rem 1rem; margin: 1.3rem 0;
+  border-left: 5px solid; }
+.dica { background: var(--bs-verde-claro); border-color: var(--bs-verde); }
+.nota { background: #e4eef5; border-color: var(--bs-azul); }
+.atencao { background: #f7ecd9; border-color: var(--bs-ambar); }
+.dica > :last-child, .nota > :last-child, .atencao > :last-child { margin-bottom: 0; }
+.dica::before, .nota::before, .atencao::before { display: block; font-family: "Source Sans 3", sans-serif;
+  font-weight: 700; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .3rem; }
+.dica::before { content: "Dica"; color: var(--bs-verde); }
+.nota::before { content: "Nota"; color: var(--bs-azul); }
+.atencao::before { content: "Atenção"; color: var(--bs-ambar); }
+
+/* Capa */
+.capa img { width: 100%; border-radius: 10px; box-shadow: 0 .5rem 1.2rem rgba(34, 48, 42, .12); }
+.logos { display: flex; gap: 2rem; align-items: center; justify-content: center; margin: 1.5rem 0; }
+.logos img { height: 56px; width: auto; border-radius: 0; }
+.versao { display: inline-block; background: var(--bs-verde); color: #fff; font-family: "Source Sans 3", sans-serif;
+  font-weight: 600; font-size: .8rem; padding: .15rem .6rem; border-radius: 999px; letter-spacing: .04em; }
+
+/* Botão de idioma (inserido por idioma.html) */
+a.idioma { display: inline-block; margin: .4rem 0 .8rem; padding: .2rem .7rem; border: 1px solid var(--bs-verde);
+  border-radius: 999px; color: var(--bs-verde); font-family: "Source Sans 3", sans-serif; font-weight: 600;
+  font-size: .82rem; text-decoration: none; }
+a.idioma::before { content: "\1F310  "; }
+a.idioma:hover { background: var(--bs-verde); color: #fff; }
+
+/* Cartões de funcionalidades */
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .9rem; margin: 1.2rem 0 1.6rem; }
+.cartao { background: #fff; border: 1px solid var(--bs-borda); border-top: 4px solid var(--bs-agua);
+  border-radius: 8px; padding: .8rem .9rem; }
+.cartao strong { display: block; color: var(--bs-azul-escuro); font-family: "Source Sans 3", sans-serif; margin-bottom: .25rem; }
+.cartao p { margin: 0; font-size: .92rem; color: var(--bs-cinza); }

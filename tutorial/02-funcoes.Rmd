@@ -1,0 +1,83 @@
+# Funções do pacote {#funcoes}
+
+O pacote reúne `r length(getNamespaceExports("biomastats"))` funções, e quase
+todas partem do mesmo ponto: o objeto de mapas criado por `load_rasters()` (ou
+por `load_lulc()`, fora do Brasil). Como cada resultado alimenta a etapa
+seguinte, as análises se encadeiam naturalmente:
+
+```
+área de estudo ─► load_rasters() ─► mapas ─┬─► get_area() ─┬─► class_diversity()
+                                            │               └─► land_time_series() ─► series_*()
+                                            ├─► land_change() · land_to_graph() · fragment_metrics()
+                                            └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+```
+
+Nas tabelas abaixo, a coluna **Recebe** indica a entrada usual de cada função.
+Para a documentação completa, use `?nome_da_função` no R.
+
+## Área de estudo e aquisição {-}
+
+| Função | O que faz | Recebe |
+|:--|:--|:--|
+| `make_polygon()` | Cria um círculo, quadrado ou hexágono a partir de latitude, longitude e largura total (km) | coordenadas |
+| `compare_shapefiles()` | Identifica os recortes (tiles) do MapBiomas que cobrem a área | shapefile |
+| `load_rasters()` | Carrega, recorta e mascara os mapas anuais, por download seletivo ou de uma coleção local | shapefile |
+| `download_mapbiomas()` | Baixa a coleção nacional, um arquivo por ano | pasta de destino |
+| `load_rasters_from_folder()` | Abre os mapas nacionais guardados em uma pasta | pasta da coleção |
+| `check_maps()` | Confere, baixa e junta por ano os recortes necessários | recortes e anos |
+| `download_maps()` | Baixa um recorte para um ou mais anos | recorte e anos |
+| `fetch_tile_manifest()` | Consulta a lista de arquivos de um recorte na API do Bioma Stats | recorte |
+
+## Áreas, mapas e classes {-}
+
+| Função | O que faz | Recebe |
+|:--|:--|:--|
+| `get_area()` | Área de cada classe por ano (km²) e gráfico da série | mapas |
+| `land_vis()` | Mapa de uso e cobertura de um ano | mapas |
+| `land_dist()` | Composição das classes em um ano (colunas ou setores) | `get_area()` |
+| `dict_build()` | Dicionário de classes: códigos, nomes em português e inglês, grupos e cores | coleção |
+| `raster_index()` | Índice das classes selecionáveis, com grupos, códigos e cores | coleção |
+
+## Composição e séries temporais {-}
+
+| Função | O que faz | Recebe |
+|:--|:--|:--|
+| `class_diversity()` | Riqueza, Shannon, Pielou, Simpson, números de Hill e dominância por ano | `get_area()` |
+| `land_time_series()` | Separa as séries anuais das classes escolhidas | `get_area()$time_series` |
+| `series_correlation()` | Associação entre duas séries, com correção para autocorrelação | `land_time_series()` |
+| `series_fit_regime()` | Regimes contínuos com uma ou mais transições e intervalos bootstrap | `land_time_series()` |
+| `series_diagnostics()` | Resíduos, autocorrelação e qualidade do ajuste | `series_fit_regime()` |
+| `series_forecast()` | Projeção do regime ajustado, com intervalo | `series_fit_regime()` |
+
+## Mudanças, paisagem e conectividade {-}
+
+| Função | O que faz | Recebe |
+|:--|:--|:--|
+| `land_change()` | Transições entre duas ou três datas: ganhos, perdas, saldos e diagrama | mapas |
+| `land_to_graph()` | Adjacências entre classes, fronteiras e rede da paisagem | mapas |
+| `biomastats_metrics()` | Área, bordas, fragmentos e agregação por ano para as classes escolhidas | mapas |
+| `lulc_metrics()` | As mesmas métricas para um único mapa | um raster anual |
+| `reclass_map()` | Mapa reclassificado das classes escolhidas em um ano | `biomastats_metrics()` |
+| `fragment_metrics()` | Métricas de cada fragmento e distribuições por classe, na grade nativa | mapas |
+| `reclass_to_polygons()` | Converte os mapas reclassificados em polígonos `sf` | `biomastats_metrics()` |
+| `land_connectivity()` | Conectividade dos fragmentos em vários limiares de distância | `reclass_to_polygons()` |
+| `patch_imp_fast()` | Importância de cada fragmento para a conectividade | cenário de `land_connectivity()` |
+
+## Camadas externas {-}
+
+| Função | O que faz | Recebe |
+|:--|:--|:--|
+| `layer_catalog()` | Lista as fontes externas, suas versões e anos de referência | — |
+| `load_lulc()` | Cobertura ESA WorldCover 10 m, em qualquer lugar do mundo, no formato de `load_rasters()` | shapefile ou `sf` |
+| `load_features()` | Estradas, ferrovias, rios, corpos d'água, edificações e localidades (OpenStreetMap ou Overture) | mapas, `sf` ou shapefile |
+| `load_physical()` | Altitude, declividade, orientação e propriedades do solo na grade dos mapas | mapas |
+| `feature_raster()` | Superfícies de distância, contagem, comprimento, cobertura e densidade de feições | `load_features()` e mapas |
+| `distance_to_nearest()` | Distância de coordenadas à feição ou classe mais próxima | pontos e feições ou mapas |
+
+## Auxiliares {-}
+
+Algumas funções existem sobretudo para uso interno, mas ficam disponíveis para
+quem precisar delas: `circle_coords()`, `square_coords()` e `hexagon_coords()`
+desenham as formas de `make_polygon()`; `get_api_values()` e
+`post_to_biomastats()` conversam com a API; `download_public_gdrive_file()` e
+`get_gdrive_filename()` baixam os arquivos públicos usados na aquisição.

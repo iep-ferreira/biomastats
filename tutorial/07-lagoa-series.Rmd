@@ -1,0 +1,85 @@
+# Séries temporais {#lagoa-series}
+
+Os mapas anuais formam, para cada classe, uma série de 40 anos.
+`land_time_series()` separa as séries de interesse, aqui soja (39), pastagem (15)
+e formação florestal (3):
+
+```{r series, fig.height=5}
+series <- land_time_series(areas$time_series, classes = c(39, 15, 3))
+series$plot
+```
+
+## Associação entre duas séries {-}
+
+Duas séries com tendência costumam parecer associadas mesmo quando não têm
+relação de um ano para o outro. Por isso, `series_correlation()` permite medir a
+associação nos níveis, nas diferenças anuais ou nos resíduos de uma tendência, e
+corrige o p-valor pela autocorrelação:
+
+```{r correlacao, fig.height=4.5}
+correlacao <- series_correlation(series, 39, 15, transformation = "difference")
+correlacao$plots$association
+```
+
+```{r include=FALSE}
+assoc <- correlacao$association
+```
+
+Nas diferenças anuais, a correlação entre soja e pastagem é de
+r = `r num(assoc$estimate, 2)` (p = `r num(assoc$p_value, 2)`; p corrigido =
+`r num(assoc$p_serial, 2)`). Ou seja, a substituição de uma classe pela outra é
+evidente nos níveis, ao longo de vários anos, mas as variações de um ano para o
+outro não andam juntas.
+
+## Regimes e pontos de mudança {-}
+
+`series_fit_regime()` ajusta uma curva contínua com transições entre regimes. O
+modelo bent-cable probabilístico estima quando cada transição acontece e quanto
+tempo ela dura, com intervalos de confiança obtidos por bootstrap:
+
+```{r regime, fig.height=5.5}
+ajuste <- series_fit_regime(series, 39, model = "prob_bent_logistic",
+                            bootstrap = 200, seed = 1)
+ajuste$plot
+```
+
+```{r echo=FALSE}
+pc <- ajuste$change_points
+tabela(data.frame(Transição = pc$transition, Ano = pc$estimate, `IC 95% inferior` = pc$conf_low,
+                  `IC 95% superior` = pc$conf_high, `Taxa antes (km²/ano)` = pc$slope_before,
+                  `Taxa depois (km²/ano)` = pc$slope_after, check.names = FALSE), 2)
+```
+
+A história da soja tem três transições, todas entre `r floor(min(pc$estimate))`
+e `r ceiling(max(pc$estimate))`: primeiro uma expansão rápida, de
+`r num(pc$slope_after[1], 1)` km² por ano, depois uma retração e, a partir de
+`r round(pc$estimate[3])`, um crescimento lento. Com `model = "auto"`, a função
+compara os modelos disponíveis pelo AICc e escolhe o mais adequado.
+
+## Diagnóstico e projeção {-}
+
+```{r diagnostico, fig.height=4}
+diagnostico <- series_diagnostics(ajuste)
+diagnostico$plots$acf
+```
+
+```{r include=FALSE}
+q <- diagnostico$quality
+```
+
+O ajuste explica `r num(100 * q$r_squared, 0)`% da variação (R²), mas os
+resíduos são autocorrelacionados (Durbin-Watson = `r num(q$durbin_watson, 2)`;
+Ljung-Box, `r if (q$ljung_box_p_value < 0.001) "p < 0,001" else paste("p =", num(q$ljung_box_p_value, 3))`).
+Quando os resíduos dependem uns dos outros, os intervalos tendem a sair
+estreitos demais. Nesse caso, `bootstrap_type = "block"` reamostra blocos de
+anos consecutivos e produz intervalos mais realistas.
+
+Por fim, `series_forecast()` prolonga o último regime:
+
+```{r projecao, fig.height=4.5}
+projecao <- series_forecast(ajuste, horizon = 5)
+projecao$plot
+```
+
+A projeção supõe que o regime atual continue. Ela deve ser lida como um
+cenário, e não como uma previsão de mudanças futuras no uso da terra.

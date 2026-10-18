@@ -6,10 +6,21 @@ objetos-tutorial/
 ignorados/
 vignette/
 *.css
-!tutorial_includes/site_theme.css
-!docs/tutorial_includes/site_theme.css
+!tutorial/*.css
+!docs/**/*.css
+!arquivo/**/*.css
 *.log
 *.Rhistory
 # Saídas dos testes manuais (gerar localmente)
 testes-manuais/**/*.html
 testes-manuais/**/*_files/
+# Livro (bookdown): arquivos intermediários; o site gerado fica em docs/
+tutorial/_book/
+tutorial/_bookdown_files/
+tutorial/biomastats-livro.*
+tutorial/*_cache/
+tutorial/*_files/
+tutorial/en/biomastats-book.*
+tutorial/en/*_files/
+# Configuração local do Claude Code
+.claude/

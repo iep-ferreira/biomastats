@@ -1,0 +1,51 @@
+# (APPENDIX) Apêndice {-}
+
+# Sobre o projeto {#sobre}
+
+## Contribua {-}
+
+Sugestões de funcionalidades, relatos de erros, pedidos de suporte e propostas
+de colaboração são bem-vindos. Abra uma *issue* no
+[repositório do GitHub](https://github.com/iep-ferreira/biomastats/issues) ou
+escreva para [iuri@ufscar.br](mailto:iuri@ufscar.br).
+
+## Como citar os dados {-}
+
+Os mapas de uso e cobertura vêm do Projeto MapBiomas, Coleção 10 da Série
+Anual de Mapas de Cobertura e Uso da Terra do Brasil (Souza et al., 2020),
+disponível em <https://mapbiomas.org> sob licença CC BY-SA. As fontes das camadas
+externas estão no capítulo \@ref(dados).
+
+## Agradecimentos {-}
+
+Agradecemos ao Projeto MapBiomas pela disponibilização das coleções de uso e
+cobertura da terra, ao Conselho Nacional de Desenvolvimento Científico e
+Tecnológico (CNPq) pelo fomento 406540/2023-3 e à equipe de desenvolvimento do
+[CeMECA – UFSCar Lagoa do Sino](https://www.cemeca.ufscar.br), que desenvolve e
+testa o Bioma Stats.
+
+Agradecemos também aos pesquisadores do Projeto Universal CNPq 406540 que
+assessoram a equipe:
+
+- **Prof. Dr. Paulo Guilherme Molin**: geotecnologias
+- **Prof.ª Dr.ª Débora Cristina Rother**: ecologia da paisagem
+- **Prof. Dr. Heber Lombardi de Carvalho**: gestão e sistemas de informação
+- **Prof. Dr. Jorge Luis Rodrigues Pantoja Filho**: meio ambiente
+- **Prof. Dr. Rafael de Oliveira Tiezzi**: meio ambiente
+
+## Termos de uso {-}
+
+O código-fonte do Bioma Stats é protegido por direitos autorais e distribuído
+sob a GNU Affero General Public License (AGPL), versão 3 ou posterior. Quem
+redistribuir ou modificar o código deve seguir os termos dessa licença e
+reconhecer os autores do software original. O texto completo está no arquivo
+`LICENSE` do repositório e em <https://www.gnu.org/licenses/agpl-3.0.html>. O
+programa é distribuído sem qualquer garantia.
+
+## Uso de inteligência artificial {-}
+
+Ferramentas de inteligência artificial foram usadas como apoio na preparação
+deste material e do pacote, sob supervisão e revisão da equipe, na refatoração e
+otimização de código, na redação e na tradução para o inglês. Todo o conteúdo
+produzido com esse auxílio foi revisado e validado pelos autores, que assumem
+integral responsabilidade pelas informações apresentadas.

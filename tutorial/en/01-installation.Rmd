@@ -1,0 +1,40 @@
+# (PART\*) Getting started {-}
+
+# Installation {#installation}
+
+The package is installed directly from GitHub and works with R 4.0 or later.
+Required dependencies, such as `sf`, `raster` and `terra`, are installed
+automatically:
+
+```{r eval=FALSE}
+install.packages("remotes")
+remotes::install_github("iep-ferreira/biomastats")
+library(biomastats)
+```
+
+To update an earlier version, restart your R session and run the installation
+again.
+
+## Optional packages {-}
+
+A few functions rely on packages that only their users need to install:
+
+| Package | Needed for |
+|:--|:--|
+| `lconnect` | comparing `land_connectivity()` with the original `lconnect` |
+| `future.apply` | `patch_imp_fast(parallel = TRUE)` |
+| `osmextract` | `load_features(source = "osm")`, with regional OpenStreetMap extracts |
+| `arrow` | `load_features(source = "overture")` |
+| `ggiraph`, `htmlwidgets` | the interactive graph of `land_to_graph()` |
+
+```{r eval=FALSE}
+install.packages(c("lconnect", "future.apply", "osmextract", "arrow",
+                   "ggiraph", "htmlwidgets"))
+```
+
+::: {.dica}
+The package's plots are `ggplot2` objects. You can adjust them with extra
+layers (`+ ggplot2::labs(...)`, `+ ggplot2::theme(...)`) and save them with
+`ggplot2::ggsave()`. The analysis functions also take `language = "en"` for
+English labels, as used throughout this edition.
+:::

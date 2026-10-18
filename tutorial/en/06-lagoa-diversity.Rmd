@@ -1,0 +1,43 @@
+# Composition and diversity {#lagoa-diversity}
+
+Ecology offers good tools for describing the composition of a landscape.
+`class_diversity()` treats classes as species and their areas as abundances
+and, for each year, computes richness, Shannon entropy, Pielou evenness, Simpson
+indices, Hill numbers and dominance:
+
+```{r diversity, fig.height=5.5}
+diversity <- class_diversity(areas, language = "en")
+diversity$plots$indices
+```
+
+```{r include=FALSE}
+ind <- diversity$indices
+i85 <- ind[ind$year == 1985, ]; i24 <- ind[ind$year == 2024, ]
+dic <- attr(areas, "class_dictionary")
+class_name <- function(code) dic$class[match(code, dic$code)]
+```
+
+The table `diversity$change` summarises the difference between the first and
+the last year:
+
+```{r echo=FALSE}
+change <- diversity$change[diversity$change$index %in% c("richness", "shannon", "pielou", "hill_1", "berger_parker"), ]
+change$index <- c(richness = "Richness (classes)", shannon = "Shannon (H')", pielou = "Pielou (J')",
+                  hill_1 = "Hill, q = 1 (effective classes)", berger_parker = "Berger-Parker (dominance)")[change$index]
+tabela(setNames(change[, c("index", "first", "last", "net_change")], c("Index", "1985", "2024", "Change")), 2)
+```
+
+At first sight, the landscape became more varied, going from `r i85$richness` to
+`r i24$richness` classes. Yet its effective diversity barely moved: Shannon
+entropy stayed flat and evenness fell from `r num(i85$pielou, 2)` to
+`r num(i24$pielou, 2)`. The new classes take up little space, while most of the
+area is concentrated in a single dominant class, which was
+`r tolower(class_name(i85$dominant_class))` in 1985 and
+`r tolower(class_name(i24$dominant_class))` in 2024.
+
+The entropy decomposition shows how much each class contributes to diversity
+over time:
+
+```{r contribution, fig.height=5.5}
+diversity$plots$contribution
+```

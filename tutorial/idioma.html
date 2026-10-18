@@ -1,0 +1,35 @@
+<script>
+/* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+document.addEventListener("DOMContentLoaded", function () {
+  var pares = {
+    "index.html": "index.html",
+    "instalacao.html": "installation.html",
+    "funcoes.html": "functions.html",
+    "dados.html": "data-sources.html",
+    "aquisicao.html": "acquisition.html",
+    "lagoa-areas.html": "lagoa-areas.html",
+    "lagoa-diversidade.html": "lagoa-diversity.html",
+    "lagoa-series.html": "lagoa-time-series.html",
+    "lagoa-mudancas.html": "lagoa-change.html",
+    "lagoa-paisagem.html": "lagoa-landscape.html",
+    "lagoa-conectividade.html": "lagoa-connectivity.html",
+    "camadas.html": "external-layers.html",
+    "sobre.html": "about.html"
+  };
+  var arquivo = window.location.pathname.split("/").pop() || "index.html";
+  var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+  var destino, rotulo;
+  if (ingles) {
+    destino = "index.html";
+    for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+    destino = "../" + destino; rotulo = "Português";
+  } else {
+    destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+  }
+  var link = document.createElement("a");
+  link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+  link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+  var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+  if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+});
+</script>

@@ -1,6 +1,11 @@
 # bioma-stats
 R package for land use and coverage analysis in Brazil
 
+**Livro do usuário:** <https://iep-ferreira.github.io/biomastats/> (português)
+e <https://iep-ferreira.github.io/biomastats/en/> (English). As fontes estão em
+`tutorial/` e `tutorial/en/` (bookdown), e o site é gerado em `docs/` com
+`Rscript build_docs.R`.
+
 
 ## Documentação do Código 
 

@@ -1,3 +1,15 @@
+# biomastats (development version)
+
+## Remoções
+
+* Removido o fluxo de consultas ao OpenStreetMap pela API Overpass:
+  `load_osm_data()`, `rasterize_osm()`, `distance_to_feature()`,
+  `density_of_feature()` e `integrate_feature()`, além das opções
+  `biomastats.osm_*`. O pacote `osmdata` deixou de ser dependência. Feições do
+  OpenStreetMap continuam disponíveis por `load_features(source = "osm")`, com
+  extratos regionais em cache. As superfícies de distância e densidade ficam
+  com `feature_raster()`, e as distâncias de pontos com `distance_to_nearest()`.
+
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o
@@ -100,6 +112,14 @@ interface.
   método library, camadas externas e um relatório por módulo em
   `testes-manuais/modulos/`. Os relatórios de análise usam o território da
   Lagoa do Sino.
+* Novo livro do usuário em bookdown, em português (`tutorial/`, publicado em
+  <https://iep-ferreira.github.io/biomastats/>) e em inglês (`tutorial/en/`,
+  em <https://iep-ferreira.github.io/biomastats/en/>), com botão para trocar de
+  idioma em cada página. Traz instalação, um sumário
+  das funções, as bases de dados e conexões, as duas vias de aquisição do
+  MapBiomas, o fluxo completo e discutido da Lagoa do Sino e as camadas
+  externas, inclusive um exemplo fora do Brasil. O tutorial anterior foi
+  arquivado em `arquivo/tutorial-2.0/`.
 * Licença unificada como GNU AGPL versão 3 ou posterior (`AGPL (>= 3)`) no
   DESCRIPTION, no README e no arquivo `LICENSE`. O `LICENSE` continha o texto
   da GPL-3 e passou a ter o texto oficial da AGPL-3.

@@ -1,0 +1,46 @@
+# Data sources and connections {#data-sources}
+
+The package keeps no copies of its own. Each function goes to the original
+source, reads only the part it needs and caches whatever can be reused later.
+
+| Source | Product | Coverage | Resolution | Reference | Access | Functions |
+|:--|:--|:--|:--|:--|:--|:--|
+| MapBiomas | Collection 10, tiles | Brazil | 30 m | 1985–2024 | Bioma Stats API → file list per tile → GeoTIFF | `load_rasters(method = "download")` |
+| MapBiomas | Collection 10, national map | Brazil | 30 m | 1985–2024 | annual GeoTIFF from the public MapBiomas repository (~28 GB, 40 years) | `download_mapbiomas()`, `load_rasters(method = "library")` |
+| ESA | WorldCover | world | 10 m | 2020 (v100), 2021 (v200) | Cloud-Optimized GeoTIFF over HTTP | `load_lulc()` |
+| Copernicus / ESA | DEM GLO-30 | world | 30 m | 2011–2015 | Cloud-Optimized GeoTIFF over HTTP | `load_physical()` |
+| ISRIC | SoilGrids 2.0 | world | 250 m | 2021 | WCS service, area subset only | `load_physical()` |
+| OpenStreetMap | Regional extracts (Geofabrik, openstreetmap.fr) | world | vector | extract date | `.osm.pbf` file with local cache | `load_features(source = "osm")` |
+| Overture Maps | GeoParquet | world | vector | release | STAC index and partial reads from S3 | `load_features(source = "overture")` |
+
+As for licences, MapBiomas uses CC BY-SA; ESA WorldCover and SoilGrids, CC BY
+4.0; Copernicus DEM, the free Copernicus licence; OpenStreetMap, ODbL; and
+Overture, ODbL and CDLA. Please cite the sources you use when publishing
+results.
+
+`layer_catalog()` returns this same list for the external layers and, with
+`online = TRUE`, checks whether each server is responding.
+
+## Connections, failures and cache {-}
+
+For selective downloads, the package queries the **Bioma Stats API**
+(`api.biomastats.org`, with a backup mirror) to find out which files make up
+each tile. That list is cached for 7 days, and maps that were already
+downloaded are reused in later runs.
+
+**External layers** have a 5-second time limit. If a source does not respond in
+time, fails or refuses access, it is set aside: the function returns that block
+with status `"skipped"` and carries on with the others, without stopping the
+analysis. On slow connections, the limit can be raised with
+`options(biomastats.timeout = 10)`.
+
+Extracts, indexes and file lists are kept in the user **cache**
+(`tools::R_user_dir("biomastats", "cache")`). Interrupted downloads leave no
+partial files behind.
+
+::: {.nota}
+Institutions with their own mirrors can point the package to them, for example
+with `options(biomastats.worldcover_root = "https://...")`. The options
+`biomastats.copernicus_root`, `biomastats.soilgrids_wcs` and
+`biomastats.overture_stac` are also available.
+:::

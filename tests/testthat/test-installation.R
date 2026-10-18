@@ -2,7 +2,6 @@ test_that("biomastats is installed and loadable", {
   expect_true(nzchar(system.file(package = "biomastats")))
   expect_true(requireNamespace("biomastats", quietly = TRUE))
   expect_equal(as.character(utils::packageVersion("biomastats")), "2.1.0")
-  expect_true(utils::packageVersion("osmdata") >= package_version("0.4.0"))
 })
 
 # Public interface: every exported function, by module. A function added with
@@ -23,10 +22,7 @@ test_that("NAMESPACE exports exactly the public functions", {
     # time series
     "land_time_series", "series_correlation", "series_fit_regime", "series_diagnostics",
     "series_forecast",
-    # OpenStreetMap features via Overpass
-    "load_osm_data", "rasterize_osm", "distance_to_feature", "density_of_feature",
-    "integrate_feature",
-    # external layers
+    # external layers (OpenStreetMap through regional extracts, not Overpass)
     "layer_catalog", "load_lulc", "load_features", "load_physical", "feature_raster",
     "distance_to_nearest")
   exported <- getNamespaceExports("biomastats")

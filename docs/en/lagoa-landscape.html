@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 9 Landscape metrics and fragments | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino">
+<meta name="description" content="The metrics in this chapter are computed on the original map grid, without reprojection. Areas and edges are measured on the ellipsoid, and there is no need to specify a UTM zone. Metrics per year...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Chapter 9 Landscape metrics and fragments | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/../imagens/capa.jpg">
+<meta property="og:description" content="The metrics in this chapter are computed on the original map grid, without reprojection. Areas and edges are measured on the ellipsoid, and there is no need to specify a UTM zone. Metrics per year...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 9 Landscape metrics and fragments | Bioma Stats">
+<meta name="twitter:description" content="The metrics in this chapter are computed on the original map grid, without reprojection. Areas and edges are measured on the ellipsoid, and there is no need to specify a UTM zone. Metrics per year...">
+<meta name="twitter:image" content="/../imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Land use and land cover in R: user guide">Bioma Stats</a>:
+        <small class="text-muted">Land use and land cover in R: user guide</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li class="book-part">Getting started</li>
+<li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
+<li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
+<li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li class="book-part">Complete workflow: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
+<li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
+<li><a class="" href="lagoa-time-series.html"><span class="header-section-number">7</span> Time series</a></li>
+<li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
+<li><a class="active" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
+<li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li class="book-part">Beyond MapBiomas</li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li class="book-part">Appendix</li>
+<li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="lagoa-landscape" class="section level1" number="9">
+<h1>
+<span class="header-section-number">9</span> Landscape metrics and fragments<a class="anchor" aria-label="anchor" href="#lagoa-landscape"><i class="fas fa-link"></i></a>
+</h1>
+<p>The metrics in this chapter are computed on the original map grid, without
+reprojection. Areas and edges are measured on the ellipsoid, and there is no
+need to specify a UTM zone.</p>
+<div id="metrics-per-year" class="section level2 unnumbered">
+<h2>Metrics per year<a class="anchor" aria-label="anchor" href="#metrics-per-year"><i class="fas fa-link"></i></a>
+</h2>
+<p><code><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics()</a></code> reclassifies the maps to the classes of interest and,
+year by year, computes area, edges, number of fragments and the aggregation
+index. Let us follow the forest formation:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics</a></span><span class="op">(</span><span class="va">maps</span>, classes <span class="op">=</span> <span class="fl">3</span>, metrics <span class="op">=</span> <span class="st">"keep.all"</span><span class="op">)</span></span>
+<span><span class="va">metrics</span><span class="op">$</span><span class="va">ai_plot</span></span>
+<span><span class="va">metrics</span><span class="op">$</span><span class="va">fragments_number</span></span></code></pre></div>
+<p><img src="biomastats-book_files/figure-html/metrics-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-book_files/figure-html/metrics-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
+<p>Besides shrinking, the forest became more fragmented: the number of fragments
+went from 18 to 28,
+and the aggregation index fell from 88% to
+80%. The full table is in
+<code>metrics$metrics_table</code>; for a single map, use <code><a href="https://rdrr.io/pkg/biomastats/man/lulc_metrics.html">lulc_metrics()</a></code>.</p>
+<p><code><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map()</a></code> highlights the selected class against the rest of the
+landscape:</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map</a></span><span class="op">(</span><span class="va">metrics</span>, year <span class="op">=</span> <span class="fl">1985</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map</a></span><span class="op">(</span><span class="va">metrics</span>, year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span></code></pre></div>
+<p><img src="biomastats-book_files/figure-html/reclassified-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-book_files/figure-html/reclassified-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
+</div>
+<div id="fragments" class="section level2 unnumbered">
+<h2>Fragments<a class="anchor" aria-label="anchor" href="#fragments"><i class="fas fa-link"></i></a>
+</h2>
+<p><code><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fragment_metrics()</a></code> goes down to the level of each fragment. For every one, it
+measures area, perimeter, core area, shape, fractal dimension, centroid,
+elongation and distance to the nearest neighbour; for each class and year, it
+summarises the size distribution:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fragments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fragment_metrics</a></span><span class="op">(</span><span class="va">maps</span>, classes <span class="op">=</span> <span class="fl">3</span>, years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1985</span>, <span class="fl">2004</span>, <span class="fl">2024</span><span class="op">)</span>,</span>
+<span>                              language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
+<span><span class="va">fragments</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">map</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/fragments-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<div class="inline-table"><table style="width:100%;" class="table table-sm">
+<colgroup>
+<col width="3%">
+<col width="7%">
+<col width="7%">
+<col width="11%">
+<col width="13%">
+<col width="26%">
+<col width="3%">
+<col width="23%">
+</colgroup>
+<thead><tr class="header">
+<th align="right">Year</th>
+<th align="right">Fragments</th>
+<th align="right">Area (ha)</th>
+<th align="right">Mean area (ha)</th>
+<th align="right">Median area (ha)</th>
+<th align="right">Largest fragment (% of landscape)</th>
+<th align="right">Gini</th>
+<th align="right">Nearest neighbour, median (m)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="right">1985</td>
+<td align="right">18</td>
+<td align="right">199.74</td>
+<td align="right">11.10</td>
+<td align="right">1.35</td>
+<td align="right">8.59</td>
+<td align="right">0.80</td>
+<td align="right">27.46</td>
+</tr>
+<tr class="even">
+<td align="right">2004</td>
+<td align="right">24</td>
+<td align="right">114.76</td>
+<td align="right">4.78</td>
+<td align="right">0.78</td>
+<td align="right">3.90</td>
+<td align="right">0.74</td>
+<td align="right">46.27</td>
+</tr>
+<tr class="odd">
+<td align="right">2024</td>
+<td align="right">28</td>
+<td align="right">106.72</td>
+<td align="right">3.81</td>
+<td align="right">0.33</td>
+<td align="right">3.23</td>
+<td align="right">0.75</td>
+<td align="right">40.65</td>
+</tr>
+</tbody>
+</table></div>
+<p>The average fragment shrank from 11.1 ha to
+3.8 ha, and the largest one, which covered
+8.6% of the landscape, now covers 3.2%. Size
+inequality (Gini) remains high, meaning that a few fragments hold most of the
+forest. The data for each fragment are in <code>fragments$patches</code>.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></div>
+<div class="next"><a href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#lagoa-landscape"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
+<li><a class="nav-link" href="#metrics-per-year">Metrics per year</a></li>
+<li><a class="nav-link" href="#fragments">Fragments</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/en/09-lagoa-landscape.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/en/09-lagoa-landscape.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

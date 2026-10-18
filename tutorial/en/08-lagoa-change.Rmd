@@ -1,0 +1,60 @@
+# Change and adjacency {#lagoa-change}
+
+## Transitions between dates {-}
+
+Knowing how much each class grew or shrank does not tell you where the area
+went. `land_change()` answers that question by comparing the maps pixel by
+pixel, at two or three dates, and measuring what stayed, what was converted and
+into what:
+
+```{r change, fig.height=6.5}
+change <- land_change(maps, years = c(1985, 2024), language = "en")
+change$plot
+```
+
+```{r include=FALSE}
+im <- change$interval_metrics
+cm <- change$class_metrics
+f3 <- cm[cm$code == 3, ]
+```
+
+```{r echo=FALSE}
+top <- cm[order(-cm$gross_change_ha), ][1:5, ]
+tabela(data.frame(Class = top$class, `1985 (ha)` = top$initial_ha, `2024 (ha)` = top$final_ha,
+                  `Gain (ha)` = top$gain_ha, `Loss (ha)` = top$loss_ha, `Net (ha)` = top$net_ha,
+                  check.names = FALSE), 0)
+```
+
+Between 1985 and 2024, `r num(100 * im$change_fraction, 0)`% of the area changed
+class. Almost all of that is quantity change (`r num(im$quantity_ha, 0)` ha),
+meaning that one class grew by taking the place of another; only
+`r num(im$allocation_ha, 0)` ha are swaps of position between classes. The forest
+illustrates the picture well: only `r num(100 * f3$persistence_fraction, 0)`% of
+the 1985 forest formation was still standing in 2024, and the
+`r num(f3$gain_ha, 0)` ha that appeared elsewhere did not make up for the
+`r num(f3$loss_ha, 0)` ha that were lost.
+
+With `years = c(1985, 2004, 2024)`, the diagram gains a third column and shows
+the trajectories across both intervals.
+
+## Adjacency between classes {-}
+
+`land_to_graph()` looks at neighbourhoods: it counts the contacts between pixels
+of different classes and builds the landscape network, in which each node is a
+class and the thickness of each link is the number of contacts between them.
+With `weight = "boundary"`, the thickness becomes the boundary length in metres.
+
+```{r network, fig.height=6.5}
+network <- land_to_graph(maps, year = 2024, language = "en")
+network$plot
+```
+
+```{r include=FALSE}
+nm <- network$node_metrics
+hub <- nm[which.max(nm$degree), ]
+```
+
+In 2024, the most connected class is `r tolower(hub$class)`, which borders
+`r hub$degree` classes along `r num(hub$boundary_m / 1000, 1)` km of edges. The
+tables `network$node_metrics` and `network$edge_metrics` detail degree,
+strength, centrality and the length of each boundary.

@@ -1,0 +1,61 @@
+# Mudanças e adjacências {#lagoa-mudancas}
+
+## Transições entre datas {-}
+
+Saber quanto cada classe cresceu ou encolheu não diz para onde a área foi.
+`land_change()` responde a essa pergunta comparando os mapas pixel a pixel, em
+duas ou três datas, e quantificando o que permaneceu, o que se converteu e em
+quê:
+
+```{r mudancas, fig.height=6.5}
+mudancas <- land_change(mapas, years = c(1985, 2024))
+mudancas$plot
+```
+
+```{r include=FALSE}
+im <- mudancas$interval_metrics
+cm <- mudancas$class_metrics
+f3 <- cm[cm$code == 3, ]
+```
+
+```{r echo=FALSE}
+top <- cm[order(-cm$gross_change_ha), ][1:5, ]
+tabela(data.frame(Classe = top$classe, `1985 (ha)` = top$initial_ha, `2024 (ha)` = top$final_ha,
+                  `Ganho (ha)` = top$gain_ha, `Perda (ha)` = top$loss_ha, `Saldo (ha)` = top$net_ha,
+                  check.names = FALSE), 0)
+```
+
+Entre 1985 e 2024, `r num(100 * im$change_fraction, 0)`% da área mudou de
+classe. Quase toda essa mudança é de quantidade (`r num(im$quantity_ha, 0)` ha),
+isto é, uma classe cresceu ocupando o lugar de outra; apenas
+`r num(im$allocation_ha, 0)` ha correspondem a trocas de posição entre classes.
+A floresta ilustra bem esse quadro: só `r num(100 * f3$persistence_fraction, 0)`%
+da formação florestal de 1985 continuava de pé em 2024, e os
+`r num(f3$gain_ha, 0)` ha que surgiram em outros pontos não compensaram os
+`r num(f3$loss_ha, 0)` ha perdidos.
+
+Com `years = c(1985, 2004, 2024)`, o diagrama ganha uma terceira coluna e mostra
+as trajetórias nos dois intervalos.
+
+## Adjacências entre classes {-}
+
+`land_to_graph()` olha para a vizinhança: conta os contatos entre pixels de
+classes diferentes e monta a rede da paisagem, em que cada nó é uma classe e a
+espessura de cada ligação é o número de contatos entre elas. Com
+`weight = "boundary"`, a espessura passa a ser a extensão da fronteira, em
+metros.
+
+```{r rede, fig.height=6.5}
+rede <- land_to_graph(mapas, year = 2024)
+rede$plot
+```
+
+```{r include=FALSE}
+nm <- rede$node_metrics
+hub <- nm[which.max(nm$degree), ]
+```
+
+Em 2024, a classe mais conectada é `r tolower(hub$classe)`, que faz fronteira
+com `r hub$degree` classes ao longo de `r num(hub$boundary_m / 1000, 1)` km de
+bordas. As tabelas `rede$node_metrics` e `rede$edge_metrics` detalham grau,
+força, centralidade e extensão de cada fronteira.

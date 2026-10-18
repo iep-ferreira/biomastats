@@ -10,6 +10,4 @@ utils::globalVariables(c(
   # time-series plots
   "area_x", "area_y", "residual", "theoretical", "fitted", "observed", "lower", "upper",
   "transition", "prediction", "label", "conf_low", "conf_high", "estimate", "lag",
-  "bound", "exceeds",
-  # feature density plot
-  "density"))
+  "bound", "exceeds"))
