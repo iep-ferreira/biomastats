@@ -16,8 +16,8 @@ uses the unrounded area_raw column.}
 }
 \value{
 List with Years, Occupied area, aggregate_data, time_series and
-  collection. Attributes metadata and class_dictionary are inherited by the
-  list, table and time_series ggplot. Metadata records coverage and units.
+collection. Attributes metadata and class_dictionary are inherited by the
+list, table and time_series ggplot. Metadata records coverage and units.
 }
 \description{
 Calculates areas in square kilometres and preserves the native analytical

@@ -1,10 +1,9 @@
 #' Distance to the nearest OpenStreetMap feature
 #'
 #' Calculates the straight-line distance from each valid reference cell to the
-#' nearest occupied cell in a rasterized feature. A feature previously loaded
-#' by [load_osm_data()] can be supplied through `feature_raster`, avoiding a
-#' repeated OSM request. If `feature_raster` is `NULL`, the function retains
-#' its convenient standalone behavior and loads the requested OSM feature.
+#' nearest occupied feature cell. A raster previously loaded by
+#' [load_osm_data()] can be reused through `feature_raster`. If it is `NULL`,
+#' the function loads the requested OSM feature for standalone use.
 #'
 #' OSM uses an open key/value tagging system rather than a closed feature list.
 #' Common keys applicable to distance calculations include `highway`,
@@ -14,6 +13,9 @@
 #' mixed geometries. Use [osmdata::available_features()] to retrieve current
 #' keys and [osmdata::available_tags()] to inspect values for a selected key.
 #' These discovery functions require network access.
+#'
+#' For multiple metrics or features, use [integrate_feature()]. It loads
+#' each OSM feature once and passes the resulting raster to this function.
 #'
 #' Distances are returned in metres for longitude/latitude rasters and in the
 #' map units of projected rasters. Cells that are `NA` in `reference_raster`
@@ -30,8 +32,9 @@
 #'   `"water"`, or `"hospital"`. Use `NULL` to match every value for the key;
 #'   a specific value is recommended to avoid very large Overpass queries.
 #' @param provider Data provider. Only `"osm"` is currently supported.
-#' @param buffer_distance Buffer around the valid reference extent, in metres,
-#'   passed to [load_osm_data()]. Defaults to `2000` (2 km).
+#' @param buffer_distance Non-negative buffer around the valid reference
+#'   extent, in metres, used when the feature must be loaded from OSM. The
+#'   default is 2000 (2 km).
 #' @param osm_options Named list of connection options passed to
 #'   [load_osm_data()], such as `timeout`, `overpass_urls`, `use_cache`, and
 #'   `cache_ttl_days`. Ignored when `feature_raster` is supplied.

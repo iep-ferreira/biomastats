@@ -1,10 +1,11 @@
 #' Rasterize OSM geometries on a reference raster
 #'
 #' Converts point, line, multiline, polygon, and multipolygon geometries
-#' returned by `osmdata` to
-#' rasters aligned with `reference_raster`. Every OSM feature cell receives
-#' value `1`. When more than one geometry type is available, polygons are
-#' retained first, followed by lines and points.
+#' returned by `osmdata` to rasters aligned with `reference_raster`.
+#' Geometries are reprojected to the raster CRS and geometries outside the
+#' raster extent are discarded before rasterization. Every feature cell
+#' receives value `1`. When more than one geometry type is available, polygons
+#' are retained first, followed by lines and points.
 #'
 #' @param osm_data An `osmdata` object, usually returned by
 #'   [osmdata::osmdata_sf()].

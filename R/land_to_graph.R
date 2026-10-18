@@ -353,11 +353,13 @@ land_to_graph <- function(data, year = NULL, connectivity = 4, include_self = FA
       ggplot2::scale_size_continuous(range = c(5, 14), breaks = scales::breaks_pretty(n = 3)) +
       ggplot2::guides(colour = ggplot2::guide_legend(order = 1,
         override.aes = list(size = 5, shape = 15, alpha = 1))) +
-      ggplot2::scale_linewidth_continuous(range = c(0.4, 4), breaks = scales::breaks_pretty(n = 3)) +
+      # Legend name on the scale: graphs without edges then raise no unknown-label warning.
+      ggplot2::scale_linewidth_continuous(name = tr("Peso", "Weight"), range = c(0.4, 4),
+                                          breaks = scales::breaks_pretty(n = 3)) +
       ggplot2::coord_equal(xlim = c(-1.6, 1.6), ylim = c(-1.6, 1.6)) +
       ggplot2::labs(title = NULL,
         subtitle = if (weight == "boundary") tr("Peso: fronteira aproximada (m)", "Weight: approximate boundary (m)") else tr("Peso: contatos entre pixels", "Weight: pixel contacts"),
-        size = tr("Forca", "Strength"), linewidth = tr("Peso", "Weight")) +
+        size = tr("Forca", "Strength")) +
       ggplot2::theme_void(base_size = 12)
   }
   widget <- NULL

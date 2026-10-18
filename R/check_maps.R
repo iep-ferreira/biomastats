@@ -1,5 +1,8 @@
 #' Check required maps and construct the raster list
 #'
+#' Checks and downloads the fragments required to construct one raster per
+#' year.
+#'
 #' @param ids Vector of map fragment identifiers.
 #' @param start Starting year.
 #' @param end Ending year.

@@ -7,7 +7,6 @@
 # analysis continues, no partial file is left in the cache and the GDAL
 # network settings are restored on exit.
 
-utils::globalVariables(c("bbox", "subtype", "x", "y", "value"))
 
 .layer_timeout <- function(timeout = NULL) {
   t <- if (is.null(timeout)) getOption("biomastats.timeout", 5) else timeout

@@ -7,25 +7,25 @@
 reclass_map(obj = NULL, year = NULL)
 }
 \arguments{
-\item{obj}{A list object containing the raster data (`rec_map`), the start year (`start`), 
-end year (`end`), and land use classes (`classes`).}
+\item{obj}{A list object containing the raster data (\code{rec_map}), the start year (\code{start}),
+end year (\code{end}), and land use classes (\code{classes}).}
 
-\item{year}{An integer representing the specific year for which the land use map should 
-be reclassified and visualized. Must be within the range of `start` and `end` in `obj`.}
+\item{year}{An integer representing the specific year for which the land use map should
+be reclassified and visualized. Must be within the range of \code{start} and \code{end} in \code{obj}.}
 }
 \value{
 A ggplot object visualizing the reclassified land use map for the given year.
 }
 \description{
-This function reclassifies a raster map based on a provided object and year, 
-and returns a ggplot visualization of the raster data with annotations for scale 
+This function reclassifies a raster map based on a provided object and year,
+and returns a ggplot visualization of the raster data with annotations for scale
 and north arrow. The raster data is expected to represent land use over time.
 }
 \details{
 The function generates a reclassification of the raster data based on the year
-  and provided classes. It uses the `ggspatial` package to add annotations for scale and
-  north arrow to the plot. The output is a ggplot object which can be further customized.
-  A warning is printed if `obj` is `NULL` or if `year` is out of the valid range.
+and provided classes. It uses the \code{ggspatial} package to add annotations for scale and
+north arrow to the plot. The output is a ggplot object which can be further customized.
+A warning is printed if \code{obj} is \code{NULL} or if \code{year} is out of the valid range.
 }
 \examples{
 # Example usage:
@@ -34,5 +34,5 @@ The function generates a reclassification of the raster data based on the year
 }
 \seealso{
 \code{\link[ggplot2]{ggplot}}, \code{\link[ggspatial]{annotation_scale}},
-  \code{\link[ggspatial]{annotation_north_arrow}}
+\code{\link[ggspatial]{annotation_north_arrow}}
 }

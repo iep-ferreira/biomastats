@@ -5,8 +5,9 @@
 #' object returned by [load_rasters()]. The CRS is inherited; no raster is
 #' reprojected and no zone or hemisphere needs to be given.
 #'
-#' Geometry: fragments are connected components ([terra::patches()]) of each
-#' class. Cell areas come from [terra::cellSize()] (geodesic for geographic
+#' Geometry: fragments are connected components of each class, labelled with
+#' [landscapemetrics::get_patches()] (same partition as [terra::patches()],
+#' much faster on large grids). Cell areas come from [terra::cellSize()] (geodesic for geographic
 #' grids). Edge lengths are measured on the WGS84 ellipsoid for geographic
 #' grids (parallel arcs for north/south edges, meridian arcs for east/west
 #' edges of each row) and, for projected grids, from the cell size in metres

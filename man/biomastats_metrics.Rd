@@ -42,6 +42,9 @@ from each raster and recorded in \code{metadata$source}.}
 \item{point_shape}{Shape of the points in the plots. Default is 16.}
 
 \item{point_size}{Size of the points in the plots. Default is 3.}
+
+\item{export.raster}{If \code{TRUE} (default), keeps the reclassified raster of
+each year in \code{rec_map}, used by \code{reclass_map()} and \code{reclass_to_polygons()}.}
 }
 \value{
 A list containing:

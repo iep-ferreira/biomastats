@@ -17,7 +17,7 @@ post_to_biomastats(fragment, year, url = NULL)
 The content of the API response in JSON format as a character string, or an error message if the request fails.
 }
 \description{
-This function sends a POST request to the Biomastats API with the specified fragment and year. 
+This function sends a POST request to the Biomastats API with the specified fragment and year.
 It handles different URL options and returns the response content in JSON format.
 }
 \examples{

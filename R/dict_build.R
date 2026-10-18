@@ -14,8 +14,6 @@ dict_build <- function(collection = 10){
 
 if (identical(as.character(collection), "esa_worldcover")) return(.dict_esa_worldcover())
 
-if(collection == 10){message("Collection 10 subtitles are loaded as default. If you want a different collection, plase change the 'collection' option") }
-
 if(!collection %in% c(7, 10)){ stop("This collection isn't available") }
 # Sub-titles for collection 7  
   dict_7 <- data.frame(rbind(

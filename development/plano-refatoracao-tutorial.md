@@ -2,7 +2,7 @@
 
 Data: 2026-10-16. Base: `tutorial.Rmd` (615 linhas, bilíngue pt/en via `b()`,
 `bh()` e `bli()`, publicado em `docs/` por `build_docs.R`) e o teste local
-integrado `ignorados/testes-locais/teste-local-integrado.Rmd`, que executa todas
+integrado (hoje `testes-manuais/teste-manual-integrado.Rmd`), que executa todas
 as funções analíticas sobre os dados de exemplo da Lagoa do Sino em ~45 s.
 
 ## Diagnóstico do tutorial atual

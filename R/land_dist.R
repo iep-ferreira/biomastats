@@ -50,7 +50,7 @@ land_dist <- function(data = NULL, year = NULL, type = "barplot" ){
   dat$names<- names_classes
   dat$percentual <- round(dat$area / sum(dat$area) * 100, 2)
 
-  head(dat,7)
+  utils::head(dat, 7)
 
   if(type!="pie"&type!="barplot"){
     print("Type not available yet!")

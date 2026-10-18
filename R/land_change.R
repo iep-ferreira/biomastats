@@ -110,9 +110,11 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
   template <- maps[[1]]
   crs <- sf::st_crs(template)
   if (is.na(crs)) stop("Raster sem CRS; necessario para calcular area.")
+  # Tolerance of 1e-6 cell: years that raster wrote to disk during load_rasters()
+  # differ from in-memory years by ~1e-14 degrees in the extent, on the same grid.
   aligned <- vapply(maps, function(r) !is.na(sf::st_crs(r)) &&
     raster::compareRaster(template, r, extent = TRUE, rowcol = TRUE, crs = TRUE,
-      res = TRUE, orig = TRUE, rotation = TRUE, tolerance = 0,
+      res = TRUE, orig = TRUE, rotation = TRUE, tolerance = 1e-6,
       stopiffalse = FALSE, showwarning = FALSE), logical(1))
   if (!all(aligned) || raster::rotated(template)) {
     stop("Rasters devem ter a mesma grade, extensao, resolucao e CRS, sem rotacao.")
@@ -284,7 +286,7 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
   for (j in seq_along(years)) {
     ids <- which(nodes$year == years[j])
     heights <- nodes$area_ha[ids]
-    nodes$ymin[ids] <- c(0, head(cumsum(heights), -1)) + (seq_along(ids) - 1) * gap
+    nodes$ymin[ids] <- c(0, utils::head(cumsum(heights), -1)) + (seq_along(ids) - 1) * gap
     nodes$ymax[ids] <- nodes$ymin[ids] + heights
     for (id in ids) {
       selected <- which(paths[[paste0("code_", years[j])]] == nodes$code[id])

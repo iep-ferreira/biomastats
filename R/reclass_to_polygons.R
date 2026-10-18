@@ -78,7 +78,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
     }
     dictionary <- dictionary[match(sort(unique(obj$classes)), dictionary$code), , drop = FALSE]
   }
-  source <- setNames(lapply(years, function(yr) {
+  source <- stats::setNames(lapply(years, function(yr) {
     r <- obj$rec_map[[yr - obj$start + 1L]]
     if (!inherits(r, "RasterLayer")) stop("rec_map deve conter objetos RasterLayer.")
     if (is.na(sf::st_crs(r))) stop("Raster de entrada sem CRS.")
@@ -102,7 +102,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
     values <- raster::getValues(r)
     allowed <- if (length(obj$classes) == 1L) c(0, 1, obj$classes) else c(0, 1)
     if (any(!is.na(values) & !values %in% allowed)) {
-      stop("rec_map contem valores incompatíveis com a reclassificacao.")
+      stop("rec_map contem valores incompat\u00edveis com a reclassificacao.")
     }
     values[!is.na(values) & values != 0] <- 1
     if (only_class) values[!is.na(values) & values == 0] <- NA

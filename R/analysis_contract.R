@@ -1,3 +1,7 @@
+# Null-default operator for every R version supported by the package
+# (base R only provides it from 4.4.0 on).
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 # Shared dictionary contract for native analytical objects.
 # Land-cover schemes other than MapBiomas collections are identified by name.
 .lulc_schemes <- function() "esa_worldcover"

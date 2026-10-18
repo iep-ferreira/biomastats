@@ -1,0 +1,203 @@
+---
+title: "Séries temporais de uso e ocupação — teste manual (módulo)"
+subtitle: "Correlação serial, regimes contínuos, bent-cable probabilístico, diagnóstico e projeção"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) {
+  if (identical(dirname(root), root)) stop("Execute dentro do repositório biomastats.")
+  root <- dirname(root)
+}
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária;
+# resultados gravados em pasta temporária, removida ao final.
+execucao <- tempfile("biomastats-modulo-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+tabela <- function(x, digits = 3, ...) knitr::kable(x, digits = digits,
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
+```
+
+# Fluxo nativo e modular
+
+O pacote é construído e instalado em uma biblioteca temporária; apenas a API
+pública é usada. `land_time_series()` herda dicionário de classes, unidade e
+metadados de `get_area()`. Cada etapa seguinte devolve um objeto próprio,
+serializável e com gráficos `ggplot2` editáveis:
+
+| Etapa | Função | Entrada |
+|:--|:--|:--|
+| Preparação | `land_time_series()` | `get_area(obj)$time_series` |
+| Associação | `series_correlation()` | duas classes de livre escolha |
+| Ajuste de regime | `series_fit_regime()` | uma classe e um modelo |
+| Qualidade e resíduos | `series_diagnostics()` | o ajuste |
+| Projeção | `series_forecast()` | o mesmo ajuste, sem nova seleção |
+
+```{r preparar, fig.height=5}
+fixture <- new.env(parent = emptyenv())
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"), envir = fixture)
+mapas <- fixture$mapas
+areas <- get_area(mapas, plot_type = "profile")
+series <- land_time_series(areas$time_series, classes = c(3, 15, 21))
+series$plot + ggplot2::labs(title = "Áreas observadas por classe")
+tabela(series$summary)
+```
+
+# Associação entre duas séries escolhidas
+
+`series_correlation()` mostra as duas séries e mede a associação entre elas,
+com significância. Análises adicionais partem da tabela `correlacao$data`.
+
+```{r correlacao, fig.height=6}
+correlacao <- series_correlation(series, series_x = 3, series_y = 15,
+                                 transformation = "difference")
+tabela(correlacao$association, digits = 4)
+correlacao$plots$series + ggplot2::labs(title = "Formação florestal e pastagem")
+correlacao$plots$association + ggplot2::labs(title = "Associação dos incrementos anuais")
+```
+
+`transformation` aceita níveis (`"level"`), primeiras diferenças (`"difference"`)
+ou resíduos sem tendência linear (`"detrended"`); `method` aceita Pearson,
+Spearman ou Kendall. Para Pearson, `p_serial` corrige a autocorrelação de
+primeira ordem pelo tamanho amostral efetivo; o `p` convencional assume anos
+independentes. As legendas estão disponíveis em português e inglês:
+
+```{r correlacao-en, fig.height=5}
+series_correlation(series, 3, 15, method = "spearman", language = "en")$plots$association
+utils::head(correlacao$data)
+```
+
+# Regimes contínuos e bent-cable probabilístico
+
+## Seleção do número de transições
+
+```{r ajuste}
+ajuste <- series_fit_regime(series, series = 3, model = "prob_bent_logistic",
+                            max_breaks = 3, bootstrap = 300, seed = 42)
+tabela(ajuste$model_table, digits = 4)
+```
+
+Com `breaks = NULL` (padrão), a função compara de zero (tendência linear) a
+`max_breaks` transições pelo AICc, contando coeficientes, centros, escalas e
+variância. `breaks = k` fixa o número de transições.
+
+## Curva ajustada, kernels recuperados e faixas de transição
+
+```{r ajuste-grafico, fig.height=7}
+ajuste$plot + ggplot2::labs(title = "Formação florestal — bent-cable probabilístico logístico")
+```
+
+A curva colorida é o modelo avaliado em `r nrow(ajuste$curve)` pontos interiores
+ao período observado: suaviza a apresentação **sem criar observações**. As linhas
+tracejadas cinzas são os **kernels recuperados**, isto é, as densidades dos
+limiares aleatórios de cada transição (eixo direito). As faixas coloridas cobrem
+os quantis 10%–90% de cada limiar e descrevem a duração da transição; não são
+intervalos de confiança.
+
+## Inferência pontual e intervalar sobre os pontos de mudança
+
+```{r ajuste-ic, fig.height=4}
+tabela(ajuste$change_points, digits = 3)
+ajuste$interval_plot + ggplot2::labs(title = "Centros das transições e incerteza bootstrap")
+```
+
+O IC percentil usa `r ajuste$change_points$bootstrap_n[1]` réplicas do bootstrap
+residual, condicionadas ao número de transições selecionado. Se os resíduos
+forem autocorrelacionados, use `bootstrap_type = "block"`.
+`slope_before` e `slope_after` são as taxas (km²/ano) antes e depois de cada centro.
+
+## Comparação entre famílias de modelos
+
+```{r comparacao, fig.height=6}
+comparacao <- series_fit_regime(series, series = 3, model = "auto", max_breaks = 3,
+                                bootstrap = 0)
+tabela(comparacao$model_table[order(comparacao$model_table$AICc), ], digits = 4)
+uniforme <- series_fit_regime(series, series = 3, model = "prob_bent_uniform",
+                              breaks = ajuste$breaks, bootstrap = 0)
+uniforme$plot + ggplot2::labs(title = "Mesmo número de transições com limiar uniforme (U-BC)")
+segmentado <- series_fit_regime(series, series = 3, model = "segmented",
+                                breaks = ajuste$breaks, bootstrap = 0)
+segmentado$plot + ggplot2::labs(title = "Segmentado contínuo (mudanças abruptas)")
+```
+
+`bent_cable` (quadrático) e `prob_bent_uniform` compartilham a mesma função média;
+o U-BC acrescenta a interpretação de limiar aleatório e o kernel retangular. O
+L-BC usa limiar logístico, com transições suaves e caudas longas.
+
+# Qualidade do ajuste e autocorrelação residual
+
+```{r diagnostico, fig.height=4.5}
+diagnostico <- series_diagnostics(ajuste, max_lag = 8)
+tabela(diagnostico$quality, digits = 4)
+diagnostico$plots$residuals + ggplot2::labs(title = "Resíduos no tempo")
+diagnostico$plots$acf + ggplot2::labs(title = "ACF residual")
+diagnostico$plots$pacf + ggplot2::labs(title = "PACF residual")
+```
+
+```{r diagnostico-qq, fig.width=5, fig.height=4.5, out.width="48%", fig.show="hold"}
+diagnostico$plots$qq + ggplot2::labs(title = "Normalidade dos resíduos")
+diagnostico$plots$observed_fitted + ggplot2::labs(title = "Observado × ajustado")
+```
+
+Durbin–Watson próximo de 2, autocorrelação de primeira ordem pequena e
+Ljung–Box não significativo indicam ausência de dependência residual relevante.
+O gráfico `diagnostico$plots$reference` repete a curva ajustada para referência.
+
+# Projeção de uma série
+
+```{r projecao, fig.height=7}
+projecao <- series_forecast(ajuste, horizon = 5)
+tabela(projecao$projection, digits = 4)
+projecao$plot + ggplot2::labs(title = "Projeção condicional da formação florestal")
+```
+
+`series_forecast()` estende o último regime do ajuste escolhido, uma série por
+vez, sem selecionar outro modelo. O intervalo é gaussiano condicional aos
+centros e escalas estimados; não inclui a incerteza das transições nem da escolha
+do modelo. Projeções negativas são sinalizadas, não truncadas.
+
+# Reutilização
+
+```{r salvar}
+saida <- file.path(execucao, "series-resultados")
+dir.create(saida, recursive = TRUE, showWarnings = FALSE)
+saveRDS(list(series = series, correlacao = correlacao, ajuste = ajuste,
+             diagnostico = diagnostico, projecao = projecao),
+        file.path(saida, "analise-series.rds"))
+utils::write.csv(ajuste$change_points, file.path(saida, "pontos-mudanca.csv"), row.names = FALSE)
+ggplot2::ggsave(file.path(saida, "ajuste.png"), ajuste$plot, width = 10, height = 7, dpi = 150, bg = "white")
+ggplot2::ggsave(file.path(saida, "correlacao.png"), correlacao$plots$association,
+                width = 9, height = 6.5, dpi = 150, bg = "white")
+```
+
+```{r sessao}
+sessionInfo()
+```
+
+# Tempo total
+
+```{r tempo-total}
+c(segundos = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

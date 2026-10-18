@@ -18,6 +18,8 @@
 #' @param line_color Color of the lines in the generated plots. Default is \code{"blue"}.
 #' @param point_shape Shape of the points in the plots. Default is 16.
 #' @param point_size Size of the points in the plots. Default is 3.
+#' @param export.raster If `TRUE` (default), keeps the reclassified raster of
+#'   each year in `rec_map`, used by `reclass_map()` and `reclass_to_polygons()`.
 #'
 #' @return A list containing:
 #'   \item{classes}{The classes considered for the analysis.}

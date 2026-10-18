@@ -22,7 +22,7 @@
 #     raster::setValues(reference_raster, c(4, NA, 5, NA))
 #   }
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = mock_fetch,
 #     rasterize_osm = mock_rasterize_osm,
 #     .package = "biomastats"
@@ -60,7 +60,7 @@
 #   }
 #   mock_rasterize_osm <- function(osm_data, reference_raster) reference_raster
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = mock_fetch,
 #     rasterize_osm = mock_rasterize_osm,
 #     .package = "biomastats"
@@ -87,7 +87,7 @@
 #   calls <- new.env(parent = emptyenv())
 #   calls$boxes <- list()
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(bbox, ...) {
 #       calls$boxes[[length(calls$boxes) + 1L]] <- bbox
 #       list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
@@ -118,7 +118,7 @@
 #   on.exit(options(old_options), add = TRUE)
 #   calls <- 0L
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(...) {
 #       calls <<- calls + 1L
 #       list(osm_points = NULL, osm_lines = "cached", osm_polygons = NULL)
@@ -146,7 +146,7 @@
 #   reference <- raster::setValues(reference, 1)
 #   attempted <- character()
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(..., endpoint) {
 #       attempted <<- c(attempted, endpoint)
 #       if (length(attempted) == 1L) stop("endpoint unavailable")
@@ -189,7 +189,7 @@
 #   old_options <- options(biomastats.osm_cache_dir = cache_dir)
 #   on.exit(options(old_options), add = TRUE)
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(...) {
 #       list(osm_points = "stale", osm_lines = NULL, osm_polygons = NULL)
 #     },
@@ -206,7 +206,7 @@
 #   record$fetched_at <- Sys.time() - 30 * 24 * 60 * 60
 #   saveRDS(record, cache_file)
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(...) stop("network unavailable"),
 #     .package = "biomastats"
 #   )
@@ -238,7 +238,7 @@
 #     osm_polygons = NULL
 #   )
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(...) {
 #       calls$fallback_used <- TRUE
 #       fallback_data
@@ -270,7 +270,7 @@
 #   )
 #   calls <- new.env(parent = emptyenv())
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(bbox, ...) {
 #       calls$bbox <- bbox
 #       list(osm_points = NULL, osm_lines = NULL, osm_polygons = NULL)
@@ -298,7 +298,7 @@
 #   reference <- raster::setValues(reference, rep(1, 4))
 #   calls <- new.env(parent = emptyenv())
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     fetch_osm_feature = function(bbox, ...) {
 #       calls$bbox <- bbox
 #       list(osm_points = NULL)
@@ -459,7 +459,7 @@
 #     feature
 #   }
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = mock_load_osm_data,
 #     .package = "biomastats"
 #   )
@@ -511,7 +511,7 @@
 #     feature_raster
 #   }
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = mock_load_osm_data,
 #     .package = "biomastats"
 #   )
@@ -557,7 +557,7 @@
 #     c(NA, NA, NA, NA, 0, NA, NA, NA, NA)
 #   )
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = function(...) feature,
 #     .package = "biomastats"
 #   )
@@ -607,7 +607,7 @@
 #   reference <- raster::setValues(reference, rep(1, 4))
 #   empty_feature <- raster::setValues(reference, rep(NA_real_, 4))
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = function(...) empty_feature,
 #     .package = "biomastats"
 #   )
@@ -647,7 +647,7 @@
 #     calls$provider <- provider
 #     feature
 #   }
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = mock_load_osm_data,
 #     .package = "biomastats"
 #   )
@@ -687,7 +687,7 @@
 #   feature <- raster::setValues(reference, rep(NA_real_, 25))
 #   feature[13] <- 0
 #
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = function(...) feature,
 #     .package = "biomastats"
 #   )
@@ -769,7 +769,7 @@
 #     values[if (identical(key_feature, "highway")) 5 else 1] <- 0
 #     raster::setValues(reference_raster, values)
 #   }
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = mock_load_osm_data,
 #     .package = "biomastats"
 #   )
@@ -813,7 +813,7 @@
 #     c(NA, NA, NA, NA, 0, NA, NA, NA, NA)
 #   )
 #   calls <- 0L
-#   testthat::local_mocked_bindings(
+#   local_mocked_bindings(
 #     load_osm_data = function(...) {
 #       calls <<- calls + 1L
 #       feature

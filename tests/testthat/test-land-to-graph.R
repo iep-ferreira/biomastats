@@ -118,7 +118,7 @@ test_that("static and interactive plots use the same native analysis", {
 })
 
 test_that("saved maps support the simple tutorial workflow", {
-  rede <- biomastats::land_to_graph(example_maps(), year = 1985, build_plot = FALSE)
+  rede <- land_to_graph(example_maps(), year = 1985, build_plot = FALSE)
   expect_s3_class(rede$graph, "igraph")
   expect_equal(rede$adjacency, t(rede$adjacency))
   expect_equal(rede$boundary_m, t(rede$boundary_m))

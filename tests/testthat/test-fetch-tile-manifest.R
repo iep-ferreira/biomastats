@@ -1,14 +1,14 @@
 test_that("fetch_tile_manifest validates its public arguments", {
   expect_error(
-    biomastats::fetch_tile_manifest(fragment = 1, api_urls = "http://example.org"),
+    fetch_tile_manifest(fragment = 1, api_urls = "http://example.org"),
     "No valid API URL"
   )
   expect_error(
-    biomastats::fetch_tile_manifest(fragment = 1, api_urls = "https://example.org", timeout = 0),
+    fetch_tile_manifest(fragment = 1, api_urls = "https://example.org", timeout = 0),
     "positive number"
   )
   expect_error(
-    biomastats::fetch_tile_manifest(api_urls = "https://example.org"),
+    fetch_tile_manifest(api_urls = "https://example.org"),
     "fragment"
   )
 })
@@ -34,7 +34,7 @@ test_that("fetch_tile_manifest reuses an exact valid JSON cache entry", {
   )
   writeBin(charToRaw(manifest_json), cache_file)
 
-  cached <- biomastats::fetch_tile_manifest(
+  cached <- fetch_tile_manifest(
     type = "cover",
     collection = "7",
     fragment = fragment,
@@ -47,7 +47,7 @@ test_that("fetch_tile_manifest reuses an exact valid JSON cache entry", {
 
 test_that("cache keys separate collection and cache reads can be bypassed", {
   expect_error(
-    biomastats::fetch_tile_manifest(
+    fetch_tile_manifest(
       type = "cover",
       collection = "8",
       fragment = "910001",
@@ -57,7 +57,7 @@ test_that("cache keys separate collection and cache reads can be bypassed", {
     "No valid API URL"
   )
   expect_error(
-    biomastats::fetch_tile_manifest(
+    fetch_tile_manifest(
       type = "cover",
       collection = "7",
       fragment = "910001",
@@ -91,7 +91,7 @@ test_that("manifest cache entries expire after seven days", {
   Sys.setFileTime(cache_file, Sys.time() - (8 * 24 * 60 * 60))
 
   expect_error(
-    biomastats::fetch_tile_manifest(
+    fetch_tile_manifest(
       type = "cover",
       collection = "7",
       fragment = fragment,
@@ -133,7 +133,7 @@ test_that("download_maps selects one cached record for the requested year", {
   writeBin(as.raw(1L), candidate_paths[[1L]])
   writeBin(as.raw(2L), candidate_paths[[2L]])
 
-  downloaded <- biomastats::download_maps(
+  downloaded <- download_maps(
     fragment = fragment,
     type = "cover",
     collection = "7",
@@ -155,12 +155,12 @@ test_that("download_maps skips manifests when the local raster exists", {
   )
   writeBin(as.raw(1L), local_path)
 
-  testthat::local_mocked_bindings(
+  local_mocked_bindings(
     fetch_tile_manifest = function(...) stop("The manifest was requested."),
     .package = "biomastats"
   )
 
-  downloaded <- biomastats::download_maps(
+  downloaded <- download_maps(
     fragment = fragment,
     type = "cover",
     collection = "7",
@@ -194,7 +194,7 @@ test_that("download_maps fetches one manifest for multiple missing years", {
     '"file_name":"coverage-collection-7-frag-', fragment, '-year-1987.tif"}]}}}'
   )
 
-  testthat::local_mocked_bindings(
+  local_mocked_bindings(
     fetch_tile_manifest = function(...) {
       calls$manifest <- calls$manifest + 1L
       manifest_json
@@ -207,7 +207,7 @@ test_that("download_maps fetches one manifest for multiple missing years", {
     .package = "biomastats"
   )
 
-  downloaded <- biomastats::download_maps(
+  downloaded <- download_maps(
     fragment = fragment,
     type = "cover",
     collection = "7",
@@ -253,7 +253,7 @@ test_that("check_maps resolves downloads before loading rasters", {
   calls$fragments <- numeric()
   calls$years <- list()
 
-  testthat::local_mocked_bindings(
+  local_mocked_bindings(
     download_maps = function(
         fragment, type, collection, year, export_folder_path) {
       calls$fragments <- c(calls$fragments, fragment)
@@ -265,7 +265,7 @@ test_that("check_maps resolves downloads before loading rasters", {
     .package = "biomastats"
   )
 
-  maps <- biomastats::check_maps(
+  maps <- check_maps(
     ids = ids,
     start = min(years),
     end = max(years),

@@ -33,18 +33,18 @@ extent, in metres, used for OSM queries. The default is 2000 (2 km). A
 feature specification can override it with its own \code{buffer_distance}.}
 
 \item{osm_options}{Default named list of connection options passed to
-\code{load_osm_data()}. Supported entries are \code{timeout},
-\code{overpass_urls}, \code{use_cache}, and \code{cache_ttl_days}. Individual
-feature specifications may override them with their own \code{osm_options}.}
+\code{\link[=load_osm_data]{load_osm_data()}}. Supported entries are \code{timeout}, \code{overpass_urls},
+\code{use_cache}, and \code{cache_ttl_days}. Individual feature specifications may
+override them with their own \code{osm_options}.}
 
 \item{plot}{Logical; if \code{TRUE}, create and return a plot for every
 feature/metric combination. If \code{FALSE}, metric plots and the top-level
 \code{plots} element are \code{NULL}.}
 }
 \value{
-An object of class \code{biomastats_feature_integration} with three elements:
-\code{features}, the rasterized features loaded once; \code{results}, a nested
-list indexed by feature and metric; and \code{plots}, a named list of
+An object of class \code{biomastats_feature_integration} with three
+elements: \code{features}, the rasterized features loaded once; \code{results}, a
+nested list indexed by feature and metric; and \code{plots}, a named list of
 \code{ggplot2} objects when \code{plot = TRUE}.
 }
 \description{
@@ -54,12 +54,11 @@ queries when distance and density are calculated for the same feature.
 }
 \details{
 \code{features} is a named list. Each element must contain \code{key} and may
-contain \code{value}, \code{provider}, \code{buffer_distance}, and
-\code{osm_options}. \code{metrics} can be a character
-vector or a named list of metric options. Available metrics are
-\code{"distance"} and \code{"density"}; the function-name aliases
-\code{"distance_to_feature"} and \code{"density_of_feature"} are also
-accepted. Density options include \code{window_size} and \code{window_shape}.
+contain \code{value}, \code{provider}, \code{buffer_distance}, and \code{osm_options}. \code{metrics}
+can be a character vector or a named list of metric options. Available
+metrics are \code{"distance"} and \code{"density"}; the function-name aliases
+\code{"distance_to_feature"} and \code{"density_of_feature"} are also accepted.
+Density options include \code{window_size} and \code{window_shape}.
 }
 \examples{
 \dontrun{

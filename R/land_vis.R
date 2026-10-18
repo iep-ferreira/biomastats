@@ -52,7 +52,7 @@ land_vis <- function(data = NULL, year = 1985){
   }
 
   # Convert the raster object to a data frame with columns "value", "x", and "y".
-  raster <- as(raster, "SpatialPixelsDataFrame")
+  raster <- methods::as(raster, "SpatialPixelsDataFrame")
   dat <- as.data.frame(raster)
   names(dat) <- c("value", "x", "y")
 

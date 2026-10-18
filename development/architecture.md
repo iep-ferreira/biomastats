@@ -149,7 +149,7 @@ interiores e apenas ilustrativo, sem inferir corredores ou distancia centroide.
 Os objetos sao serializaveis e salvos por ferramentas padrao do R.
 
 O exemplo executavel esta em
-`ignorados/testes-locais/teste-local-conectividade.Rmd`, com HTML na mesma
+`testes-manuais/modulos/teste-modulo-conectividade.Rmd`, com HTML na mesma
 pasta ignorada pelo Git. Testes incluem equivalencia com con_metric/patch_imp
 originais e upload_land, diagonal AWF, isolados, contatos/empates de limiar,
 unidades, heranca de limite, recuperacao RDS e fluxo completo com o recorte.
@@ -190,7 +190,7 @@ desenho acessiveis. Nenhum arquivo e escrito pela funcao. saveRDS/readRDS,
 ggsave, write.csv e write_graph atuam nos objetos retornados.
 
 O exemplo de build e analise esta em
-`ignorados/testes-locais/teste-local-mudancas.Rmd`, com HTML na mesma pasta
+`testes-manuais/modulos/teste-modulo-mudancas.Rmd`, com HTML na mesma pasta
 ignorada pelo Git. Os testes automatizados cobrem matrizes conhecidas,
 conservacao de areas e fluxos, trajetorias de retorno, mascara comum, grade,
 unidades projetadas/geograficas, paleta, serializacao e recorte real do pacote.
@@ -239,7 +239,7 @@ necessaria para testar ou executar o exemplo de floresta.
 
 Execute `devtools::test(filter = "reclass-to-polygons")` para testar.
 O exemplo executavel de build, analise e visualizacao esta em
-`ignorados/testes-locais/teste-local-poligonos.Rmd`; ele e mantido fora do
+`testes-manuais/modulos/teste-modulo-poligonos.Rmd`; ele e mantido fora do
 pacote porque serve como verificacao local e nao como interface distribuida.
 
 Validacao em 14/10/2026: `testthat::test_local(".")` passou com 90 verificacoes,
@@ -337,8 +337,8 @@ Graficos de perfis, transicoes, variacoes, diagnostico e projecoes herdam cores
 e legendas codigo/nome; a matriz de correlacoes usa escala numerica propria e
 rotulos completos. Todas as saidas sao serializaveis por saveRDS/readRDS e os
 graficos personalizaveis via ggplot2. Sem funcao de exportacao ou scripts auxiliares
-no fluxo do usuario. Exemplo local: ignorados/testes-locais/teste-local-series-temporais.Rmd
-com HTML executado na mesma pasta ignorada. Documentacao Rd deve ser gerada de
+no fluxo do usuario. Exemplo local: testes-manuais/modulos/teste-modulo-series-temporais.Rmd
+com HTML na mesma pasta, ignorado pelo Git. Documentacao Rd deve ser gerada de
 forma restrita aos arquivos alterados, evitando reformatar outras paginas.
 
 ### Regimes com múltiplas transições e correlação por objetivo
@@ -393,7 +393,7 @@ ou dits); números de Hill são sempre em classes efetivas. `min_area` descarta
 classes residuais e `classes` restringe o conjunto antes do cálculo das
 proporções. Anos sem pixels válidos ficam NA. Gráficos (`indices`, `hill`,
 `contribution`, `dominance`) seguem as cores do dicionário e têm legendas pt/en.
-Exemplo local: `ignorados/testes-locais/teste-local-diversidade.Rmd`.
+Teste manual: `testes-manuais/modulos/teste-modulo-diversidade.Rmd`.
 
 ## Métricas de fragmentos na grade nativa: fragment_metrics
 
@@ -412,7 +412,8 @@ grade nativa contra 97,71 ha e 21 fragmentos após reprojeção para UTM).
   apenas para registro em `metadata`. Os argumentos `zone` e `hemisphere` de
   `lulc_metrics()` e `biomastats_metrics()` ficam obsoletos e são ignorados.
 - `fragment_metrics()` (arquivo próprio) identifica fragmentos com
-  `terra::patches` (8 vizinhos por padrão) e retorna, por fragmento, área,
+  `landscapemetrics::get_patches` (8 vizinhos por padrão; mesma partição de
+  `terra::patches`, muito mais rápida em grades grandes) e retorna, por fragmento, área,
   perímetro, área núcleo, índices de forma (incluindo o `shape` do
   landscapemetrics, 0,25 P/√A), dimensão fractal, centroide ponderado pela área
   (CRS herdado e lon/lat), raio de giração, alongamento e orientação do eixo

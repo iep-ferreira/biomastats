@@ -4,26 +4,26 @@
 \alias{raster_index}
 \title{Índice de Classes de Uso e Cobertura da Terra (LULC)}
 \usage{
-raster_index(raster_type = "lulc", collection = 7, language = "English")
+raster_index(raster_type = "lulc", collection = 10, language = "English")
 }
 \arguments{
 \item{raster_type}{Tipo de raster. O valor padrão é "lulc". Outros tipos ainda não estão disponíveis.}
 
-\item{collection}{Coleção de dados a ser utilizada. Atualmente, apenas a coleção 7 está disponível.}
+\item{collection}{Coleção MapBiomas (7 ou 10; padrão 10).}
 
 \item{language}{Idioma utilizado para os rótulos de seleção. As opções são "Portuguese" ou "English". O valor padrão é "English".}
 }
 \value{
 Retorna uma lista com as seguintes informações:
 \itemize{
-  \item \code{groups}: O grupo de classes selecionadas.
-  \item \code{codes}: Os códigos das classes selecionadas.
-  \item \code{codes_color}: As cores associadas aos códigos selecionados.
-  \item \code{class}: Os nomes das classes selecionadas.
+\item \code{groups}: O grupo de classes selecionadas.
+\item \code{codes}: Os códigos das classes selecionadas.
+\item \code{codes_color}: As cores associadas aos códigos selecionados.
+\item \code{class}: Os nomes das classes selecionadas.
 }
 }
 \description{
-Esta função cria um índice de classes de uso e cobertura da terra (LULC) com base em um dicionário de dados predefinido, 
+Esta função cria um índice de classes de uso e cobertura da terra (LULC) com base em um dicionário de dados predefinido,
 permitindo ao usuário selecionar múltiplas classes para análise. A função atualmente suporta apenas dados do tipo "lulc" e da coleção 7.
 }
 \examples{

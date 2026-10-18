@@ -30,6 +30,6 @@ get_api_values <- function(json_string) {
   if (!is.null(data$error) && data$error == "") {
     return(data$result)
   } else {
-    return(paste("Erro de comunicação:", data$error))
+    return(paste("Erro de comunica\u00e7\u00e3o:", data$error))
   }
 }

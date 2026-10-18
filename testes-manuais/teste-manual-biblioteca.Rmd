@@ -38,7 +38,7 @@ etapa <- function(area, nome, expr) {
   valor
 }
 tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, row.names = FALSE,
-  format.args = list(decimal.mark = ",", big.mark = "."))
+  format.args = list(decimal.mark = ",", big.mark = ""))
 # Sem caminho explícito, procura collection_10 na pasta pessoal e em Documentos.
 candidatas <- if (is.null(params$pasta_colecao)) c(file.path(path.expand("~"), "collection_10"),
   file.path(Sys.getenv("USERPROFILE"), "Documents", "collection_10")) else path.expand(params$pasta_colecao)
@@ -64,8 +64,9 @@ tabela(data.frame(pasta = pasta, arquivos = length(arquivos),
 
 # Carregamento, recorte e preparação
 
-Cada área passa pelas etapas internas de `load_rasters()`, medidas
-separadamente, e depois pela chamada completa da função.
+O limite da Lagoa do Sino passa pelas etapas internas de `load_rasters()`,
+medidas separadamente, e depois pela chamada completa da função. A aquisição
+de áreas maiores, com duas tiles, é conferida em `teste-manual-aquisicao.Rmd`.
 
 ```{r rotina}
 preparar <- function(nome, shape) {
@@ -89,17 +90,6 @@ land_vis(lagoa$mapas, year = params$fim)
 lagoa$areas$time_series
 ```
 
-## Itapetininga (SP)
-
-```{r itapetininga}
-limite <- geobr::read_municipality(code_muni = 3522307, year = 2020, showProgress = FALSE)
-shape_ita <- file.path(execucao, "itapetininga.shp")
-sf::st_write(limite[, c("code_muni", "name_muni")], shape_ita, quiet = TRUE)
-ita <- preparar("Itapetininga", shape_ita)
-land_vis(ita$mapas, year = params$fim)
-ita$areas$time_series
-```
-
 # Verificações
 
 O recorte pelo método `library` deve coincidir com o exemplo do pacote, que foi
@@ -119,7 +109,7 @@ resumo <- function(nome, m, a) data.frame(area = nome, anos = length(m$raster),
   grade_unica = nrow(unique(t(vapply(m$raster, function(r) round(c(raster::extent(r)[], dim(r)[1:2]), 9), numeric(6))))) == 1,
   area_classificada_km2 = sum(a$aggregate_data$area_raw[a$aggregate_data$year == max(anos)]),
   area_limite_km2 = sum(as.numeric(sf::st_area(m$shape))) / 1e6)
-tabela(rbind(resumo("Lagoa do Sino", lagoa$mapas, lagoa$areas), resumo("Itapetininga", ita$mapas, ita$areas)))
+tabela(resumo("Lagoa do Sino", lagoa$mapas, lagoa$areas))
 c(anos_identicos_ao_exemplo = sum(iguais), anos = length(k), grade_identica = all(grade))
 stopifnot(all(iguais), all(grade))
 ```
@@ -131,11 +121,11 @@ cronometro[nrow(cronometro) + 1, ] <- list("—", "Total (renderização)",
   as.numeric(difftime(Sys.time(), inicio_total, units = "secs")))
 cronometro$por_ano <- ifelse(grepl("^[2-5]\\.", cronometro$etapa), cronometro$segundos / length(anos), NA)
 tabela(cronometro, 2)
-g <- cronometro[grepl("^[1-6]\\.", cronometro$etapa) & cronometro$area %in% c("Lagoa do Sino", "Itapetininga"), ]
-ggplot2::ggplot(g, ggplot2::aes(segundos, etapa, fill = area)) +
-  ggplot2::geom_col(position = "dodge") + ggplot2::scale_y_discrete(limits = rev) +
-  ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom") +
-  ggplot2::labs(x = "Segundos", y = NULL, fill = NULL, title = sprintf("Método library, %d anos", length(anos)))
+g <- cronometro[grepl("^[1-6]\\.", cronometro$etapa) & cronometro$area == "Lagoa do Sino", ]
+ggplot2::ggplot(g, ggplot2::aes(segundos, etapa)) +
+  ggplot2::geom_col(fill = "#2171b5") + ggplot2::scale_y_discrete(limits = rev) +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(x = "Segundos", y = NULL, title = sprintf("Método library, Lagoa do Sino, %d anos", length(anos)))
 ```
 
 As etapas 2 a 4 detalham o que `load_rasters()` faz internamente; a etapa 5 é a

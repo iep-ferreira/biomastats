@@ -16,8 +16,8 @@ reclass_to_polygons(
 )
 }
 \arguments{
-\item{obj}{Lista de `biomastats_metrics`, com `rec_map`, `start`, `end`
-e `classes`. Execute as metricas com `export.raster = TRUE`.}
+\item{obj}{Lista de \code{biomastats_metrics}, com \code{rec_map}, \code{start}, \code{end}
+e \code{classes}. Execute as metricas com \code{export.raster = TRUE}.}
 
 \item{years}{Anos inteiros desejados; NULL seleciona todos os anos.}
 
@@ -36,29 +36,29 @@ um CRS explicito solicita reprojecao.}
 }
 \value{
 Lista nomeada por ano ou, para um unico ano, um objeto sf com
-  value (0/1), area_ha, year, fragment_id, code, classe, class, color,
-  collection, classes (codigos selecionados) e geometry. O atributo shp_paths
-  contem os caminhos salvos. Anos sem pixels selecionados retornam sf vazio.
+value (0/1), area_ha, year, fragment_id, code, classe, class, color,
+collection, classes (codigos selecionados) e geometry. O atributo shp_paths
+contem os caminhos salvos. Anos sem pixels selecionados retornam sf vazio.
 }
 \description{
 Vetoriza os rasters reclassificados em poligonos sf
 }
 \details{
 Codigos preservados pela reclassificacao de uma unica classe sao
-  convertidos para 1. NA e excluido. Fragmentos conectados somente por um
-  vertice permanecem separados (conectividade por aresta), diferentemente
-  das metricas de paisagem com oito vizinhos. A area e calculada com sf e
-  convertida explicitamente para hectares, inclusive em CRS com pes.
-  No shapefile, fragment_id e abreviado para frag_id (limite de 10 caracteres).
-  collection e class_dictionary sao herdados do resultado das metricas.
-  Os atributos class_dictionary e metadata preservam identidades, paleta,
-  selecao temporal, CRS e resolucao de origem, inclusive apos saveRDS/readRDS.
-  O atributo boundary herda o limite da area de estudo quando disponivel nas metricas.
-  Para uma classe, code, classe, class e color identificam os poligonos de
-  presenca. Para varias classes fundidas, esses campos sao NA: os codigos
-  selecionados ficam em classes e no dicionario, sem inventar identidade
-  por fragmento. O fundo tambem nao recebe identidade de classe selecionada.
-  Objetos antigos sem colecao/dicionario continuam aceitos, com identidades
-  desconhecidas (NA); nenhuma colecao e presumida. A exportacao SHP conserva
-  as colunas, mas os atributos completos do objeto requerem serializacao RDS.
+convertidos para 1. NA e excluido. Fragmentos conectados somente por um
+vertice permanecem separados (conectividade por aresta), diferentemente
+das metricas de paisagem com oito vizinhos. A area e calculada com sf e
+convertida explicitamente para hectares, inclusive em CRS com pes.
+No shapefile, fragment_id e abreviado para frag_id (limite de 10 caracteres).
+collection e class_dictionary sao herdados do resultado das metricas.
+Os atributos class_dictionary e metadata preservam identidades, paleta,
+selecao temporal, CRS e resolucao de origem, inclusive apos saveRDS/readRDS.
+O atributo boundary herda o limite da area de estudo quando disponivel nas metricas.
+Para uma classe, code, classe, class e color identificam os poligonos de
+presenca. Para varias classes fundidas, esses campos sao NA: os codigos
+selecionados ficam em classes e no dicionario, sem inventar identidade
+por fragmento. O fundo tambem nao recebe identidade de classe selecionada.
+Objetos antigos sem colecao/dicionario continuam aceitos, com identidades
+desconhecidas (NA); nenhuma colecao e presumida. A exportacao SHP conserva
+as colunas, mas os atributos completos do objeto requerem serializacao RDS.
 }

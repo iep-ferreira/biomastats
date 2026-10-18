@@ -53,7 +53,8 @@ area), \code{frac} (fractal dimension), \code{centroid_x}, \code{centroid_y} (na
 CRS, area-weighted), \code{lon}, \code{lat}, \code{gyration_m} (radius of gyration),
 \code{elongation} (1 - minor/major axis of the area-weighted second moments),
 \code{orientation_deg} (azimuth of the major axis), bounding box and
-\code{enn_m} (edge-to-edge distance to the nearest fragment of the same class).
+\code{enn_m} (edge-to-edge geodesic distance to the nearest fragment of the
+same class, found with the s2 spatial index).
 \item \code{summary}: one row per year and class with landscape and class area,
 \code{pland}, \code{n_patches}, \code{patch_density} (per 100 ha), \code{edge_m} and
 \code{edge_density} (m/ha, edges with other classes), area mean, median, SD,
@@ -75,8 +76,9 @@ object returned by \code{\link[=load_rasters]{load_rasters()}}. The CRS is inher
 reprojected and no zone or hemisphere needs to be given.
 }
 \details{
-Geometry: fragments are connected components (\code{\link[terra:patches]{terra::patches()}}) of each
-class. Cell areas come from \code{\link[terra:cellSize]{terra::cellSize()}} (geodesic for geographic
+Geometry: fragments are connected components of each class, labelled with
+\code{\link[landscapemetrics:get_patches]{landscapemetrics::get_patches()}} (same partition as \code{\link[terra:patches]{terra::patches()}},
+much faster on large grids). Cell areas come from \code{\link[terra:cellSize]{terra::cellSize()}} (geodesic for geographic
 grids). Edge lengths are measured on the WGS84 ellipsoid for geographic
 grids (parallel arcs for north/south edges, meridian arcs for east/west
 edges of each row) and, for projected grids, from the cell size in metres

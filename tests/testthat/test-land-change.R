@@ -87,6 +87,10 @@ test_that("grid compatibility, selection and input validation are explicit", {
   maps$raster[[2]] <- raster::shift(maps$raster[[2]], dx = 10)
   expect_error(land_change(maps), "mesma grade")
   maps <- change_maps()
+  # Floating-point noise in the extent (years written to disk by raster) is the same grid.
+  maps$raster[[2]] <- raster::shift(maps$raster[[2]], dx = 1e-9)
+  expect_s3_class(land_change(maps, build_plot = FALSE), "biomastats_land_change")
+  maps <- change_maps()
   raster::crs(maps$raster[[2]]) <- "EPSG:32723"
   expect_error(land_change(maps), "mesma grade")
   maps <- change_maps()

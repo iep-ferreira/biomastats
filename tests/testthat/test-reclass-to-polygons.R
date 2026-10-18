@@ -78,13 +78,13 @@ test_that("forest polygons follow the tutorial workflow", {
   mapas <- example_env$mapas
   mapas$collection <- 10
 
-  metricas <- biomastats::biomastats_metrics(
+  metricas <- biomastats_metrics(
     mapas, start = 1985, end = 1985, zone = "22", hemisphere = "south",
     classes = 3, metrics = "class_area", export.raster = TRUE
   )
-  expect_s3_class(biomastats::reclass_map(metricas, year = 1985), "ggplot")
+  expect_s3_class(reclass_map(metricas, year = 1985), "ggplot")
 
-  poligonos <- biomastats::reclass_to_polygons(
+  poligonos <- reclass_to_polygons(
     metricas, years = 1985, save_shp = FALSE
   )
   expect_s3_class(poligonos, "sf")
