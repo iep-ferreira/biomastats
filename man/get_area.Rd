@@ -4,33 +4,23 @@
 \alias{get_area}
 \title{Calculate Land Classes Area}
 \usage{
-get_area(data = NULL, dec_places = 3, plot_type = c("areaplot"))
+get_area(data = NULL, dec_places = 3, plot_type = "areaplot")
 }
 \arguments{
-\item{data}{A list containing two elements: 
-\describe{
-  \item{time_range}{A vector of two elements specifying the start and end years.}
-  \item{raster}{A list of raster objects for each year in the time range.}
-}}
+\item{data}{Native maps object returned by load_rasters.}
 
-\item{dec_places}{An integer indicating the number of decimal places to round the area values.}
+\item{dec_places}{Decimal places for displayed areas. Statistical analysis
+uses the unrounded area_raw column.}
 
-\item{plot_type}{A character string indicating the type of plot to generate, either "profile" (default) or "areaplot".}
+\item{plot_type}{Either "areaplot" (default) or "profile".}
 }
 \value{
-A list with four elements:
-\describe{
-  \item{Years}{A vector of years covered by the time range.}
-  \item{Occupied area}{A list with the calculated areas for each land class and year.}
-  \item{aggregate_data}{A data frame with the calculated areas for each land class and year.}
-  \item{time_series}{A ggplot2 object with the time series of areas, either a line plot or an area plot.}
-}
+List with Years, Occupied area, aggregate_data, time_series and
+collection. Attributes metadata and class_dictionary are inherited by the
+list, table and time_series ggplot. Metadata records coverage and units.
 }
 \description{
-This function calculates the area of land classes over a specified time range.
-}
-\examples{
-\dontrun{
-result <- get_area(data = biomastats_raster, plot_type = "areaplot")
-}
+Calculates areas in square kilometres and preserves the native analytical
+contract on the returned list, table and ggplot. Absent classes in observed
+years receive zero; years without valid pixels remain NA.
 }

@@ -4,7 +4,7 @@
 #' permitindo ao usuário selecionar múltiplas classes para análise. A função atualmente suporta apenas dados do tipo "lulc" e da coleção 7.
 #'
 #' @param raster_type Tipo de raster. O valor padrão é "lulc". Outros tipos ainda não estão disponíveis.
-#' @param collection Coleção de dados a ser utilizada. Atualmente, apenas a coleção 7 está disponível.
+#' @param collection Coleção MapBiomas (7 ou 10; padrão 10).
 #' @param language Idioma utilizado para os rótulos de seleção. As opções são "Portuguese" ou "English". O valor padrão é "English".
 #'
 #' @return Retorna uma lista com as seguintes informações:
@@ -33,12 +33,12 @@ raster_index <- function(raster_type = "lulc", collection = 10, language = "Engl
   
   # no futuro, o dicionário será escolhido de acordo com o 
   # tipo de mapa e coleção
-  dict <- biomastats:::dict_build(collection)
+  dict <- dict_build(collection)
   dict <- dict_sorted <- dict[order(dict$code), ]
   dict <- dplyr::filter(dict, !code  %in% c(1, 10, 14, 22, 26) )
   
   if(language == "Portuguese"){  
-    selector_text <- "Selecione os itens (use espaço para selecionar múltiplos itens):"} else{
+    selector_text <- "Selecione os itens (use espa\u00e7o para selecionar m\u00faltiplos itens):"} else{
       selector_text <- "Select the items (use space to select multiple items):"  
     }
   

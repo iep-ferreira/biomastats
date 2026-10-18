@@ -1,0 +1,146 @@
+---
+title: "Métricas de fragmentos na grade nativa — teste manual (módulo)"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) {
+  if (identical(dirname(root), root)) stop("Execute dentro do repositório biomastats.")
+  root <- dirname(root)
+}
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária;
+# resultados gravados em pasta temporária, removida ao final.
+execucao <- tempfile("biomastats-modulo-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+tabela <- function(x, digits = 3, ...) knitr::kable(x, digits = digits,
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
+```
+
+# Princípio
+
+`fragment_metrics()` calcula as métricas no nível do fragmento diretamente na
+grade de origem, sem reprojetar o raster:
+
+- o CRS é herdado do objeto de `load_rasters()`;
+- a área de cada pixel vem de suas coordenadas (área geodésica, `terra::cellSize`);
+- o comprimento das bordas é medido no elipsoide WGS84 (grades geográficas) ou
+  corrigido pelo fator de escala local (grades projetadas);
+- a zona UTM e o hemisfério são detectados automaticamente, apenas para registro;
+- a vetorização usa a rotina do pacote, somente para distâncias entre fragmentos
+  e geometrias.
+
+```{r dados}
+fixture <- new.env(parent = emptyenv())
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"), envir = fixture)
+mapas <- fixture$mapas
+fragmentos <- fragment_metrics(mapas, classes = c(3, 15), years = c(1985, 2000, 2021))
+str(fragmentos$metadata$source[["1985"]][c("lonlat", "resolution", "utm")])
+```
+
+# Fragmentos
+
+Cada linha é um fragmento, com área, perímetro, área núcleo, forma, centroide,
+dispersão espacial e distância ao vizinho mais próximo.
+
+```{r fragmentos}
+maiores <- fragmentos$patches[order(-fragmentos$patches$area_ha), ]
+tabela(utils::head(maiores[, c("year", "code", "patch_id", "area_ha", "perimeter_m", "core_area_ha",
+  "shape_index", "shape_circle", "frac", "lon", "lat", "gyration_m", "elongation",
+  "orientation_deg", "enn_m")], 10))
+```
+
+```{r mapa, fig.height=7}
+fragmentos$plots$map + ggplot2::labs(title = "Fragmentos e centroides")
+```
+
+# Características distribucionais por classe
+
+```{r resumo}
+tabela(fragmentos$summary)
+tabela(fragmentos$lsm)
+```
+
+`lpi` é o maior fragmento em % da paisagem; `mesh_ha` é o tamanho efetivo de
+malha; `area_gini` mede a desigualdade dos tamanhos; `enn_*` são distâncias de
+borda a borda entre fragmentos da mesma classe. A tabela `lsm` traz métricas do
+`landscapemetrics` calculadas na mesma grade (as padrão não dependem de unidade).
+
+```{r distribuicao, fig.height=5.5}
+fragmentos$plots$size_distribution + ggplot2::labs(title = "Distribuição dos tamanhos")
+fragmentos$plots$rank_size + ggplot2::labs(title = "Rank–tamanho")
+fragmentos$plots$shape + ggplot2::labs(title = "Forma × área")
+fragmentos$plots$trend + ggplot2::labs(title = "Evolução das métricas")
+```
+
+# Por que não reprojetar
+
+Reprojetar o raster para UTM reamostra os pixels (vizinho mais próximo) e
+altera a área e os fragmentos. Comparação para a formação florestal em 1985:
+
+```{r comparacao}
+nativo <- fragmentos$summary[fragmentos$summary$year == 1985 & fragmentos$summary$code == 3, ]
+utm <- terra::project(terra::rast(mapas$raster[[1]]), "EPSG:32722", method = "near")
+ref <- as.data.frame(landscapemetrics::calculate_lsm(utm, what = c("lsm_c_ca", "lsm_c_np", "lsm_c_te")))
+ref <- ref[ref$class == 3, ]
+tabela(data.frame(metrica = c("Área (ha)", "Fragmentos"),
+  grade_nativa = c(nativo$class_area_ha, nativo$n_patches),
+  reprojetado_utm = c(ref$value[ref$metric == "ca"], ref$value[ref$metric == "np"])))
+```
+
+# Integração com as funções existentes
+
+`lulc_metrics()` e `biomastats_metrics()` passam a usar o mesmo motor: não é mais
+necessário informar `zone` nem `hemisphere`.
+
+```{r integracao}
+metricas <- biomastats_metrics(mapas, start = 1985, end = 1987, classes = 3)
+tabela(metricas$metrics_table)
+metricas$metadata$source[["1985"]]$utm$zone
+```
+
+# Classes fundidas e legendas em inglês
+
+```{r fundidas, fig.height=6}
+habitat <- fragment_metrics(mapas, classes = c(3, 4, 11), merge_classes = TRUE, years = 2021,
+                            language = "en")
+tabela(habitat$summary)
+habitat$plots$map
+```
+
+# Reutilização
+
+```{r salvar}
+saida <- file.path(execucao, "fragmentos-resultados")
+dir.create(saida, recursive = TRUE, showWarnings = FALSE)
+saveRDS(fragmentos, file.path(saida, "fragmentos.rds"))
+utils::write.csv(fragmentos$patches, file.path(saida, "fragmentos.csv"), row.names = FALSE)
+sf::st_write(fragmentos$polygons, file.path(saida, "fragmentos.gpkg"), delete_dsn = TRUE, quiet = TRUE)
+```
+
+# Tempo total
+
+```{r tempo-total}
+c(segundos = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

@@ -1,0 +1,133 @@
+---
+title: "Teste manual (módulo) — polígonos de floresta"
+author: "Bioma Stats"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+Este teste local constrói e instala o pacote da árvore de trabalho, repete o
+fluxo usado no tutorial e exibe os polígonos da classificação de floresta no
+recorte de exemplo. O arquivo e o HTML ficam em `testes-manuais/modulos/` (HTML fora do Git).
+
+Para executar a partir da raiz do projeto, em uma sessão nova do R:
+
+```{r executar, eval=FALSE}
+rmarkdown::render("testes-manuais/modulos/teste-modulo-poligonos.Rmd")
+```
+
+## Build e instalação
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) {
+  if (identical(dirname(root), root)) stop("Execute dentro do repositório biomastats.")
+  root <- dirname(root)
+}
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária;
+# resultados gravados em pasta temporária, removida ao final.
+execucao <- tempfile("biomastats-modulo-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+tabela <- function(x, digits = 3, ...) knitr::kable(x, digits = digits,
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
+```
+
+O pacote foi construído e carregado da biblioteca temporária:
+
+```{r versao}
+packageVersion("biomastats")
+```
+
+## Métricas e polígonos
+
+As chamadas abaixo acompanham o tutorial: carregam o mapa de exemplo,
+calculam as métricas para 1985 e a classe 3, exibem o mapa reclassificado e
+vetorizam o raster retornado por `biomastats_metrics()`.
+
+```{r mapa-exemplo}
+arquivo_exemplo <- system.file("examples", "mapa_exemplo.Rdata", package = "biomastats")
+ambiente_exemplo <- new.env(parent = emptyenv())
+load(arquivo_exemplo, envir = ambiente_exemplo)
+mapas <- ambiente_exemplo[["mapas"]]
+
+metricas <- biomastats_metrics(
+  mapas, start = 1985, end = 1985, 
+  classes = 3, metrics = "class_area", export.raster = TRUE
+)
+```
+
+O raster reclassificado para floresta:
+
+```{r mapa-reclassificado, fig.width=7, fig.height=6}
+reclass_map(metricas, year = 1985)
+```
+
+Vetorização e resumo dos fragmentos:
+
+```{r vetorizar}
+poligonos <- reclass_to_polygons(
+  metricas, save_shp = FALSE
+)
+data.frame(
+  ano = 1985,
+  fragmentos = nrow(poligonos),
+  area_total_ha = sum(poligonos$area_ha)
+)
+```
+
+## Visualização dos polígonos
+
+O CRS é herdado do raster reclassificado. Código, nome e cor de floresta
+vêm do dicionário herdado das métricas, sem informar uma paleta manual.
+
+```{r visualizar-poligonos, fig.width=8, fig.height=6}
+ggplot2::ggplot(poligonos) +
+  ggplot2::geom_sf(ggplot2::aes(fill = color), colour = NA) +
+  ggplot2::scale_fill_identity(
+    name = "Classe", breaks = unique(poligonos$color),
+    labels = paste(unique(poligonos$code), unique(poligonos$classe)),
+    guide = ggplot2::guide_legend(override.aes = list(colour = NA))) +
+  ggplot2::labs(title = "Fragmentos de floresta — 1985") +
+  ggplot2::theme_minimal()
+```
+
+## Objetos reutilizáveis
+
+O dicionário conserva os nomes em português e inglês e a paleta original.
+Os metadados registram os anos, a resolução e o CRS de origem. A serialização
+preserva o objeto `sf` completo, sem recalcular métricas ou vetorizar novamente.
+
+```{r reuso}
+knitr::kable(attr(poligonos, "class_dictionary"))
+attr(poligonos, "metadata")$source
+arquivo_rds <- file.path(execucao, "poligonos-floresta.rds")
+saveRDS(poligonos, arquivo_rds)
+recuperado <- readRDS(arquivo_rds)
+identical(recuperado, poligonos)
+```
+
+# Tempo total
+
+```{r tempo-total}
+c(segundos = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

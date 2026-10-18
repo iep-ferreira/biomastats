@@ -33,7 +33,7 @@ reclass_map <- function(obj = NULL, year = NULL){
   time_range <- end - start
   classes <- obj$classes
   
-  dicti <- biomastats:::dict_build()
+  dicti <- dict_build()
   name_classes <- paste(dicti$class[dicti$code %in% classes], collapse = "\n ")
  
   if (is.null(obj)) {
@@ -57,7 +57,7 @@ reclass_map <- function(obj = NULL, year = NULL){
   #  cores_classes[j] <- dic$color[pos]
   #}
 
-    raster_aux <- as(raster, "SpatialPixelsDataFrame")
+    raster_aux <- methods::as(raster, "SpatialPixelsDataFrame")
   dat <- as.data.frame(raster_aux)
   names(dat) <- c("value", "x", "y")
   dat$value <- dat$value+1

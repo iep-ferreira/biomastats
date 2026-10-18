@@ -60,7 +60,52 @@ projeto, pois o `R CMD build` pode copiar checkpoints longos do diretorio
 
 Os testes automatizados carregam `inst/examples/mapa_exemplo.Rdata` e
 reproduzem etapas de analise do tutorial. A funcao `load_rasters()` nao e
-chamada pelos testes automatizados, para evitar download e dependencia externa.
+chamada pelos testes que rodam no CI, para evitar download e dependencia externa.
+
+### Testes locais com download
+
+Arquivos `tests/testthat/test-local-*.R` baixam dados reais e rodam apenas na
+maquina do desenvolvedor. Eles ficam fora do pacote construido (`.Rbuildignore`),
+de modo que o `R CMD check` do GitHub Actions nao os executa; tambem usam
+`skip_on_ci()`, `skip_on_cran()` e `skip_if_offline()`.
+
+`test-local-itapetininga.R` baixa as duas tiles (93 e 94) de Itapetininga - SP
+para 2023-2024 em uma pasta temporaria e confere `load_rasters()`, o recorte e a
+compatibilidade com `get_area()`, `class_diversity()` e `fragment_metrics()`:
+
+```r
+devtools::test(filter = "local-itapetininga")
+```
+
+### Testes manuais (relatorios HTML)
+
+A pasta `testes-manuais/` tem quatro relatorios R Markdown de ponta a ponta e
+sete relatorios por modulo (`testes-manuais/modulos/`), para inspecao visual,
+fora do pacote construido. Guia completo em `testes-manuais/README.md`.
+As funcionalidades sao conferidas em areas pequenas (Lagoa do Sino e
+Liechtenstein); Itapetininga - SP aparece so no teste de aquisicao, o caso de
+duas tiles do MapBiomas.
+
+| Relatorio | Uso | Internet |
+|:--|:--|:--|
+| `teste-manual-integrado.Rmd` | todas as funcoes de analise sobre o exemplo da Lagoa do Sino, com tabelas dinamicas e tempo por funcao | nao |
+| `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisicao seletiva, sem cache, Lagoa do Sino e Itapetininga | sim |
+| `teste-manual-biblioteca.Rmd` | `load_rasters(method = "library")` a partir da colecao nacional local, com tempo por etapa | nao (colecao local) |
+| `teste-manual-camadas.Rmd` | camadas externas (WorldCover, OSM, Overture, Copernicus DEM, SoilGrids) no Brasil e no mundo, com ano de catalogo e simulacao de falhas | sim |
+| `modulos/teste-modulo-*.Rmd` | um relatorio por modulo: poligonos, adjacencias, mudancas, conectividade, series temporais, diversidade e fragmentos | nao |
+
+```r
+rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-camadas.Rmd")
+for (f in list.files("testes-manuais/modulos", "[.]Rmd$", full.names = TRUE))
+  rmarkdown::render(f)
+```
+
+O HTML e criado ao lado do `.Rmd` e fica fora do Git. Os antigos testes locais
+de `ignorados/testes-locais/` foram substituidos por estes relatorios
+versionados; a correspondencia esta em `testes-manuais/README.md`.
 
 ## Sandbox Linux com Docker
 
@@ -84,10 +129,49 @@ e R 4.4.2 para tornar a instalacao reproduzivel.
 
 ## GitHub Actions
 
-Cada push e pull request executa o build e o check em Linux, Windows e macOS.
-O Linux testa as versoes 4.4.3, 4.5.3 e 4.6.1; Windows e macOS testam a versao
-4.6.1. A matriz cobre a versao atual, uma versao anterior amplamente utilizada
-e a serie anterior ainda relevante.
+O workflow `.github/workflows/r-package-check.yml` roda a cada push, pull
+request ou manualmente (aba Actions, "Run workflow"). Tem dois jobs:
+
+- **check**: `R CMD build` e `R CMD check` em Linux, Windows e macOS. O Linux
+  testa a versao atual do R (`release`) e as duas series anteriores
+  (`oldrel-1`, `oldrel-2`); Windows e macOS testam `release`. Os aliases
+  acompanham automaticamente cada nova versao do R. O job falha com ERROR ou
+  WARNING; NOTEs aparecem no log. Em caso de falha, a pasta do check fica
+  disponivel como artefato do run.
+- **documentation**: regenera `man/` e `NAMESPACE` com `roxygen2` e falha se o
+  resultado diferir do que foi commitado.
+
+Os testes do CI sao leves e nao usam internet: usam o exemplo
+`inst/examples/mapa_exemplo.Rdata`, rasters e feicoes sinteticos e APIs
+simuladas (porta local fechada). Testes com download (`test-local-*.R`) e os
+relatorios de `testes-manuais/` ficam fora do pacote construido.
+
+## Consistencia da documentacao
+
+`man/*.Rd` e `NAMESPACE` sao gerados a partir dos comentarios `#'` em `R/`.
+Nunca edite esses arquivos a mao: altere o comentario e rode
+
+```r
+roxygen2::roxygenise()
+```
+
+Antes de commitar, confira localmente o mesmo que o CI:
+
+```r
+roxygen2::roxygenise()            # documentacao atualizada
+devtools::test()                  # testes automatizados
+```
+
+e, no terminal, na pasta acima do repositorio (o resultado deve terminar com
+`Status: OK` ou apenas NOTEs):
+
+```bash
+R CMD build --no-build-vignettes --no-manual biomastats
+R CMD check --no-manual --ignore-vignettes biomastats_*.tar.gz
+```
+
+Strings com acentos no codigo em `R/` devem usar escapes `\uXXXX` (o check
+acusa caracteres nao ASCII); comentarios e documentacao podem ter acentos.
 
 ## Mock temporario durante o desenvolvimento
 

@@ -1,0 +1,209 @@
+---
+title: "Teste manual (módulo) — adjacências e redes de paisagem"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+    highlight: tango
+---
+
+Este exemplo constrói o pacote local e explora as adjacências entre classes do
+recorte de 1985 distribuído com o `biomastats`. O fluxo analítico usa diretamente
+`land_to_graph()`, sem consultas a serviços externos nem funções auxiliares.
+
+Na raiz do projeto, em uma sessão nova do R com as dependências instaladas,
+execute:
+
+```{r executar, eval=FALSE}
+rmarkdown::render("testes-manuais/modulos/teste-modulo-adjacencias.Rmd")
+```
+
+Além das dependências do pacote, a renderização requer `pkgbuild`, `rmarkdown`
+e `knitr`. Instale `ggiraph` para obter os grafos interativos.
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) {
+  if (identical(dirname(root), root)) stop("Execute dentro do repositório biomastats.")
+  root <- dirname(root)
+}
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária;
+# resultados gravados em pasta temporária, removida ao final.
+execucao <- tempfile("biomastats-modulo-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+tabela <- function(x, digits = 3, ...) knitr::kable(x, digits = digits,
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
+```
+
+# Carregar o recorte e construir a rede
+
+Os nós representam classes MapBiomas, identificadas pelo código. As cores e
+os nomes vêm de `dict_build()`. Cada aresta reúne os contatos entre duas classes,
+mesmo quando esses contatos ocorrem em locais distantes do recorte.
+Coleção, classes presentes, CRS e resolução são herdados do objeto de mapas.
+As legendas apresentam amostras da paleta do dicionário, códigos e nomes das
+classes, sem imprimir hexadecimais ou precisar informar uma paleta adicional.
+
+```{r carregar}
+fixture <- new.env(parent = emptyenv())
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"),
+     envir = fixture)
+mapas <- fixture$mapas
+rede <- land_to_graph(
+  mapas, year = 1985, language = "pt"
+)
+```
+
+# Matriz de adjacências
+
+Cada contato por aresta entre dois pixels é contado uma vez. A matriz é
+simétrica; para obter um total, use `graph_metrics$total_adjacencies`, pois
+somar a matriz inteira duplica os contatos entre classes. A diagonal é zero
+por padrão, já que `include_self = FALSE`.
+
+```{r matriz}
+knitr::kable(rede$adjacency, caption = "Contatos por aresta entre classes")
+rede$heatmap + ggplot2::labs(title = "Adjacências entre classes — 1985")
+```
+
+# Grafo interativo por contagens
+
+Passe o mouse sobre nós e arestas para consultar classe, grau, força, contagens
+e fronteiras. Use a barra do widget para selecionar elementos e ampliar o grafo.
+O tamanho dos nós acompanha sua força; a espessura das arestas acompanha o peso.
+O layout circular é uma disposição visual, sem significado geográfico.
+
+```{r grafo-interativo}
+rede$graph_plot
+```
+
+O gráfico estático usa a mesma gramática `ggplot2` e pode receber novos temas,
+títulos e escalas:
+
+```{r grafo-estatico}
+rede$plot + ggplot2::labs(title = "Rede de classes — 1985")
+```
+
+# Métricas exploratórias
+
+`degree` conta classes vizinhas; `strength` soma seus pesos. A intermediação
+(`betweenness`) identifica classes nos caminhos de menor custo, definidos pelo
+inverso dos pesos. `harmonic` resume a proximidade por esses caminhos e atribui
+zero aos isolados. As métricas de rede excluem laços.
+
+`neighbor_entropy` aumenta quando os pesos se distribuem entre várias classes
+vizinhas. `homogeneity` é a fração de pontas de contatos incidentes da mesma
+classe, mesmo quando a diagonal foi omitida. Não inclui NA nem a borda externa.
+
+```{r metricas}
+knitr::kable(rede$graph_metrics, digits = 4)
+knitr::kable(rede$node_metrics, digits = 4)
+knitr::kable(rede$edge_metrics, digits = 3)
+knitr::kable(rede$class_dictionary)
+```
+
+# Comprimento aproximado de fronteiras
+
+A fronteira soma os lados compartilhados entre classes distintas. Em mapas
+projetados, a função converte as unidades do CRS para metros. Neste recorte
+geográfico, estima os lados por faixa de latitude com distâncias geodésicas.
+Isso descreve a fronteira na resolução da grade, com seu contorno em degraus.
+
+```{r fronteiras}
+fronteiras <- land_to_graph(mapas, year = 1985, weight = "boundary")
+knitr::kable(fronteiras$boundary_m, digits = 1, caption = "Fronteiras aproximadas (m)")
+fronteiras$graph_plot
+```
+
+Uma comparação das interfaces mais extensas, usando as tabelas retornadas:
+
+```{r ranking}
+fronteiras$edge_plot
+```
+
+# Vizinhança de oito pixels
+
+Contatos pelo vértice aumentam as contagens, mas não representam uma fronteira
+linear. Portanto, a matriz `boundary_m` conserva o mesmo comprimento com quatro
+ou oito vizinhos. Classes que só se tocam na diagonal ficam ligadas na rede por
+contagens, mas não na rede por fronteiras.
+
+```{r oito-vizinhos}
+rede8 <- land_to_graph(mapas, year = 1985, connectivity = 8,
+                                  include_self = TRUE, build_plot = FALSE)
+knitr::kable(rede8$adjacency, caption = "Contatos com oito vizinhos, incluindo mesma classe")
+knitr::kable(rede8$graph_metrics, digits = 4)
+```
+
+O código zero é tratado como classe quando presente; NA representa ausência
+de observação e é excluído. Classes isoladas permanecem na rede. Centralidade
+e densidade são propriedades da rede agregada de classes e precisam de hipóteses
+ecológicas adicionais para representar movimento de organismos ou conectividade
+funcional. Para comparar anos, mantenha resolução, recorte, máscara, legenda e
+vizinhança consistentes.
+
+# Exportar, recuperar e reutilizar
+
+A função retorna estatísticas, matrizes, dicionário, metadados, rede e gráficos
+prontos para reuso. A escrita usa as ferramentas padrão de cada tipo de objeto.
+O RDS guarda a análise completa e permite recuperá-la sem acessar os rasters.
+
+```{r recuperar}
+destino <- file.path(execucao, "adjacencias-export")
+dir.create(destino, recursive = TRUE, showWarnings = FALSE)
+arquivo_rds <- file.path(destino, "analise.rds")
+saveRDS(rede, arquivo_rds)
+recuperada <- readRDS(arquivo_rds)
+recuperada$graph_metrics
+```
+
+Os dois idiomas e a paleta original ficam em `class_dictionary`. A escolha
+`language` muda os rotulos de apresentacao. O codigo permanece como chave
+nas matrizes, tabelas e no grafo. A personalizacao e feita pela propria API:
+
+```{r ingles}
+english <- land_to_graph(mapas, year = 1985, language = "en")
+english$plot + ggplot2::labs(title = "Landscape adjacency")
+```
+
+Os gráficos retornados aceitam a gramática do ggplot2 antes de salvar.
+Tabelas, redes e widgets também podem ser gravados diretamente:
+
+```{r reexportar}
+grafico <- recuperada$plot + ggplot2::labs(title = "Rede de classes — 1985")
+ggplot2::ggsave(file.path(destino, "rede.png"), plot = grafico, width = 9, height = 7)
+utils::write.csv(recuperada$node_metrics, file.path(destino, "classes.csv"),
+                 row.names = FALSE, fileEncoding = "UTF-8")
+igraph::write_graph(recuperada$graph, file.path(destino, "rede.graphml"), format = "graphml")
+htmlwidgets::saveWidget(recuperada$graph_plot, file.path(destino, "rede.html"))
+```
+
+```{r ambiente}
+packageVersion("biomastats")
+sessionInfo()
+```
+
+# Tempo total
+
+```{r tempo-total}
+c(segundos = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

@@ -14,27 +14,27 @@ test_that("saved maps reproduce the analysis workflow", {
   mapas <- example_maps()
 
   expect_named(mapas, c("shape", "time_range", "raster", "collection"))
-  expect_equal(mapas[["time_range"]], c(1985, 2021))
+  expect_equal(mapas[["time_range"]], c(1985, 2024))
   expect_length(mapas[["raster"]], diff(mapas[["time_range"]]) + 1)
   expect_s3_class(mapas[["shape"]], "sf")
 
-  areas <- biomastats::get_area(mapas, plot_type = "areaplot")
+  areas <- get_area(mapas, plot_type = "areaplot")
   expect_named(areas, c("Years", "Occupied area", "aggregate_data", "time_series", "collection"))
   expect_equal(range(areas[["Years"]]), mapas[["time_range"]])
   expect_true(nrow(areas[["aggregate_data"]]) > 0)
   expect_s3_class(areas[["time_series"]], "ggplot")
 
-  expect_s3_class(biomastats::land_vis(mapas, year = 1990), "ggplot")
+  expect_s3_class(land_vis(mapas, year = 1990), "ggplot")
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_s3_class(biomastats::land_dist(areas, year = 2021, type = "barplot"), "ggplot")
-  expect_s3_class(biomastats::land_dist(areas, year = 2021, type = "pie"), "ggplot")
+  expect_s3_class(land_dist(areas, year = 2021, type = "barplot"), "ggplot")
+  expect_s3_class(land_dist(areas, year = 2021, type = "pie"), "ggplot")
 })
 
 test_that("landscape metrics and reclassified maps use saved maps", {
   mapas <- example_maps()
 
-  metrics <- biomastats::biomastats_metrics(
+  metrics <- biomastats_metrics(
     mapas,
     start = 1985,
     end = 1986,
@@ -47,10 +47,13 @@ test_that("landscape metrics and reclassified maps use saved maps", {
   expect_named(metrics, c(
     "classes", "ai_plot", "fragments_number", "area_plot",
     "edge_density_plot", "egde_lenght_plot", "frag_avg_area",
-    "metrics", "metrics_table", "rec_map", "start", "end"
+    "metrics", "metrics_table", "rec_map", "start", "end",
+    "collection", "class_dictionary", "metadata", "boundary"
   ))
   expect_equal(metrics[["start"]], 1985)
   expect_equal(metrics[["end"]], 1986)
   expect_equal(nrow(metrics[["metrics_table"]]), 2)
-  expect_s3_class(biomastats::reclass_map(metrics, year = 1985), "ggplot")
+  expect_equal(metrics$collection, as.numeric(mapas$collection))
+  expect_equal(metrics$class_dictionary$code, c(3, 4))
+  expect_s3_class(reclass_map(metrics, year = 1985), "ggplot")
 })

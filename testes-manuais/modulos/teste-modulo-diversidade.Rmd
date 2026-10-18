@@ -1,0 +1,115 @@
+---
+title: "Diversidade e entropia das classes — teste manual (módulo)"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) {
+  if (identical(dirname(root), root)) stop("Execute dentro do repositório biomastats.")
+  root <- dirname(root)
+}
+# Pacote construído a partir do código-fonte atual, em biblioteca temporária;
+# resultados gravados em pasta temporária, removida ao final.
+execucao <- tempfile("biomastats-modulo-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+tabela <- function(x, digits = 3, ...) knitr::kable(x, digits = digits,
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
+```
+
+# Fluxo nativo
+
+`class_diversity()` recebe diretamente a saída de `get_area()` — o resultado
+completo, o gráfico `time_series` ou a tabela `aggregate_data` — e herda o
+dicionário de classes, as cores e a unidade de área. Cada classe é tratada como
+uma "espécie" e sua área como abundância.
+
+```{r areas}
+fixture <- new.env(parent = emptyenv())
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"), envir = fixture)
+mapas <- fixture$mapas
+areas <- get_area(mapas)
+diversidade <- class_diversity(areas)
+tabela(diversidade$indices)
+tabela(diversidade$change)
+```
+
+# Índices ao longo do tempo
+
+```{r indices, fig.height=6.5}
+diversidade$plots$indices + ggplot2::labs(title = "Diversidade, equitabilidade e dominância")
+```
+
+Entropia de Shannon e Gini-Simpson crescem com o número de classes e com o
+equilíbrio entre suas áreas; Pielou isola o equilíbrio (0 a 1); Berger-Parker é
+a fração da classe mais abundante.
+
+# Números de Hill
+
+```{r hill}
+diversidade$plots$hill + ggplot2::labs(title = "Número efetivo de classes")
+```
+
+Os números de Hill expressam a diversidade em "classes equivalentes": riqueza
+(q = 0), exp(H') (q = 1) e 1/D (q = 2). Quanto maior a distância entre as
+curvas, maior a concentração de área em poucas classes.
+
+# Decomposição da entropia por classe
+
+```{r contribuicao, fig.height=6.5}
+diversidade$plots$contribution + ggplot2::labs(title = "Contribuição de cada classe para a entropia de Shannon")
+diversidade$plots$dominance + ggplot2::labs(title = "Composição da paisagem e dominância")
+```
+
+As contribuições −p ln p somam exatamente a entropia de cada ano e ficam na
+tabela `contributions`.
+
+# Opções
+
+```{r opcoes}
+bits <- class_diversity(areas, base = 2, min_area = 0.01, language = "en")
+tabela(utils::head(bits$indices[, c("year", "richness", "shannon", "pielou", "hill_1")]))
+bits$plots$hill
+```
+
+`base = 2` expressa as entropias em bits (os números de Hill não mudam);
+`min_area` descarta classes residuais; `classes` restringe a análise a um
+subconjunto; `language = "en"` traduz todas as legendas.
+
+# Reutilização
+
+```{r salvar}
+saida <- file.path(execucao, "diversidade-resultados")
+dir.create(saida, recursive = TRUE, showWarnings = FALSE)
+saveRDS(diversidade, file.path(saida, "diversidade.rds"))
+utils::write.csv(diversidade$indices, file.path(saida, "indices.csv"), row.names = FALSE)
+ggplot2::ggsave(file.path(saida, "contribuicao.png"), diversidade$plots$contribution,
+                width = 10, height = 6.5, dpi = 150, bg = "white")
+```
+
+# Tempo total
+
+```{r tempo-total}
+c(segundos = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

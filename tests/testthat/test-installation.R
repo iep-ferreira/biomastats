@@ -1,12 +1,37 @@
 test_that("biomastats is installed and loadable", {
   expect_true(nzchar(system.file(package = "biomastats")))
   expect_true(requireNamespace("biomastats", quietly = TRUE))
-  expect_equal(as.character(utils::packageVersion("biomastats")), "2.0.0")
+  expect_equal(as.character(utils::packageVersion("biomastats")), "2.1.0")
   expect_true(utils::packageVersion("osmdata") >= package_version("0.4.0"))
-  expect_true(is.function(biomastats::get_area))
-  expect_true(is.function(biomastats::land_vis))
-  expect_true(is.function(biomastats::density_of_feature))
-  expect_true(is.function(biomastats::integrate_feature))
+})
+
+# Public interface: every exported function, by module. A function added with
+# @export (or removed) must be listed here, so changes to the API are explicit.
+test_that("NAMESPACE exports exactly the public functions", {
+  public <- c(
+    # acquisition and preparation
+    "load_rasters", "load_rasters_from_folder", "check_maps", "download_maps",
+    "download_mapbiomas", "fetch_tile_manifest", "compare_shapefiles", "get_api_values",
+    "post_to_biomastats", "download_public_gdrive_file", "get_gdrive_filename",
+    "make_polygon", "circle_coords", "square_coords", "hexagon_coords",
+    # areas, maps and dictionaries
+    "get_area", "land_vis", "land_dist", "dict_build", "raster_index",
+    # landscape and fragment metrics
+    "lulc_metrics", "biomastats_metrics", "reclass_map", "fragment_metrics", "class_diversity",
+    # change, adjacency, vectorization and connectivity
+    "land_change", "land_to_graph", "reclass_to_polygons", "land_connectivity", "patch_imp_fast",
+    # time series
+    "land_time_series", "series_correlation", "series_fit_regime", "series_diagnostics",
+    "series_forecast",
+    # OpenStreetMap features via Overpass
+    "load_osm_data", "rasterize_osm", "distance_to_feature", "density_of_feature",
+    "integrate_feature",
+    # external layers
+    "layer_catalog", "load_lulc", "load_features", "load_physical", "feature_raster",
+    "distance_to_nearest")
+  exported <- getNamespaceExports("biomastats")
+  expect_setequal(exported, public)
+  expect_true(all(vapply(public, function(f) is.function(getExportedValue("biomastats", f)), logical(1))))
 })
 
 test_that("package examples are installed", {

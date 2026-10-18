@@ -7,23 +7,23 @@
 rasterize_osm(osm_data, reference_raster)
 }
 \arguments{
-\item{osm_data}{An `osmdata` object, usually returned by
-[osmdata::osmdata_sf()].}
+\item{osm_data}{An \code{osmdata} object, usually returned by
+\code{\link[osmdata:osmdata_sf]{osmdata::osmdata_sf()}}.}
 
-\item{reference_raster}{A `RasterLayer` used to define the extent,
+\item{reference_raster}{A \code{RasterLayer} used to define the extent,
 resolution, and coordinate reference system of the result.}
 }
 \value{
-A `RasterLayer` containing the rasterized OSM geometries, or
-  `NULL` when `osm_data` contains no supported features.
+A \code{RasterLayer} containing the rasterized OSM geometries, or
+\code{NULL} when \code{osm_data} contains no supported features.
 }
 \description{
-Converts point, line, multiline, polygon, and multipolygon geometries returned
-by `osmdata` to rasters aligned with `reference_raster`. Geometries are
-reprojected to the raster CRS and geometries outside the raster extent are
-discarded before rasterization. Every feature cell receives value `1`. When
-more than one geometry type is available, polygons are retained first,
-followed by lines and points.
+Converts point, line, multiline, polygon, and multipolygon geometries
+returned by \code{osmdata} to rasters aligned with \code{reference_raster}.
+Geometries are reprojected to the raster CRS and geometries outside the
+raster extent are discarded before rasterization. Every feature cell
+receives value \code{1}. When more than one geometry type is available, polygons
+are retained first, followed by lines and points.
 }
 \examples{
 \dontrun{

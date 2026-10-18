@@ -10,3 +10,6 @@ vignette/
 !docs/tutorial_includes/site_theme.css
 *.log
 *.Rhistory
+# Saídas dos testes manuais (gerar localmente)
+testes-manuais/**/*.html
+testes-manuais/**/*_files/

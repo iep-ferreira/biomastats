@@ -21,9 +21,11 @@ compare_shapefiles <- function(shape_path) {
   sys_path <- system.file(package = "biomastats")
 
   # Read the shapefiles
-  s <- sf::st_read(shape_path)
+  s <- sf::st_read(shape_path, quiet = TRUE)
+  sf::st_agr(s) <- "constant"
   brasil_cortado_path <- paste0(sys_path, "/shp/brasil_cortado.shp" )
-  s_brasil <- sf::st_read(brasil_cortado_path)
+  s_brasil <- sf::st_read(brasil_cortado_path, quiet = TRUE)
+  sf::st_agr(s_brasil) <- "constant"
 
   # Transform the shapefiles to the same coordinate reference system (CRS)
   s <- sf::st_transform(s, sf::st_crs(s_brasil))

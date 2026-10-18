@@ -31,11 +31,6 @@ Invisible vector of downloaded file paths
 This function downloads MapBiomas land use and land cover data for specified parameters.
 It supports different data types, collections, and time ranges.
 }
-\details{
-The function downloads land cover classification data from MapBiomas Brasil collection.
-It automatically creates the destination directory if it doesn't exist and skips existing files.
-Currently only supports collection 10 and cover data type.
-}
 \examples{
 \dontrun{
 # Download cover data for collection 10, years 1985-2024 to specific directory
@@ -46,12 +41,5 @@ download_mapbiomas(dest_dir = "~/meus_dados", time_range = c(2020, 2022))
 
 # Download with silent mode
 download_mapbiomas(dest_dir = "~/mapbiomas", quiet = TRUE)
-}
-}
-\seealso{
-Useful links:
-\itemize{
-  \item \url{https://mapbiomas.org/}
-  \item \url{https://mapbiomas.org/en/download}
 }
 }

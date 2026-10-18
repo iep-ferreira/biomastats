@@ -17,3 +17,11 @@
 ^ignorados$
 ^preview.*
 ^tutorial.*
+^tests/testthat/test-local-.*\.R$
+^testes-manuais$
+^LICENSE$
+^tests/testthat/\.gitkeep$
+^tests/testthat/\.keep$
+^CHECKLIST-AJUSTES-FUTUROS\.md$
+^test-fetch-tile-manifest\.R$
+^shp-exemplos$

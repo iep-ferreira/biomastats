@@ -8,11 +8,11 @@ biomastats_metrics(
   rasters_biomastats,
   metrics = c("keep.all", "aggregation_index", "fragments_number", "class_area",
     "edge_density", "edge_length", "frag_area"),
-  start,
-  end,
-  zone,
+  start = NULL,
+  end = NULL,
+  zone = NULL,
   classes = NULL,
-  hemisphere,
+  hemisphere = NULL,
   line_color = "blue",
   point_shape = 16,
   point_size = 3,
@@ -22,51 +22,60 @@ biomastats_metrics(
 \arguments{
 \item{rasters_biomastats}{A list containing raster data and associated time range.}
 
-\item{metrics}{A character vector specifying which metrics to calculate. 
-Available options are: \code{"keep.all"}, \code{"aggregation_index"}, \code{"fragments_number"}, 
+\item{metrics}{A character vector specifying which metrics to calculate.
+Available options are: \code{"keep.all"}, \code{"aggregation_index"}, \code{"fragments_number"},
 \code{"class_area"}, \code{"edge_density"}, \code{"edge_length"}, and \code{"frag_area"}.
 Default is \code{c("keep.all", "aggregation_index", "fragments_number", "class_area", "edge_density", "edge_length", "frag_area")}.}
 
-\item{start}{Numeric value indicating the start year for analysis.}
+\item{start}{Numeric start year; NULL inherits the input time_range.}
 
-\item{end}{Numeric value indicating the end year for analysis.}
+\item{end}{Numeric end year; NULL inherits the input time_range.}
 
-\item{zone}{The zone of interest for calculating the metrics.}
+\item{zone, hemisphere}{Deprecated and ignored. Metrics are computed on the
+native grid (no reprojection); the UTM zone and hemisphere are detected
+from each raster and recorded in \code{metadata$source}.}
 
 \item{classes}{A vector of class codes to include in the analysis. If \code{NULL}, all classes are included by default.}
-
-\item{hemisphere}{A character string specifying the hemisphere ('north' or 'south').}
 
 \item{line_color}{Color of the lines in the generated plots. Default is \code{"blue"}.}
 
 \item{point_shape}{Shape of the points in the plots. Default is 16.}
 
 \item{point_size}{Size of the points in the plots. Default is 3.}
+
+\item{export.raster}{If \code{TRUE} (default), keeps the reclassified raster of
+each year in \code{rec_map}, used by \code{reclass_map()} and \code{reclass_to_polygons()}.}
 }
 \value{
 A list containing:
-  \item{classes}{The classes considered for the analysis.}
-  \item{ai_plot}{A ggplot object for the aggregation index over time.}
-  \item{fragments_number}{A ggplot object for the number of fragments over time.}
-  \item{area_plot}{A ggplot object for the class area over time.}
-  \item{edge_density_plot}{A ggplot object for edge density over time.}
-  \item{egde_lenght_plot}{A ggplot object for edge length over time.}
-  \item{frag_avg_area}{A ggplot object for the average fragment area over time.}
-  \item{metrics}{A character vector of metrics calculated.}
-  \item{metrics_table}{A data frame containing the calculated metrics for each year.}
+\item{classes}{The classes considered for the analysis.}
+\item{ai_plot}{A ggplot object for the aggregation index over time.}
+\item{fragments_number}{A ggplot object for the number of fragments over time.}
+\item{area_plot}{A ggplot object for the class area over time.}
+\item{edge_density_plot}{A ggplot object for edge density over time.}
+\item{egde_lenght_plot}{A ggplot object for edge length over time.}
+\item{frag_avg_area}{A ggplot object for the average fragment area over time.}
+\item{metrics}{A character vector of metrics calculated.}
+\item{metrics_table}{A data frame containing the calculated metrics for each year.}
+\item{collection, class_dictionary, metadata}{Inherited collection, selected
+dictionary entries, and source CRS/resolution by year for downstream reuse.}
+\item{boundary}{The inherited study-area shape, when present in the maps
+object, for downstream landscape-area denominators.}
 }
 \description{
-This function computes a variety of landscape metrics for a set of raster data over a defined time period. 
-It generates visualizations and a table of metrics including aggregation index, fragments number, class area, 
+This function computes a variety of landscape metrics for a set of raster data over a defined time period.
+It generates visualizations and a table of metrics including aggregation index, fragments number, class area,
 edge density, edge length, and average fragment area for selected classes.
 }
 \details{
-This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
-  It checks for valid metric types and generates summary plots for selected metrics.
+This function iterates over a time range, calculating landscape metrics for each raster in the input list.
+It checks for valid metric types and generates summary plots for selected metrics.
 }
-\examples{\dontrun{
+\examples{
+\dontrun{
 rasters_data <- list(raster = list_of_rasters, time_range = c(2000, 2020))
 biomastats_metrics(rasters_data, start = 2000, end = 2020,
-                   zone = "Zone1", hemisphere = "north")
+                   classes = 3)
 }
+
 }

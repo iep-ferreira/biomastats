@@ -89,7 +89,7 @@ download_mapbiomas <- function(dest_dir,
     # Skip if file already exists
     if (file.exists(dest_file)) {
       if (!quiet) {
-        message("✓ ", ano, " already exists, skipping download")
+        message("\u2713 ", ano, " already exists, skipping download")
       }
       downloaded_files <- c(downloaded_files, dest_file)
       next
@@ -101,7 +101,7 @@ download_mapbiomas <- function(dest_dir,
         message("Downloading ", ano, "...")
       }
       
-      download.file(url = url, 
+      utils::download.file(url = url, 
                     destfile = dest_file, 
                     mode = "wb", 
                     quiet = quiet)
@@ -110,17 +110,17 @@ download_mapbiomas <- function(dest_dir,
       if (file.exists(dest_file) && file.size(dest_file) > 0) {
         downloaded_files <- c(downloaded_files, dest_file)
         if (!quiet) {
-          message("✓ ", ano, " downloaded successfully")
+          message("\u2713 ", ano, " downloaded successfully")
         }
       } else {
         if (!quiet) {
-          warning("✗ Download may have failed for year ", ano, " - file is empty or missing")
+          warning("\u2717 Download may have failed for year ", ano, " - file is empty or missing")
         }
       }
       
     }, error = function(e) {
       if (!quiet) {
-        message("✗ Error downloading year ", ano, ": ", conditionMessage(e))
+        message("\u2717 Error downloading year ", ano, ": ", conditionMessage(e))
       }
     })
   }

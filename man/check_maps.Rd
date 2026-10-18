@@ -15,14 +15,24 @@ check_maps(
 }
 \arguments{
 \item{ids}{Vector of map fragment identifiers.}
+
 \item{start}{Starting year.}
+
 \item{end}{Ending year.}
+
 \item{export_folder_path}{Directory used to store downloaded raster files.}
+
 \item{type}{Data type passed to \code{download_maps()}.}
+
 \item{collection}{Collection passed to \code{download_maps()}.}
 }
-\value{A list containing one merged raster for each year.}
-\description{Checks and downloads the fragments required to construct one raster per year.}
+\value{
+A list containing one merged raster for each year.
+}
+\description{
+Checks and downloads the fragments required to construct one raster per
+year.
+}
 \examples{
 \dontrun{
 check_maps(

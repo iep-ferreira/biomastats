@@ -3,20 +3,21 @@
 #' Queries OpenStreetMap for a feature inside the extent of a reference
 #' raster, then rasterizes the returned geometries using the same extent and
 #' resolution. The query is reduced to the smallest bounding box containing
-#' valid reference cells, then expanded by buffer_distance metres. The default
-#' buffer is 2 km, which brings nearby features crossing the study-area border
-#' into the query without querying an unnecessarily large area. The
-#' OSM query is made with `osmdata::opq()` and therefore may require network
-#' access and an available Overpass provider. Successful responses are cached
-#' for seven days by default. If the preferred Overpass endpoint fails, the
-#' function tries alternative global endpoints and can use an expired cache
-#' entry as a final availability fallback. If the installed
-#' `osmdata` version cannot assemble the returned feature metadata, the same
-#' query is read from OSM XML through the GDAL driver used by `sf`.
+#' valid reference cells, then expanded by `buffer_distance` metres. The buffer
+#' brings features crossing the study-area border into the query and reduces
+#' edge effects in the distance raster. The OSM query is made with
+#' `osmdata::opq()` and therefore may require network access and an available
+#' Overpass provider. Successful responses are cached for seven days by
+#' default. If the preferred endpoint fails, alternative global endpoints are
+#' tried, and an expired cache entry can be used as a final availability
+#' fallback. If the installed `osmdata` version cannot assemble the returned
+#' feature metadata, the same query is read from OSM XML through the GDAL
+#' driver used by `sf`.
 #'
 #' The current implementation supports OpenStreetMap through `osmdata` only.
-#' For repeated large-area or batch processing, a regional PBF extract remains
-#' more appropriate than public Overpass instances.
+#' Version 0.4.0 or newer is required. For repeated large-area or batch
+#' processing, a regional PBF extract is more appropriate than public Overpass
+#' instances. For world-wide, rate-limit-free access see [load_features()].
 #'
 #' @param reference_raster A `RasterLayer` defining the query bounding box
 #'   and the output raster geometry.
@@ -25,8 +26,10 @@
 #' @param value_feature Optional OSM feature value, such as `"primary"` or
 #'   `"water"`. If `NULL`, all values for `key_feature` are queried.
 #' @param provider Data provider. Only `"osm"` is currently supported.
-#' @param buffer_distance Buffer around the valid reference extent, in metres.
-#'   Defaults to `2000` (2 km). Use `0` to disable the buffer.
+#' @param buffer_distance Non-negative buffer around the valid reference
+#'   extent, in metres. The default is 2000 (2 km), which helps include features
+#'   crossing the study-area border without querying an unnecessarily large
+#'   area. Use `0` to disable the buffer.
 #' @param timeout Positive number of seconds allowed by each Overpass query.
 #'   Defaults to `60`.
 #' @param overpass_urls Optional character vector of Overpass interpreter URLs,

@@ -9,8 +9,8 @@
 #' @param method Raster source: `"download"` or `"library"`.
 #' @param export_folder_path Directory where downloaded raster files are stored.
 #' @param import_folder_path Directory containing an existing raster library.
-#' @param type Data type requested from the Biomastats API. Default is "cover".
-#' @param collection The collection version. Default is "10".
+#' @param type Data type requested from the Biomastats API. Default is `"cover"`.
+#' @param collection Collection version. Default is `"10"`.
 #'
 #' @return A list containing the shapefile, time range, and masked raster data.
 #' @importFrom sf st_read st_crs

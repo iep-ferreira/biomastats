@@ -2,16 +2,14 @@
 #'
 #' Loads each requested OpenStreetMap feature once and reuses its rasterized
 #' representation across all requested metrics. This avoids repeated Overpass
-#' queries when, for example, distance and density are calculated for the same
-#' road or waterway feature.
+#' queries when distance and density are calculated for the same feature.
 #'
-#' `features` is a named list. Each element must contain `key` and may contain
-#' `value`, `provider`, `buffer_distance`, and `osm_options`. `metrics` can be a
-#' character vector or a named list
-#' of metric options. Available metrics are `"distance"` and `"density"`;
-#' function-name aliases `"distance_to_feature"` and `"density_of_feature"`
-#' are also accepted. Density options include `window_size` and
-#' `window_shape`.
+#' `features` is a named list. Each element must contain `key` and may
+#' contain `value`, `provider`, `buffer_distance`, and `osm_options`. `metrics`
+#' can be a character vector or a named list of metric options. Available
+#' metrics are `"distance"` and `"density"`; the function-name aliases
+#' `"distance_to_feature"` and `"density_of_feature"` are also accepted.
+#' Density options include `window_size` and `window_shape`.
 #'
 #' @param reference_raster A `RasterLayer` defining the analysis grid, CRS,
 #'   and valid-cell mask.
@@ -22,16 +20,16 @@
 #'   `list(distance = list(), density = list(window_size = 9))`.
 #' @param provider Default data provider for features that do not define their
 #'   own provider. Only `"osm"` is currently supported.
-#' @param buffer_distance Default buffer around each valid reference extent,
-#'   in metres. Defaults to `2000` (2 km). A feature specification may define
-#'   its own `buffer_distance`.
+#' @param buffer_distance Default non-negative buffer around the valid reference
+#'   extent, in metres, used for OSM queries. The default is 2000 (2 km). A
+#'   feature specification can override it with its own `buffer_distance`.
 #' @param osm_options Default named list of connection options passed to
 #'   [load_osm_data()]. Supported entries are `timeout`, `overpass_urls`,
 #'   `use_cache`, and `cache_ttl_days`. Individual feature specifications may
-#'   override these values with their own `osm_options` list.
+#'   override them with their own `osm_options`.
 #' @param plot Logical; if `TRUE`, create and return a plot for every
-#'   feature/metric combination. If `FALSE`, metric plots are `NULL` and the
-#'   top-level `plots` element is also `NULL`.
+#'   feature/metric combination. If `FALSE`, metric plots and the top-level
+#'   `plots` element are `NULL`.
 #'
 #' @return An object of class `biomastats_feature_integration` with three
 #'   elements: `features`, the rasterized features loaded once; `results`, a

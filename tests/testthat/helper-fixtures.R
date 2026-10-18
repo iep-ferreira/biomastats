@@ -6,9 +6,9 @@ example_maps <- function() {
   load(path, envir = env)
   mapas <- env[["mapas"]]
 
-  # The bundled fixture predates the collection field.  Keep the fixture
-  # compatible with the current analysis functions without calling
-  # load_rasters() in the tests.
+  # The bundled example (Lagoa do Sino, MapBiomas Collection 10, 1985-2024)
+  # was produced by load_rasters() and already carries its collection; the
+  # fallback only protects older saved objects.
   if (is.null(mapas[["collection"]])) {
     mapas[["collection"]] <- 10
   }

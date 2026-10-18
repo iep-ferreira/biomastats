@@ -1,0 +1,137 @@
+---
+title: "biomastats — teste manual do método library (coleção nacional local)"
+params:
+  pasta_colecao: null
+  inicio: 1985
+  fim: 2024
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: hide
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+execucao <- tempfile("biomastats-biblioteca-"); dir.create(execucao)
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+t0 <- Sys.time()
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+cronometro <- data.frame(area = "—", etapa = "Build e instalação do pacote",
+                         segundos = as.numeric(difftime(Sys.time(), t0, units = "secs")))
+etapa <- function(area, nome, expr) {
+  t0 <- Sys.time(); valor <- suppressMessages(force(expr))
+  cronometro[nrow(cronometro) + 1, ] <<- list(area, nome, as.numeric(difftime(Sys.time(), t0, units = "secs")))
+  valor
+}
+tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, row.names = FALSE,
+  format.args = list(decimal.mark = ",", big.mark = ""))
+# Sem caminho explícito, procura collection_10 na pasta pessoal e em Documentos.
+candidatas <- if (is.null(params$pasta_colecao)) c(file.path(path.expand("~"), "collection_10"),
+  file.path(Sys.getenv("USERPROFILE"), "Documents", "collection_10")) else path.expand(params$pasta_colecao)
+pasta <- candidatas[dir.exists(candidatas)][1]
+if (is.na(pasta)) stop("Coleção não encontrada; informe params = list(pasta_colecao = \"<caminho>\").")
+pasta <- normalizePath(pasta, winslash = "/")
+anos <- seq(params$inicio, params$fim)
+```
+
+# Coleção nacional
+
+`load_rasters(method = "library")` recorta o limite diretamente dos mapas
+nacionais (`brasil_coverage_<ano>.tif`) já gravados no computador, sem internet.
+
+```{r colecao}
+arquivos <- file.path(pasta, paste0("brasil_coverage_", anos, ".tif"))
+stopifnot(all(file.exists(arquivos)))
+r1 <- raster::raster(arquivos[1])
+tabela(data.frame(pasta = pasta, arquivos = length(arquivos),
+  tamanho_gb = sum(file.size(arquivos)) / 2^30, linhas = nrow(r1), colunas = ncol(r1),
+  pixels_milhoes = raster::ncell(r1) / 1e6, crs = sf::st_crs(r1)$input))
+```
+
+# Carregamento, recorte e preparação
+
+O limite da Lagoa do Sino passa pelas etapas internas de `load_rasters()`,
+medidas separadamente, e depois pela chamada completa da função. A aquisição
+de áreas maiores, com duas tiles, é conferida em `teste-manual-aquisicao.Rmd`.
+
+```{r rotina}
+preparar <- function(nome, shape) {
+  s <- etapa(nome, "1. Leitura do limite", sf::st_transform(sf::st_read(shape, quiet = TRUE), 4326))
+  nacional <- etapa(nome, "2. Abertura dos mapas nacionais", load_rasters_from_folder(params$inicio, params$fim, pasta))
+  recortes <- etapa(nome, "3. Recorte (raster::crop)", lapply(nacional, raster::crop, s))
+  mascarados <- etapa(nome, "4. Máscara (raster::mask)", lapply(recortes, raster::mask, s))
+  mapas <- etapa(nome, "5. load_rasters completo", load_rasters(shape, start = params$inicio, end = params$fim,
+                   method = "library", import_folder_path = pasta, collection = "10"))
+  stopifnot(all(mapply(function(a, b) identical(raster::getValues(a), raster::getValues(b)), mascarados, mapas$raster)))
+  areas <- etapa(nome, "6. Preparação: get_area", get_area(mapas))
+  list(mapas = mapas, areas = areas)
+}
+```
+
+## Lagoa do Sino (UFSCar)
+
+```{r lagoa}
+lagoa <- preparar("Lagoa do Sino", system.file("shp", "UFSCar.shp", package = "biomastats"))
+land_vis(lagoa$mapas, year = params$fim)
+lagoa$areas$time_series
+```
+
+# Verificações
+
+O recorte pelo método `library` deve coincidir com o exemplo do pacote, que foi
+gerado pelo download seletivo de tiles com o mesmo limite.
+
+```{r verificacoes}
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"))
+shape_ex <- file.path(execucao, "exemplo.shp"); sf::st_write(mapas$shape, shape_ex, quiet = TRUE)
+biblioteca <- etapa("Exemplo do pacote", "5. load_rasters completo",
+  load_rasters(shape_ex, start = mapas$time_range[1], end = mapas$time_range[2],
+               method = "library", import_folder_path = pasta, collection = "10"))
+k <- seq_along(mapas$raster)
+iguais <- mapply(function(a, b) identical(raster::getValues(a), raster::getValues(b)), mapas$raster, biblioteca$raster[k])
+grade <- mapply(function(a, b) raster::compareRaster(a, b, stopiffalse = FALSE), mapas$raster, biblioteca$raster[k])
+resumo <- function(nome, m, a) data.frame(area = nome, anos = length(m$raster),
+  grade = paste(dim(m$raster[[1]])[1:2], collapse = " x "),
+  grade_unica = nrow(unique(t(vapply(m$raster, function(r) round(c(raster::extent(r)[], dim(r)[1:2]), 9), numeric(6))))) == 1,
+  area_classificada_km2 = sum(a$aggregate_data$area_raw[a$aggregate_data$year == max(anos)]),
+  area_limite_km2 = sum(as.numeric(sf::st_area(m$shape))) / 1e6)
+tabela(resumo("Lagoa do Sino", lagoa$mapas, lagoa$areas))
+c(anos_identicos_ao_exemplo = sum(iguais), anos = length(k), grade_identica = all(grade))
+stopifnot(all(iguais), all(grade))
+```
+
+# Tempo de cada etapa
+
+```{r tempos, fig.height=6}
+cronometro[nrow(cronometro) + 1, ] <- list("—", "Total (renderização)",
+  as.numeric(difftime(Sys.time(), inicio_total, units = "secs")))
+cronometro$por_ano <- ifelse(grepl("^[2-5]\\.", cronometro$etapa), cronometro$segundos / length(anos), NA)
+tabela(cronometro, 2)
+g <- cronometro[grepl("^[1-6]\\.", cronometro$etapa) & cronometro$area == "Lagoa do Sino", ]
+ggplot2::ggplot(g, ggplot2::aes(segundos, etapa)) +
+  ggplot2::geom_col(fill = "#2171b5") + ggplot2::scale_y_discrete(limits = rev) +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(x = "Segundos", y = NULL, title = sprintf("Método library, Lagoa do Sino, %d anos", length(anos)))
+```
+
+As etapas 2 a 4 detalham o que `load_rasters()` faz internamente; a etapa 5 é a
+chamada completa, que repete esse trabalho. Os mapas nacionais não são lidos
+por inteiro: `raster::crop` lê só a janela do limite.
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

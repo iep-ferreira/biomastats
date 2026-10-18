@@ -1,22 +1,20 @@
 #' Local density of an OpenStreetMap feature
 #'
-#' Calculates the proportion of feature cells within a moving window. A
-#' feature previously loaded by [load_osm_data()] can be supplied through
-#' `feature_raster`, avoiding a repeated OSM request. If `feature_raster` is
-#' `NULL`, the function loads the requested OSM feature for standalone use.
-#' The same window is used at every valid cell, while the denominator is
-#' adjusted near the border and around `NA` cells to avoid treating nodata as
-#' part of the landscape.
-#' If the loaded feature has no occupied cell inside the valid study-area
-#' mask, local density and global density are returned as zero rather than as
-#' an error.
+#' Calculates the proportion of feature cells within a moving window. A raster
+#' previously loaded by [load_osm_data()] can be reused through
+#' `feature_raster`. If it is `NULL`, the function loads the requested OSM
+#' feature for standalone use. If no feature cell occurs inside the valid
+#' study-area mask, local and global densities are returned as zero.
 #'
-#' This is a cell-coverage density. It is especially useful for comparing the
-#' local concentration of roads, waterways, built-up areas, or other mapped
-#' features at the resolution of the reference raster. For linear features,
-#' it should not be interpreted as physical line length per area unless the
-#' raster resolution and the rasterization method are explicitly accounted
-#' for.
+#' This is a cell-coverage density. For linear features, it should not be
+#' interpreted as physical line length per area unless raster resolution and the
+#' rasterization method are explicitly accounted for. The `global` value is
+#' the proportion of occupied valid cells in the complete reference raster.
+#' The returned `plot` is a regular `ggplot2` object and can be customized and
+#' exported with [ggplot2::ggsave()].
+#'
+#' For multiple metrics or features, use [integrate_feature()]. It loads
+#' each OSM feature once and passes the resulting raster to this function.
 #'
 #' @param reference_raster A `RasterLayer` defining the analysis extent,
 #'   resolution, CRS, and valid-cell mask.
@@ -26,8 +24,9 @@
 #' @param value_feature An optional OSM value. Use `NULL` to match every value
 #'   for the key; a specific value is recommended for large study areas.
 #' @param provider Data provider. Only `"osm"` is currently supported.
-#' @param buffer_distance Buffer around the valid reference extent, in metres,
-#'   passed to [load_osm_data()]. Defaults to `2000` (2 km).
+#' @param buffer_distance Non-negative buffer around the valid reference
+#'   extent, in metres, used when the feature must be loaded from OSM. The
+#'   default is 2000 (2 km).
 #' @param osm_options Named list of connection options passed to
 #'   [load_osm_data()], such as `timeout`, `overpass_urls`, `use_cache`, and
 #'   `cache_ttl_days`. Ignored when `feature_raster` is supplied.
