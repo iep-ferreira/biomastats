@@ -24,11 +24,14 @@ Reference:...
 Suggests:
     lconnect (>= 0.1.2),
     future.apply,
+    osmextract,
+    arrow,
     patchwork,
     ggiraph,
     htmlwidgets,
     rmarkdown,
-    testthat (>= 3.1.7)
+    testthat (>= 3.1.7),
+    withr
 Config/testthat/edition: 3
 Imports:
     grid,
@@ -47,6 +50,7 @@ Imports:
     readxl,
     rvest,
     scales,
+    curl,
     s2,
     sf,
     landscapemetrics,

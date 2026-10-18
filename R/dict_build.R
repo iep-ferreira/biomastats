@@ -4,11 +4,15 @@
 #' The dictionary includes six fields: "group" in Portuguese and English, "class" in Portuguese
 #' and English, a numerical "code", and a "color" associated with each class.
 #'
-#' @param The collection version 
+#' @param collection MapBiomas collection (7 or 10) or the name of another
+#'   land-cover scheme: `"esa_worldcover"` (ESA WorldCover 10 m, 11 classes,
+#'   official legend colours).
 #' @return A dataframe that serves as a dictionary for a classification scheme.
 #' @export
 
 dict_build <- function(collection = 10){
+
+if (identical(as.character(collection), "esa_worldcover")) return(.dict_esa_worldcover())
 
 if(collection == 10){message("Collection 10 subtitles are loaded as default. If you want a different collection, plase change the 'collection' option") }
 
@@ -115,3 +119,25 @@ if (collection == 7) {
 
 
 
+
+# ESA WorldCover 10 m legend (v100/v200), official class codes and colours.
+.dict_esa_worldcover <- function() {
+  dict <- data.frame(
+    grupo = c("Vegeta\u00e7\u00e3o natural", "Vegeta\u00e7\u00e3o natural", "Vegeta\u00e7\u00e3o natural", "Agropecu\u00e1ria",
+              "\u00c1rea n\u00e3o vegetada", "\u00c1rea n\u00e3o vegetada", "\u00c1rea n\u00e3o vegetada", "\u00c1gua",
+              "Vegeta\u00e7\u00e3o natural", "Vegeta\u00e7\u00e3o natural", "Vegeta\u00e7\u00e3o natural"),
+    group = c("Natural vegetation", "Natural vegetation", "Natural vegetation", "Farming",
+              "Non vegetated area", "Non vegetated area", "Non vegetated area", "Water",
+              "Natural vegetation", "Natural vegetation", "Natural vegetation"),
+    classe = c("Cobertura arb\u00f3rea", "Arbustos", "Campos e gram\u00edneas", "Agricultura",
+               "\u00c1rea constru\u00edda", "Solo exposto ou vegeta\u00e7\u00e3o esparsa", "Neve e gelo",
+               "Corpos d'\u00e1gua permanentes", "\u00c1reas \u00famidas herb\u00e1ceas", "Manguezais", "Musgos e l\u00edquens"),
+    class = c("Tree cover", "Shrubland", "Grassland", "Cropland", "Built-up",
+              "Bare / sparse vegetation", "Snow and ice", "Permanent water bodies",
+              "Herbaceous wetland", "Mangroves", "Moss and lichen"),
+    code = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100),
+    color = c("#006400", "#ffbb22", "#ffff4c", "#f096ff", "#fa0000", "#b4b4b4",
+              "#f0f0f0", "#0064c8", "#0096a0", "#00cf75", "#fae6a0"),
+    stringsAsFactors = FALSE)
+  dict[order(-dict$code), ]
+}

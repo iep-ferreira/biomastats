@@ -1,0 +1,217 @@
+---
+title: "biomastats — teste manual de camadas externas (Brasil e mundo)"
+params:
+  cache_novo: true
+  osm_brasil: false
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    number_sections: true
+    self_contained: true
+    code_folding: hide
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.height = 5.5, fig.align = "center", dpi = 100)
+inicio_total <- Sys.time()
+root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+execucao <- tempfile("biomastats-camadas-"); dir.create(execucao)
+# Cache novo: extratos OSM e índices do Overture baixados nesta execução.
+if (isTRUE(params$cache_novo)) Sys.setenv(R_USER_CACHE_DIR = file.path(execucao, "cache"))
+library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+t0 <- Sys.time()
+install_status <- system2(file.path(R.home("bin"), "R"),
+  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
+    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
+.libPaths(c(library_dir, .libPaths()))
+suppressPackageStartupMessages(library(biomastats, lib.loc = library_dir))
+cronometro <- data.frame(area = "—", etapa = "Build e instalação do pacote",
+                         segundos = as.numeric(difftime(Sys.time(), t0, units = "secs")))
+etapa <- function(area, nome, expr) {
+  t0 <- Sys.time(); valor <- suppressMessages(force(expr))
+  cronometro[nrow(cronometro) + 1, ] <<- list(area, nome, as.numeric(difftime(Sys.time(), t0, units = "secs")))
+  valor
+}
+tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, row.names = FALSE,
+  format.args = list(decimal.mark = ",", big.mark = ""))
+dinamica <- function(x, digits = 2) {
+  x <- as.data.frame(x); x$geometry <- NULL
+  if (!requireNamespace("DT", quietly = TRUE)) return(tabela(utils::head(x, 30), digits))
+  num <- vapply(x, function(v) is.numeric(v) && any(is.finite(v) & v != round(v)), TRUE)
+  DT::formatRound(DT::datatable(x, rownames = FALSE, filter = "top", options = list(pageLength = 10, scrollX = TRUE)),
+                  columns = names(x)[num], digits = digits)
+}
+mapa_feicoes <- function(f, area) {
+  camadas <- Filter(Negate(is.null), f$features)
+  g <- ggplot2::ggplot() + ggplot2::geom_sf(data = area, fill = "grey96", colour = "grey40")
+  cores <- c(roads = "#444444", railways = "#7b3294", waterways = "#2171b5", water_bodies = "#6baed6",
+             buildings = "#e6550d", places = "#d7301f")
+  for (n in names(camadas)) g <- g + ggplot2::geom_sf(data = camadas[[n]], colour = cores[[n]],
+    fill = grDevices::adjustcolor(cores[[n]], .4), size = 1, linewidth = .4)
+  g + ggplot2::theme_minimal() + ggplot2::labs(caption = paste(names(camadas), collapse = ", "))
+}
+```
+
+Este relatório confere as funções de camadas externas com dados reais:
+`layer_catalog()`, `load_lulc()`, `load_features()`, `load_physical()`,
+`feature_raster()` e `distance_to_nearest()`. Ele usa o mesmo limite de área de
+estudo das análises de uso e ocupação, uma área no Brasil (Lagoa do Sino) e uma
+fora dele (Liechtenstein). Cada fonte que não responder em 5 s é ignorada, e o
+relatório continua.
+
+# Catálogo de fontes
+
+```{r catalogo}
+tabela(etapa("—", "layer_catalog (online)", layer_catalog(online = TRUE)))
+```
+
+# Brasil: UFSCar Lagoa do Sino
+
+```{r brasil-dados}
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"))
+limite_lagoa <- file.path(execucao, "lagoa.shp"); sf::st_write(mapas$shape, limite_lagoa, quiet = TRUE)
+```
+
+## Uso e ocupação portável: ESA WorldCover
+
+Mesmo limite do exemplo MapBiomas, carregado por `load_lulc()` e analisado com
+as funções existentes.
+
+```{r brasil-worldcover}
+wc <- etapa("Lagoa do Sino", "load_lulc (WorldCover 2020-2021)", load_lulc(limite_lagoa))
+if (!is.null(wc)) {
+  tabela(wc$metadata$status[, c("year", "version", "catalog_year", "status", "seconds")])
+  print(land_vis(wc, 2021))
+  areas_wc <- etapa("Lagoa do Sino", "get_area (WorldCover)", get_area(wc, plot_type = "profile"))
+  print(areas_wc$time_series)
+  print(class_diversity(areas_wc)$plots$dominance)
+}
+```
+
+## Feições (Overture)
+
+```{r brasil-feicoes}
+fo <- etapa("Lagoa do Sino", "load_features (Overture)",
+  load_features(mapas, c("roads", "waterways", "water_bodies", "buildings", "places"), source = "overture"))
+tabela(fo$status[, c("feature", "product", "version", "catalog_year", "n", "geometry", "seconds", "status")])
+mapa_feicoes(fo, mapas$shape)
+```
+
+```{r brasil-osm, eval=isTRUE(params$osm_brasil)}
+# Opcional (params$osm_brasil): extrato OSM do estado de São Paulo (~365 MB no primeiro uso).
+fs <- etapa("Lagoa do Sino", "load_features (OSM)",
+  load_features(mapas, c("roads", "waterways", "buildings", "places"), source = "osm"))
+tabela(fs$status[, c("feature", "product", "version", "catalog_year", "n", "seconds", "status")])
+```
+
+## Superfícies de distância, densidade e área
+
+```{r brasil-rasters, fig.height=5}
+if (!is.null(fo$features$roads)) {
+  vias <- etapa("Lagoa do Sino", "feature_raster (vias)", feature_raster(fo, mapas, feature = "roads"))
+  tabela(vias$metrics); print(vias$plots$distance); print(vias$plots$density)
+}
+if (!is.null(fo$features$buildings)) {
+  edif <- etapa("Lagoa do Sino", "feature_raster (edificações)", feature_raster(fo, mapas, feature = "buildings"))
+  print(edif$plots$coverage); print(edif$plots$distance)
+}
+if (!is.null(fo$features$places) && nrow(fo$features$places)) {
+  locais <- etapa("Lagoa do Sino", "feature_raster (locais)", feature_raster(fo, mapas, feature = "places", window_m = 1000))
+  print(locais$plots$density)
+}
+```
+
+## Distância mínima a partir de coordenadas
+
+```{r brasil-distancias}
+set.seed(1)
+pontos <- sf::st_as_sf(sf::st_sample(sf::st_geometry(mapas$shape), 8))
+dist <- etapa("Lagoa do Sino", "distance_to_nearest (5 alvos)", {
+  alvos <- list(
+    vias = if (!is.null(fo$features$roads)) distance_to_nearest(pontos, fo, feature = "roads"),
+    edificacoes = if (!is.null(fo$features$buildings)) distance_to_nearest(pontos, fo, feature = "buildings"),
+    agua = if (!is.null(fo$features$waterways)) distance_to_nearest(pontos, fo, feature = "waterways"),
+    floresta_mapbiomas = distance_to_nearest(pontos, mapas, classes = 3),
+    arvores_worldcover = if (!is.null(wc)) distance_to_nearest(pontos, wc, classes = 10))
+  alvos <- Filter(Negate(is.null), alvos)
+  cbind(id = alvos[[1]]$id, lon = sprintf("%.5f", alvos[[1]]$lon), lat = sprintf("%.5f", alvos[[1]]$lat),
+        as.data.frame(sapply(alvos, `[[`, "distance_m")))
+})
+tabela(dist, 1)
+```
+
+## Meio físico
+
+```{r brasil-fisico, fig.height=5}
+fisico <- etapa("Lagoa do Sino", "load_physical (7 camadas)",
+  load_physical(mapas, layers = c("elevation", "slope", "aspect", "clay", "sand", "soc", "ph")))
+tabela(fisico$status[, c("layer", "product", "catalog_year", "unit", "seconds", "status")])
+for (p in fisico$plots) print(p)
+```
+
+# Mundo: Liechtenstein
+
+```{r mundo-area}
+li <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(9.555, 47.16)), crs = 4326), 800))
+limite_li <- file.path(execucao, "liechtenstein.shp"); sf::st_write(li, limite_li, quiet = TRUE)
+wc_li <- etapa("Liechtenstein", "load_lulc (WorldCover 2021)", load_lulc(limite_li, years = 2021))
+if (!is.null(wc_li)) print(land_vis(wc_li, 2021))
+```
+
+```{r mundo-feicoes}
+osm_li <- etapa("Liechtenstein", "load_features (OSM Geofabrik)",
+  load_features(limite_li, c("roads", "water_bodies", "buildings", "places"), source = "osm", buffer_m = 300))
+ovt_li <- etapa("Liechtenstein", "load_features (Overture)",
+  load_features(limite_li, c("roads", "water_bodies", "buildings", "places"), source = "overture", buffer_m = 300))
+tabela(rbind(osm_li$status, ovt_li$status)[, c("feature", "source", "product", "catalog_year", "n", "seconds", "status")])
+mapa_feicoes(osm_li, li)
+```
+
+```{r mundo-rasters, fig.height=5}
+if (!is.null(wc_li) && !is.null(osm_li$features$roads)) {
+  vias_li <- etapa("Liechtenstein", "feature_raster (vias OSM)", feature_raster(osm_li, wc_li, feature = "roads"))
+  print(vias_li$plots$distance)
+  fis_li <- etapa("Liechtenstein", "load_physical (elevação, declividade)",
+                  load_physical(wc_li, layers = c("elevation", "slope")))
+  for (p in fis_li$plots) print(p)
+  tabela(distance_to_nearest(data.frame(lon = c(9.55, 9.56), lat = c(47.16, 47.155)), osm_li, feature = "roads"), 1)
+}
+```
+
+# Fontes indisponíveis: o processo continua
+
+Endereços apontados para uma porta local fechada simulam fontes fora do ar.
+Cada bloco é ignorado sem interromper o relatório.
+
+```{r falhas}
+fechado <- "http://127.0.0.1:9"
+antigas <- options(biomastats.worldcover_root = fechado, biomastats.overture_stac = fechado,
+                   biomastats.copernicus_root = fechado, biomastats.soilgrids_wcs = fechado)
+falha <- etapa("Simulação", "3 fontes fora do ar", list(
+  lulc = suppressWarnings(load_lulc(limite_lagoa, years = 2021)),
+  feicoes = load_features(mapas, "roads", source = "overture")$status,
+  fisico = load_physical(mapas, layers = c("elevation", "clay"))$status))
+options(antigas)
+tabela(data.frame(bloco = c("load_lulc", "load_features", "load_physical: elevation", "load_physical: clay"),
+  status = c(if (is.null(falha$lulc)) "skipped (NULL)" else "ok", falha$feicoes$status, falha$fisico$status)))
+```
+
+# Tempo de cada etapa
+
+```{r tempos, fig.height=6}
+cronometro[nrow(cronometro) + 1, ] <- list("—", "Total (renderização)",
+  as.numeric(difftime(Sys.time(), inicio_total, units = "secs")))
+tabela(cronometro, 1)
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

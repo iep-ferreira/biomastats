@@ -1,5 +1,9 @@
 # Shared dictionary contract for native analytical objects.
+# Land-cover schemes other than MapBiomas collections are identified by name.
+.lulc_schemes <- function() "esa_worldcover"
+
 .biomastats_collection <- function(collection) {
+  if (is.character(collection) && length(collection) == 1L && collection %in% .lulc_schemes()) return(collection)
   if (is.character(collection) && length(collection) == 1L &&
       !is.na(collection) && grepl("^[0-9]+$", collection)) collection <- as.numeric(collection)
   if (!is.numeric(collection) || length(collection) != 1L ||

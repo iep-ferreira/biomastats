@@ -4,7 +4,12 @@
 \alias{dict_build}
 \title{Construct the dictionary}
 \usage{
-dict_build()
+dict_build(collection = 10)
+}
+\arguments{
+\item{collection}{MapBiomas collection (7 or 10) or the name of another
+land-cover scheme: \code{"esa_worldcover"} (ESA WorldCover 10 m, 11 classes,
+official legend colours).}
 }
 \value{
 A dataframe that serves as a dictionary for a classification scheme.

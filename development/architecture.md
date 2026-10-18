@@ -427,3 +427,46 @@ grade nativa contra 97,71 ha e 21 fragmentos após reprojeção para UTM).
   landscapemetrics; `biomastats_metrics()` herda as melhorias sem mudar a API.
 - Transformações de coordenadas ficam restritas a pontos (centroides para
   lon/lat; centro da grade para a zona UTM).
+
+## Camadas externas: lulc, feições e meio físico
+
+Funções (um arquivo cada): `layer_catalog()`, `load_lulc()`, `load_features()`,
+`load_physical()`, `feature_raster()` e `distance_to_nearest()`. Infraestrutura
+interna compartilhada em `R/layer_sources.R`.
+
+- **Mesma área de referência.** Todas recebem o objeto de mapas (ou o mesmo
+  shapefile) e herdam limite, grade, CRS e ano. `load_lulc()` devolve o mesmo
+  objeto de `load_rasters()` (`shape`, `time_range`, `raster` com
+  `RasterLayer` em memória, `collection`), com `collection = "esa_worldcover"`
+  reconhecida por `dict_build()` e pelo contrato de coleção; as funções de
+  análise de uso e ocupação funcionam sem adaptação.
+- **Fontes gratuitas, sem chave, mundiais:** ESA WorldCover e Copernicus DEM
+  (COG com leitura só da janela), SoilGrids (WCS com recorte), OSM por extrato
+  regional `.osm.pbf` (Geofabrik ou openstreetmap.fr, escolha automática do
+  menor extrato que contém a área, cache local, sem Overpass) e Overture
+  (índice STAC por release em cache, leitura só dos arquivos que cruzam a área).
+- **Ano de catálogo acessível:** `layer_catalog()` lista versão e ano de cada
+  fonte; cada carregamento registra a versão e o ano efetivamente lidos
+  (`metadata$status` ou `status`): ano do WorldCover, data do extrato OSM
+  (cabeçalho HTTP), release do Overture, versão do DEM e do SoilGrids.
+- **Regra de 5 s (H).** Cada requisição que não responde em `timeout` segundos
+  (padrão 5, opção `biomastats.timeout`), falha ou sofre limitação faz pular só
+  o seu bloco: valor `NULL`, status `skipped` e mensagem; a análise continua.
+  Leituras remotas pelo GDAL são precedidas por checagem rápida (`curl`, HEAD),
+  pois o GDAL faz novas tentativas internas. Downloads grandes continuam
+  enquanto há fluxo de dados e são abortados se pararem por `timeout` segundos;
+  nenhum arquivo parcial fica no cache e as configurações do GDAL são
+  restauradas. `load_features(max_extract_mb)` evita downloads de extratos
+  muito grandes.
+- **Covariáveis externas** são reamostradas para a grade dos mapas (bilinear;
+  vizinho mais próximo para aspecto). Os mapas de uso não são reprojetados.
+- **Superfícies por tipo de geometria** (`feature_raster`): pontos (distância,
+  contagem, densidade), linhas (distância, comprimento, densidade) e polígonos
+  (distância, cobertura, área, densidade), calculadas numa grade estendida até
+  as feições do buffer e recortadas à grade de referência; densidade por janela
+  quadrada com tabela de somas acumuladas e área geodésica da janela.
+- **Distância a partir de coordenadas** (`distance_to_nearest`): índice
+  espacial s2 até a feição ou até a área de uma classe (vetorizada com a rotina
+  compartilhada), em metros geodésicos.
+- Testes automatizados leves e offline (`test-external-layers.R`); teste manual
+  com dados reais em `testes-manuais/teste-manual-camadas.Rmd`.

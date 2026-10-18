@@ -1,6 +1,6 @@
 # Testes manuais do biomastats
 
-Três relatórios R Markdown que conferem o pacote de ponta a ponta e geram um
+Quatro relatórios R Markdown que conferem o pacote de ponta a ponta e geram um
 HTML para inspeção visual. Complementam os testes automatizados
 (`tests/testthat`), que rodam no GitHub Actions; estes rodam só na sua máquina.
 
@@ -9,6 +9,7 @@ HTML para inspeção visual. Complementam os testes automatizados
 | `teste-manual-integrado.Rmd` | Todas as funções de análise sobre o exemplo da Lagoa do Sino (Coleção 10, 1985–2024): mapas, áreas, diversidade, séries temporais, mudanças, adjacências, métricas da paisagem, fragmentos e conectividade, com tabelas dinâmicas e o tempo de cada função | não | 1 a 2 min |
 | `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisição seletiva de tiles, sem cache: Lagoa do Sino (1 tile) e Itapetininga - SP (2 tiles) | sim | 3 a 5 min |
 | `teste-manual-biblioteca.Rmd` | `load_rasters(method = "library")`: recorte a partir da coleção nacional já gravada no computador (`collection_10`, 1985–2024), com o tempo de cada etapa, para a Lagoa do Sino e Itapetininga; confere que o recorte coincide com o exemplo do pacote | não (exige a coleção local, ~28 GB) | 3 a 4 min |
+| `teste-manual-camadas.Rmd` | Camadas externas gratuitas no mesmo limite das análises, no Brasil (Lagoa do Sino) e no mundo (Liechtenstein): ESA WorldCover por `load_lulc()`, feições OSM e Overture por `load_features()`, relevo e solos por `load_physical()`, superfícies por `feature_raster()`, distâncias por `distance_to_nearest()`, ano de catálogo de cada fonte e simulação de fontes fora do ar | sim | 2 a 3 min |
 
 ## Antes de rodar
 
@@ -17,7 +18,7 @@ HTML para inspeção visual. Complementam os testes automatizados
    `knitr` e `DT` (tabelas dinâmicas). O teste de aquisição também usa `geobr`.
 
 ```r
-install.packages(c("rmarkdown", "knitr", "DT", "geobr"))
+install.packages(c("rmarkdown", "knitr", "DT", "geobr", "osmextract", "arrow"))
 ```
 
 Não é preciso instalar o `biomastats`: cada relatório constrói o pacote a partir
@@ -29,6 +30,7 @@ do código-fonte atual em uma biblioteca temporária.
 rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-camadas.Rmd")
 ```
 
 O HTML é criado ao lado do `.Rmd`, com o mesmo nome, e fica fora do Git.
@@ -91,3 +93,23 @@ A renderização para com erro se o recorte do método library divergir do exemp
 do pacote (gerado por download de tiles com o mesmo limite). A tabela "Tempo de
 cada etapa" separa leitura do limite, abertura dos mapas nacionais, recorte,
 máscara, chamada completa de `load_rasters()` e `get_area()`.
+
+## Teste de camadas externas
+
+Confere as fontes de `layer_catalog()` com dados reais. Na tabela de status de
+cada bloco, `ok` indica dados carregados; `skipped`, uma fonte que não
+respondeu em 5 s ou falhou (o relatório continua sem ela). A seção "Fontes
+indisponíveis" simula servidores fora do ar e deve mostrar todos os blocos
+como `skipped`.
+
+Parâmetros:
+
+- `cache_novo` (padrão `TRUE`): baixa extratos OSM e índices do Overture em
+  uma pasta temporária; use `FALSE` para reaproveitar o cache do pacote.
+- `osm_brasil` (padrão `FALSE`): inclui o extrato OSM do estado de São Paulo
+  para a Lagoa do Sino (cerca de 365 MB no primeiro uso).
+
+```r
+rmarkdown::render("testes-manuais/teste-manual-camadas.Rmd",
+                  params = list(cache_novo = FALSE, osm_brasil = TRUE))
+```

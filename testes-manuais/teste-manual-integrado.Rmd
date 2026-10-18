@@ -41,7 +41,7 @@ etapa <- function(modulo, funcao, expr) {
   valor
 }
 tabela <- function(x, digits = 2, ...) knitr::kable(x, digits = digits, row.names = FALSE,
-  format.args = list(decimal.mark = ",", big.mark = "."), ...)
+  format.args = list(decimal.mark = ",", big.mark = ""), ...)
 # Tabela dinâmica (filtro, ordenação e busca); sem o pacote DT, tabela estática.
 dinamica <- function(x, digits = 3) {
   x <- as.data.frame(x)
