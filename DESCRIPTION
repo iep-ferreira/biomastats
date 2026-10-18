@@ -43,7 +43,6 @@ Imports:
     httr,
     magrittr,
     methods,
-    osmdata (>= 0.4.0),
     raster,
     terra,
     units,

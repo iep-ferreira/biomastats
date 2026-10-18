@@ -1,0 +1,103 @@
+# Aquisição dos mapas do MapBiomas {#aquisicao}
+
+Toda análise começa com uma área de estudo e com o objeto de mapas produzido
+por `load_rasters()`. Há duas maneiras de chegar a ele, e ambas levam ao mesmo
+resultado.
+
+## Área de estudo {-}
+
+A área é um shapefile de polígono, em qualquer sistema de coordenadas. O pacote
+já traz o limite do campus Lagoa do Sino da UFSCar, usado neste capítulo:
+
+```{r}
+ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
+```
+
+Quando não há um shapefile à mão, `make_polygon()` desenha a área a partir de
+um ponto central, de uma forma (`"circle"`, `"square"` ou `"hexagon"`) e da
+largura total em km (`size`), que corresponde ao diâmetro do círculo, ao lado do
+quadrado ou à distância entre vértices opostos do hexágono. Um hexágono de
+cerca de 12,5 km² centrado no campus, como a área de exemplo da Parte II, sai
+assim:
+
+```{r eval=FALSE}
+area <- make_polygon(lat = -23.605, lon = -48.529, size = 4.4,
+                     shape = "hexagon")
+```
+
+::: {.atencao}
+`make_polygon()` grava o resultado como `polygon.shp` na pasta `shp` do pacote
+instalado e substitui o arquivo anterior. Para guardar uma área, salve o objeto
+devolvido (`area$polygon`) com `sf::st_write()` em uma pasta sua.
+:::
+
+O MapBiomas divide o Brasil em recortes (tiles), e `compare_shapefiles()`
+indica quais deles cobrem a área. A Lagoa do Sino cabe inteira no recorte 93:
+
+```{r}
+unique(compare_shapefiles(ufscar))
+```
+
+```{r grade-tiles, echo=FALSE, fig.height=5.5, out.width="80%", fig.cap="Grade de recortes usada na aquisição seletiva. Em destaque, o recorte 93, que contém a Lagoa do Sino (ponto)."}
+grade <- sf::st_read(system.file("shp", "brasil_cortado.shp", package = "biomastats"), quiet = TRUE)
+grade$id <- seq_len(nrow(grade))
+grade$usado <- grade$id %in% compare_shapefiles(ufscar)
+ponto <- sf::st_centroid(sf::st_union(sf::st_transform(sf::st_read(ufscar, quiet = TRUE), sf::st_crs(grade))))
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = grade, ggplot2::aes(fill = usado), colour = "#c9c1ad", linewidth = .25) +
+  ggplot2::geom_sf(data = ponto, colour = "#22302a", size = 2.2) +
+  ggplot2::scale_fill_manual(values = c(`FALSE` = "#f3ecdc", `TRUE` = "#3b7d3a"), guide = "none") +
+  ggplot2::theme_void()
+```
+
+## Via 1: download seletivo {-}
+
+Nesta via, o pacote baixa da API do Bioma Stats apenas os recortes e os anos
+de que a área precisa. Se ela cruza mais de um recorte, os vizinhos são unidos
+antes do recorte final e da máscara pelo limite. Os arquivos ficam na pasta
+indicada e são reaproveitados nas execuções seguintes.
+
+```{r eval=FALSE}
+mapas <- load_rasters(ufscar, start = 1985, end = 2024, method = "download",
+                      export_folder_path = "mapbiomas-recortes")
+```
+
+## Via 2: coleção nacional local {-}
+
+Aqui o mapa nacional de cada ano é baixado uma única vez. Depois disso,
+qualquer área pode ser recortada dele sem internet, o que torna esta via a mais
+indicada para muitas áreas ou para áreas grandes.
+
+```{r eval=FALSE}
+download_mapbiomas(dest_dir = "collection_10", data_type = "cover",
+                   collection = 10, time_range = c(1985, 2024))
+
+mapas <- load_rasters(ufscar, start = 1985, end = 2024, method = "library",
+                      import_folder_path = "collection_10")
+```
+
+| | Download seletivo | Coleção nacional |
+|:--|:--|:--|
+| Transferência | só os recortes da área | ~28 GB para 1985–2024, uma única vez |
+| Internet durante a análise | sim, na primeira execução | não |
+| Mais indicada para | poucas áreas, de até 2 ou 3 recortes | muitas áreas, áreas grandes, uso offline |
+
+::: {.nota}
+As duas vias produzem o mesmo objeto: para a área de exemplo da Lagoa do Sino,
+os 40 mapas recortados da coleção nacional são idênticos, célula a célula, aos
+obtidos pelo download seletivo.
+:::
+
+## O objeto de mapas {-}
+
+`load_rasters()` devolve uma lista com o limite da área (`shape`), o período
+(`time_range`), um mapa por ano (`raster`) e a coleção (`collection`). Esse
+objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:
+
+```{r eval=FALSE}
+save(mapas, file = "lagoa-do-sino.Rdata")
+load("lagoa-do-sino.Rdata")
+```
+
+O pacote já inclui o objeto de mapas da área de exemplo da Lagoa do Sino, de
+1985 a 2024, que é usado em toda a Parte II.

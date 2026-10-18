@@ -1,0 +1,66 @@
+# Métricas da paisagem e fragmentos {#lagoa-paisagem}
+
+As métricas deste capítulo são calculadas na grade original dos mapas, sem
+reprojeção. Áreas e bordas são medidas sobre o elipsoide, e não é preciso
+informar a zona UTM.
+
+## Métricas por ano {-}
+
+`biomastats_metrics()` reclassifica os mapas para as classes de interesse e,
+ano a ano, calcula área, bordas, número de fragmentos e índice de agregação.
+Vamos acompanhar a formação florestal:
+
+```{r metricas, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+metricas <- biomastats_metrics(mapas, classes = 3, metrics = "keep.all")
+metricas$ai_plot
+metricas$fragments_number
+```
+
+```{r include=FALSE}
+mt <- metricas$metrics_table
+m85 <- mt[mt$Year == 1985, ]; m24 <- mt[mt$Year == 2024, ]
+```
+
+Além de menor, a floresta ficou mais fragmentada: o número de fragmentos passou
+de `r m85[["Number of Fragments"]]` para `r m24[["Number of Fragments"]]`, e o
+índice de agregação caiu de `r num(m85[["Aggregation Index (%)"]], 0)`% para
+`r num(m24[["Aggregation Index (%)"]], 0)`%. A tabela completa está em
+`metricas$metrics_table`; para um único mapa, use `lulc_metrics()`.
+
+Com `reclass_map()`, a classe escolhida aparece em destaque contra o restante
+da paisagem:
+
+```{r reclassificado, fig.show="hold", out.width="50%", fig.width=6, fig.height=5.5}
+reclass_map(metricas, year = 1985)
+reclass_map(metricas, year = 2024)
+```
+
+## Fragmentos {-}
+
+`fragment_metrics()` desce ao nível de cada fragmento. Para cada um, mede área,
+perímetro, área núcleo, forma, dimensão fractal, centroide, alongamento e
+distância ao vizinho mais próximo; para cada classe e ano, resume a distribuição
+de tamanhos:
+
+```{r fragmentos, fig.height=5.5}
+fragmentos <- fragment_metrics(mapas, classes = 3, years = c(1985, 2004, 2024))
+fragmentos$plots$map
+```
+
+```{r echo=FALSE}
+s <- fragmentos$summary
+tabela(data.frame(Ano = s$year, Fragmentos = s$n_patches, `Área (ha)` = s$class_area_ha,
+                  `Área média (ha)` = s$area_mean, `Área mediana (ha)` = s$area_median,
+                  `Maior fragmento (% da paisagem)` = s$lpi, Gini = s$area_gini,
+                  `Vizinho mais próximo, mediana (m)` = s$enn_median, check.names = FALSE), 2)
+```
+
+```{r include=FALSE}
+s85 <- s[s$year == 1985, ]; s24 <- s[s$year == 2024, ]
+```
+
+O fragmento médio encolheu de `r num(s85$area_mean, 1)` ha para
+`r num(s24$area_mean, 1)` ha, e o maior deles, que cobria `r num(s85$lpi, 1)`% da
+paisagem, passou a cobrir `r num(s24$lpi, 1)`%. A desigualdade de tamanhos
+(Gini) continua alta, o que significa que poucos fragmentos concentram a maior
+parte da floresta. Os dados de cada fragmento estão em `fragmentos$patches`.

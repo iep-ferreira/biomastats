@@ -1,8 +1,9 @@
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o
-objeto de mapas de `load_rasters()`. As funções existentes mantêm a mesma
-interface.
+objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
+2.0.0: a remoção das funções de consulta ao Overpass e o novo significado de
+`size` em `make_polygon()` (veja "Remoções" e "Correções").
 
 ## Novos módulos de análise
 
@@ -70,6 +71,15 @@ interface.
 * `dict_build()` não imprime mais a mensagem "Collection 10 subtitles are
   loaded as default" a cada chamada.
 
+## Remoções
+
+* Removido o fluxo de consultas ao OpenStreetMap pela API Overpass:
+  `load_osm_data()`, `rasterize_osm()`, `distance_to_feature()`,
+  `density_of_feature()` e `integrate_feature()`, além das opções
+  `biomastats.osm_*`. Feições do OpenStreetMap continuam disponíveis por `load_features(source = "osm")`, com
+  extratos regionais em cache. As superfícies de distância e densidade ficam
+  com `feature_raster()`, e as distâncias de pontos com `distance_to_nearest()`.
+
 ## Correções
 
 * `land_change()` aceita anos na mesma grade mesmo quando o `raster` gravou
@@ -79,6 +89,35 @@ interface.
   tolerância agora é de um milionésimo de célula.
 * `land_to_graph()` deixa de emitir o aviso "Ignoring unknown labels" do
   ggplot2 em paisagens sem arestas.
+* `land_change()`: a coluna `valid_area_ha` de `coverage` trazia o número de
+  pixels válidos, e não a área em hectares, porque o `!` se aplicava ao produto
+  `is.na(values) * area`. No mapa de exemplo (1985 e 2024), ela valia 15130 em
+  vez de ~1242 ha.
+* `land_change()` calcula a área de cada pixel com `terra::cellSize()`, como
+  `get_area()`. Antes, polígonos de célula medidos com `sf::st_area()` davam
+  áreas um pouco diferentes: no mapa de exemplo, formação florestal em 1985
+  tinha 200,21 ha em `land_change()` e 199,74 ha em `get_area()`; agora as duas
+  dão 199,74 ha. Em CRS projetado, a área da célula deixa de ser a nominal da
+  grade e passa a corrigir a distorção da projeção, como em `get_area()` (uma
+  célula de 10 m no meridiano central UTM tem 0,010008 ha). `metadata$area_method`
+  registra o novo método, e o campo `metadata$geographic_s2` foi removido.
+* `make_polygon()` gerava formas com tamanho e proporções dependentes da
+  latitude: o tamanho era multiplicado por cos(lat) e usado como o mesmo raio
+  em graus de latitude e de longitude. Um círculo com `size = 2` em
+  Liechtenstein (latitude 47,16) media ~2,7 km N–S por ~1,8 km L–O. Agora os
+  vértices são posicionados no elipsoide WGS84 com `geosphere::destPoint()`, e
+  `size` é a largura total da forma, em km: diâmetro do círculo, lado do
+  quadrado ou distância entre vértices opostos do hexágono, em qualquer
+  latitude.
+* **Mudança incompatível.** A mesma chamada de `make_polygon()` gera áreas
+  diferentes das versões anteriores. Por exemplo, um hexágono com `size = 2.5`
+  a 23,6° S tinha 12,5 km² e agora tem 4,1 km². Em `circle_coords()`,
+  `square_coords()` e `hexagon_coords()`, o argumento `adj_size` (raio em
+  graus) foi substituído por `size`, com o mesmo significado e unidade de
+  `make_polygon()`.
+* O exemplo `inst/examples/mapa_exemplo.Rdata` não muda. Ele foi criado com
+  `make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")`
+  nas versões anteriores e continua com 12,465 km².
 
 ## Dependências
 
@@ -87,6 +126,7 @@ interface.
 * Novas em Suggests: `lconnect`, `future.apply`, `osmextract`, `arrow`,
   `ggiraph`, `htmlwidgets`, `rmarkdown` e `withr`.
 * Removidas de Imports, por não serem usadas: `graphics` e `readxl`.
+* Removida de Imports: `osmdata`, junto com o fluxo de consultas ao Overpass.
 
 ## Documentação e testes
 
@@ -95,16 +135,24 @@ interface.
   correspondência.
 * O GitHub Actions roda `R CMD check` em Linux (R release, oldrel-1 e
   oldrel-2), Windows e macOS, e falha em ERROR ou WARNING. Os testes
-  automatizados (652 verificações) não usam internet.
+  automatizados (680 verificações) não usam internet.
 * Testes manuais versionados em `testes-manuais/`: integrado, aquisição,
   método library, camadas externas e um relatório por módulo em
   `testes-manuais/modulos/`. Os relatórios de análise usam o território da
   Lagoa do Sino.
+* Novo livro do usuário em bookdown, em português (`tutorial/`, publicado em
+  <https://iep-ferreira.github.io/biomastats/>) e em inglês (`tutorial/en/`,
+  em <https://iep-ferreira.github.io/biomastats/en/>), com botão para trocar de
+  idioma em cada página. Traz instalação, um sumário
+  das funções, as bases de dados e conexões, as duas vias de aquisição do
+  MapBiomas, o fluxo completo e discutido da Lagoa do Sino e as camadas
+  externas, inclusive um exemplo fora do Brasil. O tutorial anterior foi
+  arquivado em `arquivo/tutorial-2.0/`.
 * Licença unificada como GNU AGPL versão 3 ou posterior (`AGPL (>= 3)`) no
   DESCRIPTION, no README e no arquivo `LICENSE`. O `LICENSE` continha o texto
   da GPL-3 e passou a ter o texto oficial da AGPL-3.
 * Testes sem prefixos redundantes (`biomastats::`, `testthat::`). A interface
-  pública (46 funções exportadas) está listada em
+  pública (41 funções exportadas) está listada em
   `tests/testthat/test-installation.R`.
 
 # biomastats 2.0.0

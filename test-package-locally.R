@@ -17,7 +17,7 @@ if ("biomastats" %in% loadedNamespaces()) {
 }
 library(devtools)
 devtools::load_all(".")
-stopifnot("osm_options" %in% names(formals(integrate_feature)))
+stopifnot(is.function(load_features))
 devtools::test()
 
 
@@ -82,14 +82,7 @@ stopifnot(identical(status_instalacao, 0L))
 
 # 5. Carregar o pacote instalado
 library(biomastats, lib.loc = biblioteca)
-stopifnot(packageVersion("biomastats") == package_version("2.0.0"))
-stopifnot(packageVersion("osmdata") >= package_version("0.4.0"))
-if (!"osm_options" %in% names(formals(biomastats::integrate_feature))) {
-  stop(
-    "A sessão não carregou a árvore de trabalho atual: 'osm_options' ausente.",
-    call. = FALSE
-  )
-}
+stopifnot(packageVersion("biomastats") == package_version(read.dcf("DESCRIPTION")[1, "Version"]))
 packageVersion("biomastats")
 find.package("biomastats")
 
@@ -126,64 +119,14 @@ mapa_uso
 mapa_uso_final <- biomastats::land_vis(mapas, year = ultimo_ano)
 mapa_uso_final
 
-# Temporariamente desativado: OSM/Overpass (rate limiting).
-# # 10. Integrar feições OSM e calcular métricas usando um raster anual
-# # Cada feição é consultada uma vez e reutilizada por distância e densidade.
-# if (!"osm_options" %in% names(formals(biomastats::integrate_feature))) {
-#   stop(
-#     paste(
-#       "Versão antiga do biomastats carregada.",
-#       "Execute primeiro o FLUXO 2 deste arquivo."
-#     ),
-#     call. = FALSE
-#   )
-# }
-# indice_ano <- ano_visualizacao - primeiro_ano + 1
-# raster_anual <- mapas[["raster"]][[indice_ano]]
-#
-# feicoes_integradas <- biomastats::integrate_feature(
-#   reference_raster = raster_anual,
-#   features = list(
-#     roads = list(key = "highway", value = "primary")
-#   ),
-#   metrics = list(
-#     distance = list(),
-#     density = list(window_size = 9, window_shape = "circle")
-#   ),
-#   osm_options = list(
-#     timeout = 60,
-#     use_cache = TRUE,
-#     cache_ttl_days = 7
-#   ),
-#   plot = TRUE
-# )
-# feicoes_integradas[["results"]][["roads"]][["distance"]][["raster"]]
-# feicoes_integradas[["results"]][["roads"]][["density"]][["global"]]
-#
-# mapa_distancia_vias <- feicoes_integradas[["plots"]][["roads_distance"]] +
-#   ggplot2::labs(
-#     title = paste("Distance to roads in", ano_visualizacao)
-#   )
-# mapa_distancia_vias
-#
-# arquivo_mapa_distancia <- tempfile(fileext = ".png")
-# ggplot2::ggsave(
-#   filename = arquivo_mapa_distancia,
-#   plot = mapa_distancia_vias,
-#   width = 8,
-#   height = 6,
-#   dpi = 150
-# )
-# stopifnot(file.exists(arquivo_mapa_distancia))
-#
-# # 11. Distribuir classes
+# 10. Distribuir classes
 distribuicao_barra <- biomastats::land_dist(areas, year = ultimo_ano, type = "barplot")
 distribuicao_barra
 
 distribuicao_pizza <- biomastats::land_dist(areas, year = ultimo_ano, type = "pie")
 distribuicao_pizza
 
-# 12. Calcular métrica e gerar mapa reclassificado
+# 11. Calcular métrica e gerar mapa reclassificado
 metricas <- biomastats::biomastats_metrics(
   mapas,
   start = primeiro_ano,
@@ -198,9 +141,9 @@ metricas[["metrics_table"]]
 mapa_reclassificado <- biomastats::reclass_map(metricas, year = primeiro_ano)
 mapa_reclassificado
 
-# 13. Opcional: mapas interativos no RStudio
+# 12. Opcional: mapas interativos no RStudio
 # mapview::mapview(ufscar)
 # mapview::mapview(polygon_estudo)
 
-# 14. Restaurar a biblioteca original ao terminar o fluxo 2
+# 13. Restaurar a biblioteca original ao terminar o fluxo 2
 .libPaths(bibliotecas_anteriores)

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Capítulo 8 Mudanças e adjacências | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
+<meta name="description" content="Transições entre datas Saber quanto cada classe cresceu ou encolheu não diz para onde a área foi. land_change() responde a essa pergunta comparando os mapas pixel a pixel, em duas ou três datas, e...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Capítulo 8 Mudanças e adjacências | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/imagens/capa.jpg">
+<meta property="og:description" content="Transições entre datas Saber quanto cada classe cresceu ou encolheu não diz para onde a área foi. land_change() responde a essa pergunta comparando os mapas pixel a pixel, em duas ou três datas, e...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Capítulo 8 Mudanças e adjacências | Bioma Stats">
+<meta name="twitter:description" content="Transições entre datas Saber quanto cada classe cresceu ou encolheu não diz para onde a área foi. land_change() responde a essa pergunta comparando os mapas pixel a pixel, em duas ou três datas, e...">
+<meta name="twitter:image" content="/imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Uso e cobertura da terra em R: guia do usuário">Bioma Stats</a>:
+        <small class="text-muted">Uso e cobertura da terra em R: guia do usuário</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Apresentação</a></li>
+<li class="book-part">Primeiros passos</li>
+<li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
+<li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
+<li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li class="book-part">Fluxo completo: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
+<li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
+<li><a class="" href="lagoa-series.html"><span class="header-section-number">7</span> Séries temporais</a></li>
+<li><a class="active" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
+<li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
+<li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li class="book-part">Além do MapBiomas</li>
+<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li class="book-part">Apêndice</li>
+<li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="lagoa-mudancas" class="section level1" number="8">
+<h1>
+<span class="header-section-number">Capítulo 8</span> Mudanças e adjacências<a class="anchor" aria-label="anchor" href="#lagoa-mudancas"><i class="fas fa-link"></i></a>
+</h1>
+<div id="transições-entre-datas" class="section level2 unnumbered">
+<h2>Transições entre datas<a class="anchor" aria-label="anchor" href="#transi%C3%A7%C3%B5es-entre-datas"><i class="fas fa-link"></i></a>
+</h2>
+<p>Saber quanto cada classe cresceu ou encolheu não diz para onde a área foi.
+<code><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change()</a></code> responde a essa pergunta comparando os mapas pixel a pixel, em
+duas ou três datas, e quantificando o que permaneceu, o que se converteu e em
+quê:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mudancas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change</a></span><span class="op">(</span><span class="va">mapas</span>, years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1985</span>, <span class="fl">2024</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mudancas</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/mudancas-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="36%">
+<col width="11%">
+<col width="11%">
+<col width="13%">
+<col width="13%">
+<col width="13%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Classe</th>
+<th align="right">1985 (ha)</th>
+<th align="right">2024 (ha)</th>
+<th align="right">Ganho (ha)</th>
+<th align="right">Perda (ha)</th>
+<th align="right">Saldo (ha)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Soja</td>
+<td align="right">0</td>
+<td align="right">790</td>
+<td align="right">790</td>
+<td align="right">0</td>
+<td align="right">790</td>
+</tr>
+<tr class="even">
+<td align="left">Pastagem</td>
+<td align="right">715</td>
+<td align="right">53</td>
+<td align="right">12</td>
+<td align="right">675</td>
+<td align="right">-663</td>
+</tr>
+<tr class="odd">
+<td align="left">Mosaico de Usos</td>
+<td align="right">136</td>
+<td align="right">146</td>
+<td align="right">119</td>
+<td align="right">109</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">Formação Florestal</td>
+<td align="right">200</td>
+<td align="right">107</td>
+<td align="right">20</td>
+<td align="right">113</td>
+<td align="right">-93</td>
+</tr>
+<tr class="odd">
+<td align="left">Campo Alagado e Área Pantanosa</td>
+<td align="right">146</td>
+<td align="right">100</td>
+<td align="right">3</td>
+<td align="right">49</td>
+<td align="right">-46</td>
+</tr>
+</tbody>
+</table></div>
+<p>Entre 1985 e 2024, 78% da área mudou de
+classe. Quase toda essa mudança é de quantidade (818 ha),
+isto é, uma classe cresceu ocupando o lugar de outra; apenas
+152 ha correspondem a trocas de posição entre classes.
+A floresta ilustra bem esse quadro: só 44%
+da formação florestal de 1985 continuava de pé em 2024, e os
+20 ha que surgiram em outros pontos não compensaram os
+113 ha perdidos.</p>
+<p>Com <code>years = c(1985, 2004, 2024)</code>, o diagrama ganha uma terceira coluna e mostra
+as trajetórias nos dois intervalos.</p>
+</div>
+<div id="adjacências-entre-classes" class="section level2 unnumbered">
+<h2>Adjacências entre classes<a class="anchor" aria-label="anchor" href="#adjac%C3%AAncias-entre-classes"><i class="fas fa-link"></i></a>
+</h2>
+<p><code><a href="https://rdrr.io/pkg/biomastats/man/land_to_graph.html">land_to_graph()</a></code> olha para a vizinhança: conta os contatos entre pixels de
+classes diferentes e monta a rede da paisagem, em que cada nó é uma classe e a
+espessura de cada ligação é o número de contatos entre elas. Com
+<code>weight = "boundary"</code>, a espessura passa a ser a extensão da fronteira, em
+metros.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rede</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_to_graph.html">land_to_graph</a></span><span class="op">(</span><span class="va">mapas</span>, year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span>
+<span><span class="va">rede</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/rede-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>Em 2024, a classe mais conectada é campo alagado e área pantanosa, que faz fronteira
+com 8 classes ao longo de 29,6 km de
+bordas. As tabelas <code>rede$node_metrics</code> e <code>rede$edge_metrics</code> detalham grau,
+força, centralidade e extensão de cada fronteira.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="lagoa-series.html"><span class="header-section-number">7</span> Séries temporais</a></div>
+<div class="next"><a href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#lagoa-mudancas"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
+<li><a class="nav-link" href="#transi%C3%A7%C3%B5es-entre-datas">Transições entre datas</a></li>
+<li><a class="nav-link" href="#adjac%C3%AAncias-entre-classes">Adjacências entre classes</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/08-lagoa-mudancas.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/08-lagoa-mudancas.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

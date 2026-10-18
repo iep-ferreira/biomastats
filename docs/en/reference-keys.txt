@@ -1,0 +1,16 @@
+fig:tile-grid
+fig:unnamed-chunk-39
+fig:unnamed-chunk-41
+fig:unnamed-chunk-44
+installation
+functions
+data-sources
+acquisition
+lagoa-areas
+lagoa-diversity
+lagoa-time-series
+lagoa-change
+lagoa-landscape
+lagoa-connectivity
+external-layers
+about

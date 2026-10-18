@@ -1,0 +1,104 @@
+# Acquiring MapBiomas maps {#acquisition}
+
+Every analysis starts with a study area and the maps object produced by
+`load_rasters()`. There are two ways to get there, and both lead to the same
+result.
+
+## Study area {-}
+
+The area is a polygon shapefile in any coordinate reference system. The package
+already includes the boundary of the UFSCar Lagoa do Sino campus, used in this
+chapter:
+
+```{r}
+ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
+```
+
+When no shapefile is at hand, `make_polygon()` draws the area from a centre
+point, a shape (`"circle"`, `"square"` or `"hexagon"`) and the total width in km
+(`size`), which is the circle's diameter, the square's side or the distance
+between opposite vertices of the hexagon. A hexagon of about 12.5 km² centred on
+the campus, like the example area in Part II, looks like this:
+
+```{r eval=FALSE}
+area <- make_polygon(lat = -23.605, lon = -48.529, size = 4.4,
+                     shape = "hexagon")
+```
+
+::: {.atencao}
+`make_polygon()` writes the result as `polygon.shp` in the `shp` folder of the
+installed package, replacing the previous file. To keep an area, save the
+returned object (`area$polygon`) with `sf::st_write()` in a folder of your own.
+:::
+
+MapBiomas splits Brazil into tiles, and `compare_shapefiles()` tells you which
+ones cover the area. Lagoa do Sino fits entirely within tile 93:
+
+```{r}
+unique(compare_shapefiles(ufscar))
+```
+
+```{r tile-grid, echo=FALSE, fig.height=5.5, out.width="80%", fig.cap="Tile grid used for selective acquisition. Highlighted: tile 93, which contains Lagoa do Sino (dot)."}
+grade <- sf::st_read(system.file("shp", "brasil_cortado.shp", package = "biomastats"), quiet = TRUE)
+grade$id <- seq_len(nrow(grade))
+grade$usado <- grade$id %in% compare_shapefiles(ufscar)
+ponto <- sf::st_centroid(sf::st_union(sf::st_transform(sf::st_read(ufscar, quiet = TRUE), sf::st_crs(grade))))
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = grade, ggplot2::aes(fill = usado), colour = "#c9c1ad", linewidth = .25) +
+  ggplot2::geom_sf(data = ponto, colour = "#22302a", size = 2.2) +
+  ggplot2::scale_fill_manual(values = c(`FALSE` = "#f3ecdc", `TRUE` = "#3b7d3a"), guide = "none") +
+  ggplot2::theme_void()
+```
+
+## Route 1: selective download {-}
+
+Here the package downloads from the Bioma Stats API only the tiles and years
+the area needs. If the area crosses more than one tile, the neighbouring tiles
+are merged before the final crop and the mask by the boundary. The files are
+kept in the folder you choose and reused in later runs.
+
+```{r eval=FALSE}
+maps <- load_rasters(ufscar, start = 1985, end = 2024, method = "download",
+                     export_folder_path = "mapbiomas-tiles")
+```
+
+## Route 2: local national collection {-}
+
+Here the national map for each year is downloaded only once. After that, any
+area can be cropped from it without an internet connection, which makes this
+route the better choice for many areas or for large ones.
+
+```{r eval=FALSE}
+download_mapbiomas(dest_dir = "collection_10", data_type = "cover",
+                   collection = 10, time_range = c(1985, 2024))
+
+maps <- load_rasters(ufscar, start = 1985, end = 2024, method = "library",
+                     import_folder_path = "collection_10")
+```
+
+| | Selective download | National collection |
+|:--|:--|:--|
+| Transfer | only the area's tiles | ~28 GB for 1985–2024, just once |
+| Internet during analysis | yes, on the first run | no |
+| Best for | a few areas, up to 2 or 3 tiles | many areas, large areas, offline use |
+
+::: {.nota}
+Both routes produce the same object: for the Lagoa do Sino example area, the 40
+maps cropped from the national collection are identical, cell by cell, to those
+obtained by selective download.
+:::
+
+## The maps object {-}
+
+`load_rasters()` returns a list with the area boundary (`shape`), the time span
+(`time_range`), one map per year (`raster`) and the collection (`collection`).
+You can save and share this object, so the acquisition never has to be
+repeated:
+
+```{r eval=FALSE}
+save(maps, file = "lagoa-do-sino.Rdata")
+load("lagoa-do-sino.Rdata")
+```
+
+The package already includes the maps object for the Lagoa do Sino example
+area, from 1985 to 2024, which is used throughout Part II.

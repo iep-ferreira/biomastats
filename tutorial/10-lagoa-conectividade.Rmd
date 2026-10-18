@@ -1,0 +1,66 @@
+# Vetorização e conectividade {#lagoa-conectividade}
+
+## Fragmentos como polígonos {-}
+
+Para analisar a conectividade, os fragmentos precisam virar polígonos.
+`reclass_to_polygons()` faz essa conversão a partir dos mapas reclassificados e
+guarda área, ano e identidade da classe. Aqui, a floresta de 2024:
+
+```{r}
+poligonos <- reclass_to_polygons(metricas, years = 2024, save_shp = FALSE)
+```
+
+São `r nrow(poligonos)` fragmentos, que somam `r num(sum(poligonos$area_ha), 0)` ha.
+Com `save_shp = TRUE`, cada ano também é gravado como shapefile.
+
+## Conectividade em vários limiares {-}
+
+`land_connectivity()` liga os fragmentos que estão mais próximos do que uma
+distância máxima, ou seja, a distância que um organismo consegue percorrer fora
+da floresta, e calcula os índices de conectividade para cada limiar:
+
+```{r conectividade, fig.height=6}
+conectividade <- land_connectivity(poligonos, max_dist = c(100, 300, 600))
+conectividade$plot
+```
+
+```{r echo=FALSE}
+cm <- conectividade$metrics
+tabela(data.frame(`Distância máxima (m)` = cm$max_dist_m, Componentes = cm$graph_components,
+                  `Fragmentos isolados` = cm$isolates, `IIC (×10⁻³)` = 1000 * cm$IIC, check.names = FALSE), 2)
+```
+
+Para uma espécie que só atravessa 100 m de área aberta, a floresta se divide em
+`r cm$graph_components[1]` grupos desconectados, com `r cm$isolates[1]`
+fragmentos isolados. Com 300 m, restam `r cm$graph_components[2]` grupos, e o
+índice integral de conectividade (IIC) fica
+`r num(cm$IIC[2] / cm$IIC[1], 0)` vezes maior. De 300 para 600 m, o ganho é
+pequeno: para espécies capazes de cruzar cerca de 300 m, a floresta que restou
+já funciona como uma rede.
+
+## Fragmentos prioritários {-}
+
+`patch_imp_fast()` mede quanto a conectividade cairia se cada fragmento fosse
+removido, no cenário escolhido:
+
+```{r}
+cenario_300 <- conectividade$scenarios[["300"]]$land
+importancia <- patch_imp_fast(cenario_300, metric = "IIC")
+```
+
+```{r include=FALSE}
+p <- sort(importancia$prioritization, decreasing = TRUE)
+```
+
+A perda de qualquer um dos dois fragmentos mais importantes reduziria o IIC em
+`r num(p[1], 1)`% e `r num(p[2], 1)`%, respectivamente, enquanto
+`r sum(p < 5)` dos `r length(p)` fragmentos reduzem menos de 5% cada. A
+conectividade da floresta depende, portanto, da conservação de poucos
+fragmentos.
+
+`land_connectivity()` já calcula essa priorização para cada limiar, e o mapa
+mostra quanto o índice cairia sem cada fragmento:
+
+```{r importancia, fig.height=6}
+conectividade$importance_plot
+```

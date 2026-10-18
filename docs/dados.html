@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Capítulo 3 Bases de dados e conexões | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
+<meta name="description" content="O pacote não guarda cópias próprias dos dados. Cada função vai à fonte original, lê apenas o trecho que interessa e mantém em cache o que pode ser reaproveitado depois. Fonte Produto Cobertura...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Capítulo 3 Bases de dados e conexões | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/imagens/capa.jpg">
+<meta property="og:description" content="O pacote não guarda cópias próprias dos dados. Cada função vai à fonte original, lê apenas o trecho que interessa e mantém em cache o que pode ser reaproveitado depois. Fonte Produto Cobertura...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Capítulo 3 Bases de dados e conexões | Bioma Stats">
+<meta name="twitter:description" content="O pacote não guarda cópias próprias dos dados. Cada função vai à fonte original, lê apenas o trecho que interessa e mantém em cache o que pode ser reaproveitado depois. Fonte Produto Cobertura...">
+<meta name="twitter:image" content="/imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Uso e cobertura da terra em R: guia do usuário">Bioma Stats</a>:
+        <small class="text-muted">Uso e cobertura da terra em R: guia do usuário</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Apresentação</a></li>
+<li class="book-part">Primeiros passos</li>
+<li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
+<li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
+<li><a class="active" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li class="book-part">Fluxo completo: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
+<li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
+<li><a class="" href="lagoa-series.html"><span class="header-section-number">7</span> Séries temporais</a></li>
+<li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
+<li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
+<li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li class="book-part">Além do MapBiomas</li>
+<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li class="book-part">Apêndice</li>
+<li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="dados" class="section level1" number="3">
+<h1>
+<span class="header-section-number">Capítulo 3</span> Bases de dados e conexões<a class="anchor" aria-label="anchor" href="#dados"><i class="fas fa-link"></i></a>
+</h1>
+<p>O pacote não guarda cópias próprias dos dados. Cada função vai à fonte
+original, lê apenas o trecho que interessa e mantém em cache o que pode ser
+reaproveitado depois.</p>
+<div class="inline-table"><table style="width:100%;" class="table table-sm">
+<colgroup>
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Fonte</th>
+<th align="left">Produto</th>
+<th align="left">Cobertura</th>
+<th align="left">Resolução</th>
+<th align="left">Referência</th>
+<th align="left">Acesso</th>
+<th align="left">Funções</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">MapBiomas</td>
+<td align="left">Coleção 10, recortes (tiles)</td>
+<td align="left">Brasil</td>
+<td align="left">30 m</td>
+<td align="left">1985–2024</td>
+<td align="left">API do Bioma Stats → lista de arquivos por recorte → GeoTIFF</td>
+<td align="left"><code>load_rasters(method = "download")</code></td>
+</tr>
+<tr class="even">
+<td align="left">MapBiomas</td>
+<td align="left">Coleção 10, mapa nacional</td>
+<td align="left">Brasil</td>
+<td align="left">30 m</td>
+<td align="left">1985–2024</td>
+<td align="left">GeoTIFF anual no repositório público do MapBiomas (~28 GB, 40 anos)</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/download_mapbiomas.html">download_mapbiomas()</a></code>, <code>load_rasters(method = "library")</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">ESA</td>
+<td align="left">WorldCover</td>
+<td align="left">mundo</td>
+<td align="left">10 m</td>
+<td align="left">2020 (v100), 2021 (v200)</td>
+<td align="left">Cloud-Optimized GeoTIFF por HTTP</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left">Copernicus / ESA</td>
+<td align="left">DEM GLO-30</td>
+<td align="left">mundo</td>
+<td align="left">30 m</td>
+<td align="left">2011–2015</td>
+<td align="left">Cloud-Optimized GeoTIFF por HTTP</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_physical.html">load_physical()</a></code></td>
+</tr>
+<tr class="odd">
+<td align="left">ISRIC</td>
+<td align="left">SoilGrids 2.0</td>
+<td align="left">mundo</td>
+<td align="left">250 m</td>
+<td align="left">2021</td>
+<td align="left">serviço WCS, só o recorte</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_physical.html">load_physical()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left">OpenStreetMap</td>
+<td align="left">Extratos regionais (Geofabrik, openstreetmap.fr)</td>
+<td align="left">mundo</td>
+<td align="left">vetorial</td>
+<td align="left">data do extrato</td>
+<td align="left">arquivo <code>.osm.pbf</code> com cache local</td>
+<td align="left"><code>load_features(source = "osm")</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Overture Maps</td>
+<td align="left">GeoParquet</td>
+<td align="left">mundo</td>
+<td align="left">vetorial</td>
+<td align="left">versão (release)</td>
+<td align="left">índice STAC e leitura parcial no S3</td>
+<td align="left"><code>load_features(source = "overture")</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Quanto às licenças, o MapBiomas usa CC BY-SA; o ESA WorldCover e o SoilGrids,
+CC BY 4.0; o Copernicus DEM, a licença livre do programa Copernicus; o
+OpenStreetMap, ODbL; e o Overture, ODbL e CDLA. Ao publicar resultados, cite as
+fontes usadas.</p>
+<p>A função <code><a href="https://rdrr.io/pkg/biomastats/man/layer_catalog.html">layer_catalog()</a></code> devolve essa mesma relação para as camadas externas
+e, com <code>online = TRUE</code>, verifica se cada servidor está respondendo.</p>
+<div id="conexões-falhas-e-cache" class="section level2 unnumbered">
+<h2>Conexões, falhas e cache<a class="anchor" aria-label="anchor" href="#conex%C3%B5es-falhas-e-cache"><i class="fas fa-link"></i></a>
+</h2>
+<p>No download seletivo, o pacote consulta a <strong>API do Bioma Stats</strong>
+(<code>api.biomastats.org</code>, com um espelho de reserva) para saber quais arquivos
+compõem cada recorte. Essa lista fica em cache por 7 dias, e os mapas já
+baixados são reaproveitados nas execuções seguintes.</p>
+<p>As <strong>camadas externas</strong> têm um tempo limite de 5 segundos. Se uma fonte não
+responde nesse prazo, falha ou recusa o acesso, ela é deixada de lado: a função
+devolve aquele bloco com status <code>"skipped"</code> e segue com as demais, sem
+interromper a análise. Em conexões lentas, o prazo pode ser ampliado com
+<code>options(biomastats.timeout = 10)</code>.</p>
+<p>Extratos, índices e listas de arquivos ficam no <strong>cache</strong> do usuário
+(<code>tools::R_user_dir("biomastats", "cache")</code>). Downloads interrompidos não
+deixam arquivos parciais para trás.</p>
+<div class="nota">
+<p>Instituições com espelhos próprios podem apontar o pacote para eles, por
+exemplo com <code>options(biomastats.worldcover_root = "https://...")</code>. Também estão
+disponíveis <code>biomastats.copernicus_root</code>, <code>biomastats.soilgrids_wcs</code> e
+<code>biomastats.overture_stac</code>.</p>
+</div>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></div>
+<div class="next"><a href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#dados"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
+<li><a class="nav-link" href="#conex%C3%B5es-falhas-e-cache">Conexões, falhas e cache</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/03-dados.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/03-dados.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

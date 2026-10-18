@@ -6,6 +6,14 @@ change_maps <- function() {
        time_range = c(1985, 1987), collection = "10")
 }
 
+# Areas come from terra::cellSize(), as in get_area(). A 10 m cell on the UTM
+# central meridian covers 0.01 ha divided by the squared scale factor 0.9996,
+# with ~1e-8 noise between cells, hence the tolerance.
+change_cell_ha <- 0.01 / 0.9996^2
+expect_ha <- function(object, cells) {
+  expect_equal(object, cells * change_cell_ha, tolerance = 1e-6)
+}
+
 test_that("bipartite transitions conserve pixels and quantify gains and losses", {
   maps <- change_maps()
   result <- land_change(maps, years = c(1985, 1986), build_plot = FALSE)
@@ -15,16 +23,16 @@ test_that("bipartite transitions conserve pixels and quantify gains and losses",
   expect_equal(result$years, c(1985, 1986))
   m <- result$matrices[[1]]
   expect_equal(unname(m$pixels), matrix(c(2, 2, 1, 1), 2))
-  expect_equal(m$area_ha, m$pixels * 0.01)
-  expect_equal(unname(m$probability), matrix(c(2/3, 2/3, 1/3, 1/3), 2))
-  expect_equal(result$class_metrics$gain_ha, c(0.02, 0.01))
-  expect_equal(result$class_metrics$loss_ha, c(0.01, 0.02))
-  expect_equal(result$class_metrics$net_ha, c(0.01, -0.01))
-  expect_equal(result$interval_metrics$total_ha, 0.06)
-  expect_equal(result$interval_metrics$persistence_ha, 0.03)
-  expect_equal(result$interval_metrics$change_ha, 0.03)
-  expect_equal(result$interval_metrics$quantity_ha, 0.01)
-  expect_equal(result$interval_metrics$allocation_ha, 0.02)
+  expect_ha(m$area_ha, m$pixels)
+  expect_equal(unname(m$probability), matrix(c(2/3, 2/3, 1/3, 1/3), 2), tolerance = 1e-6)
+  expect_ha(result$class_metrics$gain_ha, c(2, 1))
+  expect_ha(result$class_metrics$loss_ha, c(1, 2))
+  expect_ha(result$class_metrics$net_ha, c(1, -1))
+  expect_ha(result$interval_metrics$total_ha, 6)
+  expect_ha(result$interval_metrics$persistence_ha, 3)
+  expect_ha(result$interval_metrics$change_ha, 3)
+  expect_ha(result$interval_metrics$quantity_ha, 1)
+  expect_ha(result$interval_metrics$allocation_ha, 2)
   expect_equal(sum(result$transitions$share), 1)
   expect_equal(sum(result$trajectory_metrics$share), 1)
   expect_null(result$plot)
@@ -36,10 +44,10 @@ test_that("tripartite trajectories preserve observed paths and all comparisons",
   result <- land_change(change_maps(), build_plot = FALSE)
   expect_named(result$matrices, c("1985_1986", "1986_1987", "1985_1987"))
   expect_equal(result$trajectory_metrics$pixels, c(2, 2, 1, 1))
-  expect_equal(result$trajectory_metrics$area_ha, c(0.02, 0.02, 0.01, 0.01))
+  expect_ha(result$trajectory_metrics$area_ha, c(2, 2, 1, 1))
   expect_equal(result$trajectories$trajectory_id, seq_len(6))
   expect_equal(sum(result$trajectories$pixels), 6)
-  expect_equal(sum(result$trajectories$area_ha), 0.06)
+  expect_ha(sum(result$trajectories$area_ha), 6)
   expect_true(all(is.na(result$matrices[[1]]$probability["15", ])))
   expect_equal(rowSums(result$matrices[[1]]$probability)[c("3", "4")], c("3" = 1, "4" = 1))
   expect_true(igraph::is_directed(result$graph))
@@ -50,7 +58,7 @@ test_that("tripartite trajectories preserve observed paths and all comparisons",
     expect_equal(sum(edges$area_ha[edges$to == name]), sum(edges$area_ha[edges$from == name]))
   }
   expect_true(all(edges$end_year - edges$start_year == 1))
-  expect_equal(sum(edges$area_ha), 0.12)
+  expect_ha(sum(edges$area_ha), 12)
   expect_equal(sum(result$class_metrics$gross_change_ha), 2 * sum(result$interval_metrics$change_ha))
   subset <- land_change(change_maps(), years = c(1987, 1986), build_plot = FALSE)
   expect_equal(subset$years, c(1986, 1987))
@@ -65,8 +73,10 @@ test_that("one complete-case mask is shared across all three moments", {
   expect_equal(result$coverage$valid_pixels, c(6, 5, 5))
   expect_equal(result$coverage$common_pixels, rep(4, 3))
   expect_equal(result$coverage$excluded_valid_pixels, c(2, 1, 1))
+  expect_ha(result$coverage$valid_area_ha, c(6, 5, 5))
+  expect_ha(result$coverage$common_area_ha, rep(4, 3))
   expect_equal(result$interval_metrics$common_pixels, rep(4, 3))
-  expect_equal(result$interval_metrics$total_ha, rep(0.04, 3))
+  expect_ha(result$interval_metrics$total_ha, rep(4, 3))
   maps$raster[[1]][] <- NA
   expect_error(land_change(maps), "Nenhum pixel")
 })
@@ -98,13 +108,16 @@ test_that("grid compatibility, selection and input validation are explicit", {
   expect_error(land_change(maps), "inteiros")
 })
 
-test_that("cell areas inherit projected units or geographic latitude", {
-  r <- raster::raster(nrows = 1, ncols = 1, xmn = 0, xmx = 10, ymn = 0, ymx = 20,
-    crs = "+proj=utm +zone=22 +south +datum=WGS84 +units=us-ft")
+test_that("cell areas follow projected units or geographic latitude, as in get_area()", {
+  # 10 x 20 US survey feet on the central meridian of UTM 22S (x = 500 km).
+  r <- raster::raster(nrows = 1, ncols = 1, xmn = 1640416.67, xmx = 1640426.67,
+    ymn = 24278000, ymx = 24278020, crs = "+proj=utm +zone=22 +south +datum=WGS84 +units=us-ft")
   maps <- list(raster = list(raster::setValues(r, 3), raster::setValues(r, 4)),
                time_range = c(2000, 2001), collection = 10)
   result <- land_change(maps, build_plot = FALSE)
-  expect_equal(result$interval_metrics$total_ha, 200 * (1200 / 3937)^2 / 10000)
+  expect_equal(result$interval_metrics$total_ha, 200 * (1200 / 3937)^2 / 10000 / 0.9996^2,
+    tolerance = 1e-4)
+  expect_equal(result$interval_metrics$total_ha, 100 * get_area(maps)$aggregate_data$area_raw[1])
   expect_equal(result$interval_metrics$change_fraction, 1)
   r <- raster::raster(nrows = 2, ncols = 1, xmn = -49, xmx = -48.99,
     ymn = -24.01, ymx = -23.99, crs = "EPSG:4326")
@@ -112,8 +125,9 @@ test_that("cell areas inherit projected units or geographic latitude", {
   result <- land_change(maps, build_plot = FALSE)
   cell <- sf::st_sfc(sf::st_polygon(list(rbind(c(-49, -23.99), c(-48.99, -23.99),
     c(-48.99, -24), c(-49, -24), c(-49, -23.99)))), crs = 4326)
+  # s2 measures on a sphere; terra::cellSize on the WGS84 ellipsoid.
   expected <- as.numeric(units::set_units(sf::st_area(cell), "ha"))
-  expect_equal(result$matrices[[1]]$area_ha["3", "4"], expected)
+  expect_equal(result$matrices[[1]]$area_ha["3", "4"], expected, tolerance = 0.005)
   expect_gt(result$matrices[[1]]$area_ha["3", "4"], result$matrices[[1]]$area_ha["4", "3"])
 })
 
@@ -165,4 +179,31 @@ test_that("bundled maps support the public two- and three-moment workflow", {
   expect_equal(sum(result$trajectory_metrics$area_ha), result$interval_metrics$total_ha[1])
   expect_equal(result$interval_metrics$total_ha, rep(result$interval_metrics$total_ha[1], 3))
   expect_equal(igraph::vertex_attr(result$graph, "color"), result$node_metrics$color)
+})
+
+test_that("valid area is reported in hectares, not in pixels", {
+  # Regression: colSums(!is.na(values) * area) negated the product and
+  # returned the pixel count instead of the valid area.
+  result <- land_change(example_maps(), years = c(1985, 2024), build_plot = FALSE)
+  coverage <- result$coverage
+  expect_equal(coverage$excluded_valid_pixels, c(0, 0))
+  expect_equal(coverage$valid_area_ha, coverage$common_area_ha)
+  expect_equal(coverage$valid_area_ha, rep(result$interval_metrics$total_ha, 2))
+  expect_false(isTRUE(all.equal(coverage$valid_area_ha, coverage$valid_pixels)))
+})
+
+test_that("class areas match get_area() on the bundled maps", {
+  # Regression: sf::st_area cell polygons gave 200.21 ha of forest formation in
+  # 1985 against 199.74 ha in get_area().
+  maps <- example_maps()
+  result <- land_change(maps, years = c(1985, 2024), build_plot = FALSE)
+  areas <- get_area(maps)$aggregate_data
+  km2 <- function(year, codes) {
+    areas$area_raw[match(paste(codes, year), paste(areas$land_class, areas$year))]
+  }
+  metrics <- result$class_metrics
+  expect_false(anyNA(km2(1985, metrics$code)))
+  expect_equal(metrics$initial_ha, 100 * km2(1985, metrics$code), tolerance = 1e-6)
+  expect_equal(metrics$final_ha, 100 * km2(2024, metrics$code), tolerance = 1e-6)
+  expect_equal(result$metadata$area_method, "terra::cellSize(unit = \"ha\", mask = FALSE), as in get_area()")
 })

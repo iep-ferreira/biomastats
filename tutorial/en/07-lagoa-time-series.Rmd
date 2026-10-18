@@ -1,0 +1,87 @@
+# Time series {#lagoa-time-series}
+
+The annual maps form a 40-year series for each class. `land_time_series()`
+extracts the series of interest, here soybean (39), pasture (15) and forest
+formation (3):
+
+```{r series, fig.height=5}
+series <- land_time_series(areas$time_series, classes = c(39, 15, 3),
+                           language = "en")
+series$plot
+```
+
+## Association between two series {-}
+
+Two trending series often look related even when they have nothing to do with
+each other from one year to the next. That is why `series_correlation()` can
+measure association on the levels, on the annual differences or on the
+residuals of a trend, and corrects the p-value for autocorrelation:
+
+```{r correlation, fig.height=4.5}
+correlation <- series_correlation(series, 39, 15, transformation = "difference",
+                                  language = "en")
+correlation$plots$association
+```
+
+```{r include=FALSE}
+assoc <- correlation$association
+```
+
+On annual differences, the correlation between soybean and pasture is
+r = `r num(assoc$estimate, 2)` (p = `r num(assoc$p_value, 2)`; corrected p =
+`r num(assoc$p_serial, 2)`). In other words, the replacement of one class by the
+other is clear in the levels, over several years, but their year-to-year
+changes do not move together.
+
+## Regimes and change points {-}
+
+`series_fit_regime()` fits a continuous curve with transitions between regimes.
+The probabilistic bent-cable model estimates when each transition happens and
+how long it lasts, with bootstrap confidence intervals:
+
+```{r regime, fig.height=5.5}
+fit <- series_fit_regime(series, 39, model = "prob_bent_logistic",
+                         bootstrap = 200, seed = 1, language = "en")
+fit$plot
+```
+
+```{r echo=FALSE}
+pc <- fit$change_points
+tabela(data.frame(Transition = pc$transition, Year = pc$estimate, `95% CI lower` = pc$conf_low,
+                  `95% CI upper` = pc$conf_high, `Rate before (km²/yr)` = pc$slope_before,
+                  `Rate after (km²/yr)` = pc$slope_after, check.names = FALSE), 2)
+```
+
+The soybean story has three transitions, all between `r floor(min(pc$estimate))`
+and `r ceiling(max(pc$estimate))`: first a rapid expansion of
+`r num(pc$slope_after[1], 1)` km² per year, then a contraction and, from
+`r round(pc$estimate[3])` on, slow growth. With `model = "auto"`, the function
+compares the available models by AICc and picks the most suitable one.
+
+## Diagnostics and projection {-}
+
+```{r diagnostics, fig.height=4}
+diagnostics <- series_diagnostics(fit)
+diagnostics$plots$acf
+```
+
+```{r include=FALSE}
+q <- diagnostics$quality
+```
+
+The fit explains `r num(100 * q$r_squared, 0)`% of the variation (R²), but the
+residuals are autocorrelated (Durbin-Watson = `r num(q$durbin_watson, 2)`;
+Ljung-Box, `r if (q$ljung_box_p_value < 0.001) "p < 0.001" else paste("p =", num(q$ljung_box_p_value, 3))`).
+When residuals depend on each other, intervals tend to come out too narrow. In
+that case, `bootstrap_type = "block"` resamples blocks of consecutive years and
+produces more realistic intervals.
+
+Finally, `series_forecast()` extends the last regime:
+
+```{r projection, fig.height=4.5}
+projection <- series_forecast(fit, horizon = 5)
+projection$plot
+```
+
+The projection assumes the current regime continues. Read it as a scenario,
+not as a prediction of future land use change.

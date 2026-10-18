@@ -1,0 +1,47 @@
+# Bases de dados e conexões {#dados}
+
+O pacote não guarda cópias próprias dos dados. Cada função vai à fonte
+original, lê apenas o trecho que interessa e mantém em cache o que pode ser
+reaproveitado depois.
+
+| Fonte | Produto | Cobertura | Resolução | Referência | Acesso | Funções |
+|:--|:--|:--|:--|:--|:--|:--|
+| MapBiomas | Coleção 10, recortes (tiles) | Brasil | 30 m | 1985–2024 | API do Bioma Stats → lista de arquivos por recorte → GeoTIFF | `load_rasters(method = "download")` |
+| MapBiomas | Coleção 10, mapa nacional | Brasil | 30 m | 1985–2024 | GeoTIFF anual no repositório público do MapBiomas (~28 GB, 40 anos) | `download_mapbiomas()`, `load_rasters(method = "library")` |
+| ESA | WorldCover | mundo | 10 m | 2020 (v100), 2021 (v200) | Cloud-Optimized GeoTIFF por HTTP | `load_lulc()` |
+| Copernicus / ESA | DEM GLO-30 | mundo | 30 m | 2011–2015 | Cloud-Optimized GeoTIFF por HTTP | `load_physical()` |
+| ISRIC | SoilGrids 2.0 | mundo | 250 m | 2021 | serviço WCS, só o recorte | `load_physical()` |
+| OpenStreetMap | Extratos regionais (Geofabrik, openstreetmap.fr) | mundo | vetorial | data do extrato | arquivo `.osm.pbf` com cache local | `load_features(source = "osm")` |
+| Overture Maps | GeoParquet | mundo | vetorial | versão (release) | índice STAC e leitura parcial no S3 | `load_features(source = "overture")` |
+
+Quanto às licenças, o MapBiomas usa CC BY-SA; o ESA WorldCover e o SoilGrids,
+CC BY 4.0; o Copernicus DEM, a licença livre do programa Copernicus; o
+OpenStreetMap, ODbL; e o Overture, ODbL e CDLA. Ao publicar resultados, cite as
+fontes usadas.
+
+A função `layer_catalog()` devolve essa mesma relação para as camadas externas
+e, com `online = TRUE`, verifica se cada servidor está respondendo.
+
+## Conexões, falhas e cache {-}
+
+No download seletivo, o pacote consulta a **API do Bioma Stats**
+(`api.biomastats.org`, com um espelho de reserva) para saber quais arquivos
+compõem cada recorte. Essa lista fica em cache por 7 dias, e os mapas já
+baixados são reaproveitados nas execuções seguintes.
+
+As **camadas externas** têm um tempo limite de 5 segundos. Se uma fonte não
+responde nesse prazo, falha ou recusa o acesso, ela é deixada de lado: a função
+devolve aquele bloco com status `"skipped"` e segue com as demais, sem
+interromper a análise. Em conexões lentas, o prazo pode ser ampliado com
+`options(biomastats.timeout = 10)`.
+
+Extratos, índices e listas de arquivos ficam no **cache** do usuário
+(`tools::R_user_dir("biomastats", "cache")`). Downloads interrompidos não
+deixam arquivos parciais para trás.
+
+::: {.nota}
+Instituições com espelhos próprios podem apontar o pacote para eles, por
+exemplo com `options(biomastats.worldcover_root = "https://...")`. Também estão
+disponíveis `biomastats.copernicus_root`, `biomastats.soilgrids_wcs` e
+`biomastats.overture_stac`.
+:::

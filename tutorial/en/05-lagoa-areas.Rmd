@@ -1,0 +1,59 @@
+# (PART\*) Complete workflow: Lagoa do Sino {-}
+
+# Data, areas and maps {#lagoa-areas}
+
+In this part, every analysis in the package is applied, one after another, to a
+12.5 km² hexagon centred on the UFSCar Lagoa do Sino campus in Buri, São Paulo,
+using the MapBiomas Collection 10 annual maps from 1985 to 2024. The maps object
+ships with the package (it is stored under the name `mapas`):
+
+```{r}
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"))
+maps <- mapas
+```
+
+## Area by class {-}
+
+`get_area()` measures the area of each class in each year, accounting for the
+true area of every pixel, and returns both the table (`aggregate_data`) and a
+plot of the series:
+
+```{r areas, fig.height=5.5}
+areas <- get_area(maps, plot_type = "areaplot")
+areas$time_series
+```
+
+```{r include=FALSE}
+a <- areas$aggregate_data
+km2 <- function(code, year) sum(a$area_raw[a$land_class == code & a$year == year])
+total85 <- sum(a$area_raw[a$year == 1985])
+pas85 <- km2(15, 1985); pas24 <- km2(15, 2024)
+soy85 <- km2(39, 1985); soy24 <- km2(39, 2024)
+for85 <- km2(3, 1985); for24 <- km2(3, 2024)
+```
+
+In four decades, the landscape switched its productive base. In 1985, pasture
+covered `r num(pas85)` km², `r num(100 * pas85 / total85, 0)`% of the area; by
+2024, only `r num(pas24)` km² remained. Over the same period, soybean, absent in
+1985, grew to `r num(soy24)` km² and came to dominate the landscape. Forest
+formation shrank from `r num(100 * for85, 0)` ha to `r num(100 * for24, 0)` ha, a
+loss of `r num(100 * (for85 - for24) / for85, 0)`%.
+
+## Maps {-}
+
+With `land_vis()`, this transformation shows up on the map of each year, with
+the official MapBiomas legend and colours:
+
+```{r maps, fig.show="hold", out.width="50%", fig.width=6, fig.height=6}
+land_vis(maps, year = 1985)
+land_vis(maps, year = 2024)
+```
+
+## Composition in one year {-}
+
+To summarise the composition of a single year, `land_dist()` draws a bar chart
+(`type = "barplot"`) or a pie chart (`type = "pie"`):
+
+```{r distribution, fig.height=4.5}
+land_dist(areas, year = 2024, type = "barplot")
+```

@@ -1,0 +1,51 @@
+# (APPENDIX) Appendix {-}
+
+# About the project {#about}
+
+## Contributing {-}
+
+Feature suggestions, bug reports, support requests and offers to collaborate
+are all welcome. Open an issue on the
+[GitHub repository](https://github.com/iep-ferreira/biomastats/issues) or write
+to [iuri@ufscar.br](mailto:iuri@ufscar.br).
+
+## Citing the data {-}
+
+The land use and land cover maps come from the MapBiomas Project, Collection 10
+of the Annual Series of Land Cover and Land Use Maps of Brazil (Souza et al.,
+2020), available at <https://mapbiomas.org> under a CC BY-SA licence. The
+sources of the external layers are listed in Chapter \@ref(data-sources).
+
+## Acknowledgements {-}
+
+We thank the MapBiomas Project for making its land use and land cover
+collections available, the National Council for Scientific and Technological
+Development (CNPq) for grant 406540/2023-3, and the development team at
+[CeMECA – UFSCar Lagoa do Sino](https://www.cemeca.ufscar.br), who build and test
+Bioma Stats.
+
+We also thank the researchers of CNPq Universal Project 406540 who advise the
+team:
+
+- **Prof. Dr. Paulo Guilherme Molin**: geotechnologies
+- **Prof. Dr. Débora Cristina Rother**: landscape ecology
+- **Prof. Dr. Heber Lombardi de Carvalho**: management and information systems
+- **Prof. Dr. Jorge Luis Rodrigues Pantoja Filho**: environment
+- **Prof. Dr. Rafael de Oliveira Tiezzi**: environment
+
+## Terms of use {-}
+
+The Bioma Stats source code is protected by copyright and distributed under the
+GNU Affero General Public License (AGPL), version 3 or later. Anyone who
+redistributes or modifies the code must follow the terms of that licence and
+credit the authors of the original software. The full text is in the `LICENSE`
+file of the repository and at <https://www.gnu.org/licenses/agpl-3.0.html>. The
+program comes with no warranty.
+
+## Use of artificial intelligence {-}
+
+Artificial intelligence tools were used to support the preparation of this
+material and of the package, under the team's supervision and review, for code
+refactoring and optimisation, writing, and translation into English. All
+content produced with this help was reviewed and validated by the authors, who
+take full responsibility for the information presented.

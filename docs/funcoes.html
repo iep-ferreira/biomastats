@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Capítulo 2 Funções do pacote | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
+<meta name="description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Capítulo 2 Funções do pacote | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/imagens/capa.jpg">
+<meta property="og:description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Capítulo 2 Funções do pacote | Bioma Stats">
+<meta name="twitter:description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta name="twitter:image" content="/imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Uso e cobertura da terra em R: guia do usuário">Bioma Stats</a>:
+        <small class="text-muted">Uso e cobertura da terra em R: guia do usuário</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Apresentação</a></li>
+<li class="book-part">Primeiros passos</li>
+<li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
+<li><a class="active" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
+<li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li class="book-part">Fluxo completo: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
+<li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
+<li><a class="" href="lagoa-series.html"><span class="header-section-number">7</span> Séries temporais</a></li>
+<li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
+<li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
+<li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li class="book-part">Além do MapBiomas</li>
+<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li class="book-part">Apêndice</li>
+<li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="funcoes" class="section level1" number="2">
+<h1>
+<span class="header-section-number">Capítulo 2</span> Funções do pacote<a class="anchor" aria-label="anchor" href="#funcoes"><i class="fas fa-link"></i></a>
+</h1>
+<p>O pacote reúne 41 funções, e quase
+todas partem do mesmo ponto: o objeto de mapas criado por <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> (ou
+por <code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code>, fora do Brasil). Como cada resultado alimenta a etapa
+seguinte, as análises se encadeiam naturalmente:</p>
+<pre><code>área de estudo ─► load_rasters() ─► mapas ─┬─► get_area() ─┬─► class_diversity()
+                                            │               └─► land_time_series() ─► series_*()
+                                            ├─► land_change() · land_to_graph() · fragment_metrics()
+                                            └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()</code></pre>
+<p>Nas tabelas abaixo, a coluna <strong>Recebe</strong> indica a entrada usual de cada função.
+Para a documentação completa, use <code>?nome_da_função</code> no R.</p>
+<div id="área-de-estudo-e-aquisição" class="section level2 unnumbered">
+<h2>Área de estudo e aquisição<a class="anchor" aria-label="anchor" href="#%C3%A1rea-de-estudo-e-aquisi%C3%A7%C3%A3o"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Função</th>
+<th align="left">O que faz</th>
+<th align="left">Recebe</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/make_polygon.html">make_polygon()</a></code></td>
+<td align="left">Cria um círculo, quadrado ou hexágono a partir de latitude, longitude e largura total (km)</td>
+<td align="left">coordenadas</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/compare_shapefiles.html">compare_shapefiles()</a></code></td>
+<td align="left">Identifica os recortes (tiles) do MapBiomas que cobrem a área</td>
+<td align="left">shapefile</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code></td>
+<td align="left">Carrega, recorta e mascara os mapas anuais, por download seletivo ou de uma coleção local</td>
+<td align="left">shapefile</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_mapbiomas.html">download_mapbiomas()</a></code></td>
+<td align="left">Baixa a coleção nacional, um arquivo por ano</td>
+<td align="left">pasta de destino</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters_from_folder.html">load_rasters_from_folder()</a></code></td>
+<td align="left">Abre os mapas nacionais guardados em uma pasta</td>
+<td align="left">pasta da coleção</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/check_maps.html">check_maps()</a></code></td>
+<td align="left">Confere, baixa e junta por ano os recortes necessários</td>
+<td align="left">recortes e anos</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_maps.html">download_maps()</a></code></td>
+<td align="left">Baixa um recorte para um ou mais anos</td>
+<td align="left">recorte e anos</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/fetch_tile_manifest.html">fetch_tile_manifest()</a></code></td>
+<td align="left">Consulta a lista de arquivos de um recorte na API do Bioma Stats</td>
+<td align="left">recorte</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="áreas-mapas-e-classes" class="section level2 unnumbered">
+<h2>Áreas, mapas e classes<a class="anchor" aria-label="anchor" href="#%C3%A1reas-mapas-e-classes"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Função</th>
+<th align="left">O que faz</th>
+<th align="left">Recebe</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area()</a></code></td>
+<td align="left">Área de cada classe por ano (km²) e gráfico da série</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_vis.html">land_vis()</a></code></td>
+<td align="left">Mapa de uso e cobertura de um ano</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_dist.html">land_dist()</a></code></td>
+<td align="left">Composição das classes em um ano (colunas ou setores)</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/dict_build.html">dict_build()</a></code></td>
+<td align="left">Dicionário de classes: códigos, nomes em português e inglês, grupos e cores</td>
+<td align="left">coleção</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/raster_index.html">raster_index()</a></code></td>
+<td align="left">Índice das classes selecionáveis, com grupos, códigos e cores</td>
+<td align="left">coleção</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="composição-e-séries-temporais" class="section level2 unnumbered">
+<h2>Composição e séries temporais<a class="anchor" aria-label="anchor" href="#composi%C3%A7%C3%A3o-e-s%C3%A9ries-temporais"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Função</th>
+<th align="left">O que faz</th>
+<th align="left">Recebe</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/class_diversity.html">class_diversity()</a></code></td>
+<td align="left">Riqueza, Shannon, Pielou, Simpson, números de Hill e dominância por ano</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_time_series.html">land_time_series()</a></code></td>
+<td align="left">Separa as séries anuais das classes escolhidas</td>
+<td align="left"><code>get_area()$time_series</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_correlation.html">series_correlation()</a></code></td>
+<td align="left">Associação entre duas séries, com correção para autocorrelação</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_time_series.html">land_time_series()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_fit_regime.html">series_fit_regime()</a></code></td>
+<td align="left">Regimes contínuos com uma ou mais transições e intervalos bootstrap</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_time_series.html">land_time_series()</a></code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_diagnostics.html">series_diagnostics()</a></code></td>
+<td align="left">Resíduos, autocorrelação e qualidade do ajuste</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_fit_regime.html">series_fit_regime()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_forecast.html">series_forecast()</a></code></td>
+<td align="left">Projeção do regime ajustado, com intervalo</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/series_fit_regime.html">series_fit_regime()</a></code></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="mudanças-paisagem-e-conectividade" class="section level2 unnumbered">
+<h2>Mudanças, paisagem e conectividade<a class="anchor" aria-label="anchor" href="#mudan%C3%A7as-paisagem-e-conectividade"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Função</th>
+<th align="left">O que faz</th>
+<th align="left">Recebe</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change()</a></code></td>
+<td align="left">Transições entre duas ou três datas: ganhos, perdas, saldos e diagrama</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_to_graph.html">land_to_graph()</a></code></td>
+<td align="left">Adjacências entre classes, fronteiras e rede da paisagem</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics()</a></code></td>
+<td align="left">Área, bordas, fragmentos e agregação por ano para as classes escolhidas</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/lulc_metrics.html">lulc_metrics()</a></code></td>
+<td align="left">As mesmas métricas para um único mapa</td>
+<td align="left">um raster anual</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map()</a></code></td>
+<td align="left">Mapa reclassificado das classes escolhidas em um ano</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fragment_metrics()</a></code></td>
+<td align="left">Métricas de cada fragmento e distribuições por classe, na grade nativa</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code></td>
+<td align="left">Converte os mapas reclassificados em polígonos <code>sf</code>
+</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code></td>
+<td align="left">Conectividade dos fragmentos em vários limiares de distância</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast()</a></code></td>
+<td align="left">Importância de cada fragmento para a conectividade</td>
+<td align="left">cenário de <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="camadas-externas" class="section level2 unnumbered">
+<h2>Camadas externas<a class="anchor" aria-label="anchor" href="#camadas-externas"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Função</th>
+<th align="left">O que faz</th>
+<th align="left">Recebe</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/layer_catalog.html">layer_catalog()</a></code></td>
+<td align="left">Lista as fontes externas, suas versões e anos de referência</td>
+<td align="left">—</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code></td>
+<td align="left">Cobertura ESA WorldCover 10 m, em qualquer lugar do mundo, no formato de <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code>
+</td>
+<td align="left">shapefile ou <code>sf</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_features.html">load_features()</a></code></td>
+<td align="left">Estradas, ferrovias, rios, corpos d’água, edificações e localidades (OpenStreetMap ou Overture)</td>
+<td align="left">mapas, <code>sf</code> ou shapefile</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_physical.html">load_physical()</a></code></td>
+<td align="left">Altitude, declividade, orientação e propriedades do solo na grade dos mapas</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/feature_raster.html">feature_raster()</a></code></td>
+<td align="left">Superfícies de distância, contagem, comprimento, cobertura e densidade de feições</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/load_features.html">load_features()</a></code> e mapas</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/distance_to_nearest.html">distance_to_nearest()</a></code></td>
+<td align="left">Distância de coordenadas à feição ou classe mais próxima</td>
+<td align="left">pontos e feições ou mapas</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="auxiliares" class="section level2 unnumbered">
+<h2>Auxiliares<a class="anchor" aria-label="anchor" href="#auxiliares"><i class="fas fa-link"></i></a>
+</h2>
+<p>Algumas funções existem sobretudo para uso interno, mas ficam disponíveis para
+quem precisar delas: <code><a href="https://rdrr.io/pkg/biomastats/man/circle_coords.html">circle_coords()</a></code>, <code><a href="https://rdrr.io/pkg/biomastats/man/square_coords.html">square_coords()</a></code> e <code><a href="https://rdrr.io/pkg/biomastats/man/hexagon_coords.html">hexagon_coords()</a></code>
+desenham as formas de <code><a href="https://rdrr.io/pkg/biomastats/man/make_polygon.html">make_polygon()</a></code>; <code><a href="https://rdrr.io/pkg/biomastats/man/get_api_values.html">get_api_values()</a></code> e
+<code><a href="https://rdrr.io/pkg/biomastats/man/post_to_biomastats.html">post_to_biomastats()</a></code> conversam com a API; <code><a href="https://rdrr.io/pkg/biomastats/man/download_public_gdrive_file.html">download_public_gdrive_file()</a></code> e
+<code><a href="https://rdrr.io/pkg/biomastats/man/get_gdrive_filename.html">get_gdrive_filename()</a></code> baixam os arquivos públicos usados na aquisição.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></div>
+<div class="next"><a href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#funcoes"><span class="header-section-number">2</span> Funções do pacote</a></li>
+<li><a class="nav-link" href="#%C3%A1rea-de-estudo-e-aquisi%C3%A7%C3%A3o">Área de estudo e aquisição</a></li>
+<li><a class="nav-link" href="#%C3%A1reas-mapas-e-classes">Áreas, mapas e classes</a></li>
+<li><a class="nav-link" href="#composi%C3%A7%C3%A3o-e-s%C3%A9ries-temporais">Composição e séries temporais</a></li>
+<li><a class="nav-link" href="#mudan%C3%A7as-paisagem-e-conectividade">Mudanças, paisagem e conectividade</a></li>
+<li><a class="nav-link" href="#camadas-externas">Camadas externas</a></li>
+<li><a class="nav-link" href="#auxiliares">Auxiliares</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/02-funcoes.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/02-funcoes.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

@@ -25,3 +25,5 @@
 ^CHECKLIST-AJUSTES-FUTUROS\.md$
 ^test-fetch-tile-manifest\.R$
 ^shp-exemplos$
+^arquivo$
+^\.claude$

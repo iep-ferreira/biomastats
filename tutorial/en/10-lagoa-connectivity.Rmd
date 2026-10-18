@@ -1,0 +1,65 @@
+# Vectorization and connectivity {#lagoa-connectivity}
+
+## Fragments as polygons {-}
+
+To analyse connectivity, fragments need to become polygons.
+`reclass_to_polygons()` performs that conversion from the reclassified maps and
+keeps area, year and class identity. Here, the 2024 forest:
+
+```{r}
+polygons <- reclass_to_polygons(metrics, years = 2024, save_shp = FALSE)
+```
+
+There are `r nrow(polygons)` fragments, totalling `r num(sum(polygons$area_ha), 0)` ha.
+With `save_shp = TRUE`, each year is also written as a shapefile.
+
+## Connectivity at several thresholds {-}
+
+`land_connectivity()` links fragments that lie closer than a maximum distance,
+that is, the distance an organism can travel outside the forest, and computes
+connectivity indices for each threshold:
+
+```{r connectivity, fig.height=6}
+connectivity <- land_connectivity(polygons, max_dist = c(100, 300, 600),
+                                  language = "en")
+connectivity$plot
+```
+
+```{r echo=FALSE}
+cm <- connectivity$metrics
+tabela(data.frame(`Maximum distance (m)` = cm$max_dist_m, Components = cm$graph_components,
+                  `Isolated fragments` = cm$isolates, `IIC (×10⁻³)` = 1000 * cm$IIC, check.names = FALSE), 2)
+```
+
+For a species that only crosses 100 m of open land, the forest splits into
+`r cm$graph_components[1]` disconnected groups, with `r cm$isolates[1]` isolated
+fragments. At 300 m, `r cm$graph_components[2]` groups remain, and the integral
+index of connectivity (IIC) becomes `r num(cm$IIC[2] / cm$IIC[1], 0)` times
+larger. From 300 to 600 m, the gain is small: for species able to cross about
+300 m, the remaining forest already works as a network.
+
+## Priority fragments {-}
+
+`patch_imp_fast()` measures how much connectivity would drop if each fragment
+were removed, in the chosen scenario:
+
+```{r}
+scenario_300 <- connectivity$scenarios[["300"]]$land
+importance <- patch_imp_fast(scenario_300, metric = "IIC")
+```
+
+```{r include=FALSE}
+p <- sort(importance$prioritization, decreasing = TRUE)
+```
+
+Losing either of the two most important fragments would cut the IIC by
+`r num(p[1], 1)`% and `r num(p[2], 1)`%, respectively, while `r sum(p < 5)` of
+the `r length(p)` fragments reduce it by less than 5% each. The forest's
+connectivity therefore depends on conserving a handful of fragments.
+
+`land_connectivity()` already computes this prioritization for each threshold,
+and the map shows how much the index would drop without each fragment:
+
+```{r importance, fig.height=6}
+connectivity$importance_plot
+```

@@ -1,11 +1,15 @@
 #!/usr/bin/env Rscript
-# Rebuild docs/ (GitHub Pages) from tutorial.Rmd.
+# Rebuild docs/ (GitHub Pages) from the bookdown books in tutorial/ (Portuguese)
+# and tutorial/en/ (English).
 #
 # Usage (from the package root):
 #   Rscript build_docs.R
+#
+# Requires bookdown and downlit. The book is rendered with the current package
+# source, installed in a temporary library, independently of any biomastats
+# version installed in the user's library. Figures of external layers are
+# generated only when missing from tutorial/imagens/ (requires internet once).
 
-# Prefer the directory that contains this script when Rscript was invoked
-# with a path; otherwise use the current working directory.
 args <- commandArgs(trailingOnly = FALSE)
 file_arg <- grep("^--file=", args, value = TRUE)
 root <- if (length(file_arg)) {
@@ -13,60 +17,27 @@ root <- if (length(file_arg)) {
 } else {
   normalizePath(getwd(), winslash = "/", mustWork = TRUE)
 }
-setwd(root)
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
 
-message("Working directory: ", root)
-
-css_src <- file.path("tutorial_includes", "site_theme.css")
-if (!file.exists(css_src)) {
-  stop(
-    "Missing ", css_src, ". ",
-    "This file is required by tutorial_includes/lang_header.html ",
-    "and is what defines the tutorial visual identity."
-  )
+for (pkg in c("bookdown", "downlit")) {
+  if (!requireNamespace(pkg, quietly = TRUE)) stop("Install the '", pkg, "' package first.")
 }
 
-message("Rendering tutorial.Rmd → tutorial.html ...")
-rmarkdown::render(
-  input = "tutorial.Rmd",
-  output_file = "tutorial.html",
-  output_dir = root,
-  quiet = FALSE,
-  envir = new.env(parent = globalenv())
-)
+lib <- file.path(tempdir(), "biomastats-book-lib")
+dir.create(lib, showWarnings = FALSE)
+message("Installing biomastats from ", root, " ...")
+status <- system2(file.path(R.home("bin"), "R"),
+                  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(lib)),
+                    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
+if (status != 0) stop("R CMD INSTALL failed.")
+.libPaths(c(lib, .libPaths()))
 
-if (!file.exists("tutorial.html")) {
-  stop("Render finished but tutorial.html was not created.")
-}
+# Portuguese edition -> docs/; English edition -> docs/en/ (rendered second).
+setwd(file.path(root, "tutorial"))
+bookdown::render_book("index.Rmd", quiet = TRUE)
+setwd(file.path(root, "tutorial", "en"))
+bookdown::render_book("index.Rmd", quiet = TRUE)
 
-# Preserve artifacts in docs/ that this script does not regenerate.
-preserve <- character()
-pdf_src <- file.path("docs", "tutorial.pdf")
-if (file.exists(pdf_src)) {
-  tmp_pdf <- tempfile(fileext = ".pdf")
-  file.copy(pdf_src, tmp_pdf, overwrite = TRUE)
-  preserve["tutorial.pdf"] <- tmp_pdf
-}
-
-message("Recreating docs/ ...")
-if (dir.exists("docs")) {
-  unlink("docs", recursive = TRUE)
-}
-dir.create("docs", recursive = TRUE)
-dir.create(file.path("docs", "tutorial_includes"), recursive = TRUE)
-
-ok <- file.copy("tutorial.html", file.path("docs", "index.html"), overwrite = TRUE)
-includes <- list.files("tutorial_includes", full.names = TRUE)
-ok <- ok && all(file.copy(includes, file.path("docs", "tutorial_includes"), overwrite = TRUE))
-if (!isTRUE(ok)) stop("Failed to copy one or more files into docs/.")
-
-for (name in names(preserve)) {
-  if (!file.copy(preserve[[name]], file.path("docs", name), overwrite = TRUE)) {
-    stop("Failed to restore preserved file: ", name)
-  }
-  unlink(preserve[[name]])
-}
-
-same_html <- tools::md5sum("tutorial.html") == tools::md5sum(file.path("docs", "index.html"))
-message("docs/index.html == tutorial.html: ", same_html)
+# GitHub Pages: serve files as they are (no Jekyll processing).
+file.create(file.path(root, "docs", ".nojekyll"))
 message("Done. Preview: docs/index.html")

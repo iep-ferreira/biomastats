@@ -1,0 +1,58 @@
+# (PART\*) Fluxo completo: Lagoa do Sino {-}
+
+# Dados, áreas e mapas {#lagoa-areas}
+
+Nesta parte, todas as análises do pacote são aplicadas, uma após a outra, a um
+hexágono de 12,5 km² centrado no campus Lagoa do Sino da UFSCar, em Buri (SP),
+com os mapas anuais da Coleção 10 do MapBiomas de 1985 a 2024. O objeto de
+mapas vem com o pacote:
+
+```{r}
+load(system.file("examples", "mapa_exemplo.Rdata", package = "biomastats"))
+```
+
+## Áreas por classe {-}
+
+`get_area()` mede a área de cada classe em cada ano, levando em conta a área
+real de cada pixel, e devolve tanto a tabela (`aggregate_data`) quanto o gráfico
+da série:
+
+```{r areas, fig.height=5.5}
+areas <- get_area(mapas, plot_type = "areaplot")
+areas$time_series
+```
+
+```{r include=FALSE}
+a <- areas$aggregate_data
+km2 <- function(code, year) sum(a$area_raw[a$land_class == code & a$year == year])
+total85 <- sum(a$area_raw[a$year == 1985])
+pas85 <- km2(15, 1985); pas24 <- km2(15, 2024)
+soj85 <- km2(39, 1985); soj24 <- km2(39, 2024)
+flo85 <- km2(3, 1985); flo24 <- km2(3, 2024)
+```
+
+Em quatro décadas, a paisagem trocou de base produtiva. Em 1985, a pastagem
+ocupava `r num(pas85)` km², `r num(100 * pas85 / total85, 0)`% da área; em 2024,
+restavam `r num(pas24)` km². No mesmo período, a soja, que não aparecia em 1985,
+chegou a `r num(soj24)` km² e passou a dominar a paisagem. A formação florestal
+encolheu de `r num(100 * flo85, 0)` ha para `r num(100 * flo24, 0)` ha, uma perda
+de `r num(100 * (flo85 - flo24) / flo85, 0)`%.
+
+## Mapas {-}
+
+Com `land_vis()`, essa transformação fica visível no mapa de cada ano, com a
+legenda e as cores oficiais do MapBiomas:
+
+```{r mapas, fig.show="hold", out.width="50%", fig.width=6, fig.height=6}
+land_vis(mapas, year = 1985)
+land_vis(mapas, year = 2024)
+```
+
+## Composição em um ano {-}
+
+Para resumir a composição de um único ano, `land_dist()` desenha um gráfico de
+colunas (`type = "barplot"`) ou de setores (`type = "pie"`):
+
+```{r distribuicao, fig.height=4.5}
+land_dist(areas, year = 2024, type = "barplot")
+```

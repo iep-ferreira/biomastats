@@ -1,5 +1,10 @@
 # Plano de refatoração do tutorial
 
+> **Executado em 2026-10-18.** O tutorial foi reconstruído como livro bookdown
+> em `tutorial/`, publicado em `docs/`, com a identidade visual descrita em
+> `development/identidade-visual-livro.md`. O tutorial anterior está em
+> `arquivo/tutorial-2.0/`. Este plano fica como registro.
+
 Data: 2026-10-16. Base: `tutorial.Rmd` (615 linhas, bilíngue pt/en via `b()`,
 `bh()` e `bli()`, publicado em `docs/` por `build_docs.R`) e o teste local
 integrado (hoje `testes-manuais/teste-manual-integrado.Rmd`), que executa todas

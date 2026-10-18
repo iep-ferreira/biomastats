@@ -1,0 +1,24 @@
+book_filename: "biomastats-book"
+output_dir: "../../docs/en"
+delete_merged_file: true
+before_chapter_script: ["_lang.R", "../_common.R"]
+language:
+  label:
+    fig: "Figure "
+    tab: "Table "
+  ui:
+    chapter_name: "Chapter "
+rmd_files:
+  - index.Rmd
+  - 01-installation.Rmd
+  - 02-functions.Rmd
+  - 03-data-sources.Rmd
+  - 04-acquisition.Rmd
+  - 05-lagoa-areas.Rmd
+  - 06-lagoa-diversity.Rmd
+  - 07-lagoa-time-series.Rmd
+  - 08-lagoa-change.Rmd
+  - 09-lagoa-landscape.Rmd
+  - 10-lagoa-connectivity.Rmd
+  - 11-external-layers.Rmd
+  - 12-about.Rmd

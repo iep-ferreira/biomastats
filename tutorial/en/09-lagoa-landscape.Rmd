@@ -1,0 +1,67 @@
+# Landscape metrics and fragments {#lagoa-landscape}
+
+The metrics in this chapter are computed on the original map grid, without
+reprojection. Areas and edges are measured on the ellipsoid, and there is no
+need to specify a UTM zone.
+
+## Metrics per year {-}
+
+`biomastats_metrics()` reclassifies the maps to the classes of interest and,
+year by year, computes area, edges, number of fragments and the aggregation
+index. Let us follow the forest formation:
+
+```{r metrics, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+metrics <- biomastats_metrics(maps, classes = 3, metrics = "keep.all")
+metrics$ai_plot
+metrics$fragments_number
+```
+
+```{r include=FALSE}
+mt <- metrics$metrics_table
+m85 <- mt[mt$Year == 1985, ]; m24 <- mt[mt$Year == 2024, ]
+```
+
+Besides shrinking, the forest became more fragmented: the number of fragments
+went from `r m85[["Number of Fragments"]]` to `r m24[["Number of Fragments"]]`,
+and the aggregation index fell from `r num(m85[["Aggregation Index (%)"]], 0)`% to
+`r num(m24[["Aggregation Index (%)"]], 0)`%. The full table is in
+`metrics$metrics_table`; for a single map, use `lulc_metrics()`.
+
+`reclass_map()` highlights the selected class against the rest of the
+landscape:
+
+```{r reclassified, fig.show="hold", out.width="50%", fig.width=6, fig.height=5.5}
+reclass_map(metrics, year = 1985)
+reclass_map(metrics, year = 2024)
+```
+
+## Fragments {-}
+
+`fragment_metrics()` goes down to the level of each fragment. For every one, it
+measures area, perimeter, core area, shape, fractal dimension, centroid,
+elongation and distance to the nearest neighbour; for each class and year, it
+summarises the size distribution:
+
+```{r fragments, fig.height=5.5}
+fragments <- fragment_metrics(maps, classes = 3, years = c(1985, 2004, 2024),
+                              language = "en")
+fragments$plots$map
+```
+
+```{r echo=FALSE}
+s <- fragments$summary
+tabela(data.frame(Year = s$year, Fragments = s$n_patches, `Area (ha)` = s$class_area_ha,
+                  `Mean area (ha)` = s$area_mean, `Median area (ha)` = s$area_median,
+                  `Largest fragment (% of landscape)` = s$lpi, Gini = s$area_gini,
+                  `Nearest neighbour, median (m)` = s$enn_median, check.names = FALSE), 2)
+```
+
+```{r include=FALSE}
+s85 <- s[s$year == 1985, ]; s24 <- s[s$year == 2024, ]
+```
+
+The average fragment shrank from `r num(s85$area_mean, 1)` ha to
+`r num(s24$area_mean, 1)` ha, and the largest one, which covered
+`r num(s85$lpi, 1)`% of the landscape, now covers `r num(s24$lpi, 1)`%. Size
+inequality (Gini) remains high, meaning that a few fragments hold most of the
+forest. The data for each fragment are in `fragments$patches`.
