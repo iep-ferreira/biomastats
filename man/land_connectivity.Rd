@@ -11,6 +11,11 @@ land_connectivity(
   boundary = NULL,
   crs = NULL,
   metric_patch = c("IIC", "AWF"),
+  iic_rule = c("definition", "lconnect"),
+  k = NULL,
+  p_ref = 0.5,
+  d_ref = NULL,
+  parallel = FALSE,
   language = c("pt", "en"),
   build_plot = TRUE
 )
@@ -36,7 +41,15 @@ projetado em metros. Caso contrario escolhe UTM local para extensoes de ate
 seis graus de longitude entre 80S e 84N; regioes maiores exigem CRS explicito.
 A geometria original e preservada em source_polygons.}
 
-\item{metric_patch}{Indices de priorizacao, IIC e/ou AWF; padrao ambos.}
+\item{metric_patch}{Indices de priorizacao: IIC, PC e/ou AWF; padrao IIC e
+AWF. O PC e o mais custoso (poda n^3 e caminhos ponderados).}
+
+\item{iic_rule}{"definition" (padrao) ou "lconnect"; ver \code{\link[=patch_imp_fast]{patch_imp_fast()}}.}
+
+\item{k, p_ref, d_ref}{Calibracao de k para PC e AWF, como em
+\code{\link[=patch_imp_fast]{patch_imp_fast()}}. Sem k nem d_ref, cada limiar usa p = 0,5 a max_dist / 2.}
+
+\item{parallel}{Paralelizar o conector com future.apply (FALSE por padrao).}
 
 \item{language}{Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.}
 
@@ -45,11 +58,14 @@ A geometria original e preservada em source_polygons.}
 \value{
 Lista biomastats_connectivity com source_polygons, analysis_polygons,
 boundary, distance (matriz em metros), metrics (data.frame por limiar),
-patch_metrics (sf por fragmento/limiar), edge_metrics (data.frame),
+patch_metrics (sf por fragmento/limiar, com dIIC, dPC, dAWF e suas fracoes
+dX_intra, dX_flux e dX_connector), fraction_metrics (data.frame longo das
+fracoes por fragmento, limiar e indice), edge_metrics (data.frame),
 scenarios (lista nomeada por limiar, cada item com land de classe lconnect,
 graph igraph com todos os fragmentos e patch_importance com objetos pimp),
 class_dictionary, metadata, plot (grafo espacial ggplot), cluster_plot,
-importance_plot e range_plot. Todos sao reutilizaveis apos saveRDS/readRDS.
+importance_plot, fractions_plot, connector_plot e range_plot. Todos sao
+reutilizaveis apos saveRDS/readRDS.
 }
 \description{
 Integra diretamente os poligonos sf de \code{\link[=reclass_to_polygons]{reclass_to_polygons()}} ao fluxo de
@@ -58,27 +74,32 @@ nao grava shapefiles e nao recalcula distancias nas remocoes de fragmentos.
 }
 \details{
 Distancias sao minimas entre bordas de poligonos, nao entre centroides.
-Os indices NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF e IIC reproduzem as
-convencoes de lconnect 0.1.2 com rotinas nativas otimizadas. Areas SLC, MSC
-e ECS sao m2; AWF e m4; CPL e numero de passos; IIC, CCP e LCP sao adimensionais.
+NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS e AWF reproduzem as convencoes de
+lconnect 0.1.2 com rotinas nativas otimizadas. IIC segue a definicao de
+Pascual-Hortal & Saura (2006), que inclui os fragmentos isolados; o valor do
+lconnect, que os omite, fica em IIC_lconnect. PC (Saura & Pascual-Hortal 2007)
+usa a probabilidade maxima de caminho e so e calculado quando pedido em
+metric_patch (NA caso contrario). Areas SLC, MSC e ECS sao m2; AWF e m4; CPL e
+numero de passos; IIC, PC, CCP e LCP sao adimensionais.
 
-O grafo de exploracao usa distancia < max_dist, incluindo contatos a distancia
-zero, e preserva isolados. Para compatibilidade, NC e indices de componentes
-usam distancia <= max_dist (single linkage de lconnect), enquanto IIC e CPL
-usam distancia < max_dist e excluem isolados. Contatos a distancia zero
-contam como ligacoes (lconnect 0.1.2 os descarta); o ideal e dissolve-los
-antes, com reclass_to_polygons(directions = 8). Em empates no limiar,
-NC pode diferir de graph_components e componentes do grafo.
-patch_metrics distingue cluster_lconnect, component e iic_included.
-Estas diferencas sao explicitas; nao se deve interpretar NC como contagem
-dos componentes do grafo estrito nos casos de fronteira do limiar.
+O grafo de exploracao, o IIC e o CPL usam distancia < max_dist, incluindo
+contatos a distancia zero, e preservam isolados. Para compatibilidade, NC e
+indices de componentes usam distancia <= max_dist (single linkage de
+lconnect). O ideal e dissolver contatos antes, com
+reclass_to_polygons(directions = 8). Em empates no limiar, NC pode diferir
+de graph_components e componentes do grafo. patch_metrics distingue
+cluster_lconnect, component e iic_included (todos os fragmentos na regra
+"definition"; somente os com ligacao a d > 0 na regra "lconnect").
 
-IIC mantem o denominador area_l fixo na remocao de fragmentos. AWF nao corta
-pares pelo limiar; max_dist controla seu decaimento exponencial. Em indices
-inicialmente zero, a priorizacao e indefinida (NaN), com status
-"undefined_baseline" no objeto pimp. Um fragmento nao tem ranking relativo e
-recebe o mesmo status. CPL sem pares conectados e NA. Nenhum indice prova
-conectividade funcional.
+A importancia e decomposta segundo Saura & Rubio (2010) em intra (area do
+proprio fragmento), fluxo (ligacao com os demais) e conector (papel de
+trampolim nos melhores caminhos entre outros fragmentos). No AWF tudo e
+fluxo. IIC e PC mantem o denominador area_l fixo na remocao de fragmentos.
+AWF nao corta pares pelo limiar; max_dist controla seu decaimento
+exponencial. Em indices inicialmente zero, a priorizacao e indefinida (NaN),
+com status "undefined_baseline" no objeto pimp. Um fragmento nao tem ranking
+relativo e recebe o mesmo status. CPL sem pares conectados e NA. Nenhum
+indice prova conectividade funcional.
 
 A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva
@@ -90,7 +111,9 @@ plot usa cores das classes herdadas e simbolos para isolados. As linhas
 ligam pontos interiores apenas para visualizacao; nao sao corredores nem
 representam a linha da menor distancia entre bordas. cluster_plot usa cores
 categoricas de componentes (nao classes de uso). importance_plot usa escala
-continua da reducao percentual. Todos aceitam labs, temas e escalas ggplot2;
+continua da reducao percentual. fractions_plot empilha intra, fluxo e
+conector dos 15 fragmentos mais importantes por indice e limiar;
+connector_plot mapeia a fracao de conector (IIC e PC). Todos aceitam labs, temas e escalas ggplot2;
 use ggsave/st_write/write.csv/write_graph/saveRDS nos retornos para escrita.
 O pacote lconnect e opcional: os objetos land/pimp sao construidos em memoria
 com seu contrato e podem ser consumidos pelas suas funcoes quando instalado.
@@ -99,12 +122,17 @@ A matriz de distancias e os calculos de caminhos requerem memoria quadratica.
 \examples{
 \dontrun{
 poligonos <- reclass_to_polygons(metricas, save_shp = FALSE)
-conectividade <- land_connectivity(poligonos, max_dist = c(30, 100, 300))
+conectividade <- land_connectivity(poligonos, max_dist = c(30, 100, 300),
+  metric_patch = c("IIC", "PC", "AWF"))
 conectividade$plot + ggplot2::labs(title = "Conectividade dos fragmentos")
 conectividade$metrics
+conectividade$fractions_plot
 lconnect::con_metric(conectividade$scenarios[[1]]$land, c("NC", "LNK", "IIC"))
 }
 }
 \references{
+Pascual-Hortal, L. & Saura, S. (2006) Landscape Ecology 21:
+959-967. Saura, S. & Pascual-Hortal, L. (2007) Landscape and Urban
+Planning 83: 91-103. Saura, S. & Rubio, L. (2010) Ecography 33: 523-537.
 \href{https://cran.r-project.org/package=lconnect}{lconnect 0.1.2}.
 }

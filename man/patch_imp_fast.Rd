@@ -2,44 +2,86 @@
 % Please edit documentation in R/patch_imp_fast.R
 \name{patch_imp_fast}
 \alias{patch_imp_fast}
-\title{Priorizacao otimizada de fragmentos compativel com lconnect}
+\title{Priorizacao otimizada de fragmentos por IIC, PC ou AWF}
 \usage{
-patch_imp_fast(landscape, metric = c("IIC", "AWF"), parallel = FALSE)
+patch_imp_fast(
+  landscape,
+  metric = c("IIC", "PC", "AWF"),
+  parallel = FALSE,
+  method = c("decomposition", "removal"),
+  iic_rule = c("definition", "lconnect"),
+  k = NULL,
+  p_ref = 0.5,
+  d_ref = NULL
+)
 }
 \arguments{
 \item{landscape}{Objeto de classe lconnect, produzido por
 \code{\link[=land_connectivity]{land_connectivity()}} ou lconnect::upload_land(). Deve usar CRS em metros.}
 
-\item{metric}{Indice de priorizacao: "IIC" (padrao) ou "AWF".}
+\item{metric}{Indice de priorizacao: "IIC" (padrao), "PC" ou "AWF".}
 
-\item{parallel}{Paralelizar remocoes IIC com future.apply, usando o plano
-definido pelo usuario. FALSE por padrao; nao altera o plano global.}
+\item{parallel}{Paralelizar o calculo do conector com future.apply, usando
+o plano definido pelo usuario. FALSE por padrao; nao altera o plano global.}
+
+\item{method}{"decomposition" (padrao), pela identidade de Saura & Rubio
+(2010), ou "removal", que recalcula o indice apos cada remocao e serve
+de referencia. Sem efeito para AWF, calculado em forma fechada.}
+
+\item{iic_rule}{"definition" (padrao) segue Pascual-Hortal & Saura (2006)
+e inclui fragmentos isolados; "lconnect" reproduz o lconnect 0.1.2, que
+omite isolados e contatos a distancia zero, apenas para comparacao.}
+
+\item{k}{Constante de decaimento (1/m) de p_ij = exp(-k d_ij), usada por
+PC e AWF. Tem prioridade sobre p_ref e d_ref.}
+
+\item{p_ref, d_ref}{Calibracao de k pela probabilidade de dispersao p_ref na
+distancia d_ref (m): k = -log(p_ref) / d_ref. Padrao: p = 0,5 a
+max_dist / 2, como no lconnect.}
 }
 \value{
-Objeto de classe pimp com landscape (sf com coluna attributes) e
-prioritization (reducao percentual do indice apos remover cada fragmento).
-O atributo metric identifica o indice. Nao escreve arquivos.
+Objeto de classe pimp com landscape (sf com coluna attributes),
+prioritization (reducao percentual do indice apos remover cada fragmento)
+e fractions (data.frame com intra, flux e connector, em \% do indice, que
+somam prioritization; NULL na regra lconnect e no metodo removal).
+Atributos: metric, status, index (valor do indice na paisagem), k,
+method, iic_rule e connector_candidates. Nao escreve arquivos.
 }
 \description{
 Reutiliza a matriz de distancias de um objeto lconnect, sem reconstruir
-geometrias ou recalcular distancias a cada remocao de fragmento.
+geometrias ou recalcular distancias a cada remocao de fragmento, e
+decompoe a importancia em fracoes intra, fluxo e conector.
 }
 \details{
-IIC usa caminhos topologicos nao ponderados, arestas com
-distancia < max_dist (inclusive contatos a distancia zero) e exclui
-vertices isolados. Diferentemente de lconnect 0.1.2, que descarta
-distancias zero, fragmentos que se tocam sao considerados conectados;
-prefira dissolve-los antes com \code{\link[=reclass_to_polygons]{reclass_to_polygons()}}. A area do limite permanece fixa em todas as remocoes.
-AWF usa exp(-k*d), k = -log(0.5)/(max_dist/2), sem diagonal, para todos
-os pares, mesmo alem do limiar. Sua contribuicao marginal e calculada
-por operacoes matriciais, incluindo corretamente as duas parcelas da
-diagonal que precisam ser removidas. AWF tem unidades de area ao quadrado.
-Quando o indice inicial e zero, a prioridade e indefinida e retorna NaN;
-status = "undefined_baseline" e anexado ao objeto. Uma paisagem com um
-fragmento tambem nao possui ranking relativo e recebe esse status.
-Memoria quadratica no numero de fragmentos; IIC recalcula caminhos apos
-cada remocao e pode continuar custoso em paisagens grandes.
+IIC e PC tem a forma I = sum_ij a_i a_j M_ij / A_L^2, somada em
+todos os fragmentos, inclusive i = j e os isolados (M_ii = 1). No IIC,
+M_ij = 1 / (1 + nl_ij), com ligacao quando d_ij < max_dist, inclusive
+contatos (d = 0). No PC (Saura & Pascual-Hortal 2007), M_ij = p*_ij, a
+maior probabilidade entre todos os caminhos, diretos ou indiretos, de
+modo que um trampolim (stepping stone) recebe importancia de conector.
+AWF (Jordan et al. 2003) soma apenas o fluxo direto a_i a_j exp(-k d_ij),
+i != j, mesmo alem do limiar; sua importancia e toda fluxo.
+
+A decomposicao calcula intra (a_r^2) e fluxo em forma fechada e recalcula
+o conector apenas para fragmentos que estao em algum melhor caminho entre
+outros dois, e so entre esses pares. No PC, arestas com dois ou mais
+desvios estritamente mais curtos sao podadas sem alterar o resultado.
+A area do limite permanece fixa em todas as remocoes.
+
+Quando o indice inicial e zero ou ha um unico fragmento, a prioridade e
+indefinida (NaN) e status = "undefined_baseline". Memoria quadratica no
+numero de fragmentos; a poda do PC custa n^3 operacoes.
+}
+\examples{
+\dontrun{
+land <- land_connectivity(poligonos, max_dist = 300)$scenarios[[1]]$land
+pc <- patch_imp_fast(land, metric = "PC", p_ref = 0.05, d_ref = 300)
+head(pc$fractions)
+}
 }
 \references{
+Pascual-Hortal, L. & Saura, S. (2006) Landscape Ecology 21:
+959-967. Saura, S. & Pascual-Hortal, L. (2007) Landscape and Urban
+Planning 83: 91-103. Saura, S. & Rubio, L. (2010) Ecography 33: 523-537.
 \href{https://cran.r-project.org/package=lconnect}{lconnect}.
 }

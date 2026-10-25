@@ -64,3 +64,38 @@ mostra quanto o índice cairia sem cada fragmento:
 ```{r importancia, fig.height=6}
 conectividade$importance_plot
 ```
+
+O IIC segue a definição de Pascual-Hortal e Saura (2006): fragmentos isolados
+também contam, pela própria área. O valor do `lconnect`, que os omite, fica em
+`conectividade$metrics$IIC_lconnect`.
+
+## Trampolins e frações da importância {-}
+
+A importância de cada fragmento se divide em três partes (Saura e Rubio, 2010):
+a área do próprio fragmento (intra), a ligação direta com os demais (fluxo) e o
+papel de **trampolim**, quando ele está no melhor caminho entre outros dois
+(conector). A probabilidade de conectividade (PC; Saura e Pascual-Hortal, 2007)
+considera caminhos indiretos e é a métrica mais indicada para identificar
+trampolins. Aqui, com probabilidade de dispersão de 5% a 300 m:
+
+```{r}
+pc <- patch_imp_fast(cenario_300, metric = "PC", p_ref = 0.05, d_ref = 300)
+head(pc$fractions)
+```
+
+```{r include=FALSE}
+f <- pc$fractions
+trampolins <- sum(f$connector > 0.5 * pc$prioritization)
+```
+
+Em `r trampolins` fragmentos, mais da metade da importância vem do papel de
+conector: são manchas pequenas que valem mais pela posição do que pela área.
+Em `land_connectivity()`, as frações ficam em `patch_metrics` (colunas
+`dPC_intra`, `dPC_flux` e `dPC_connector`) e em `fraction_metrics`, com os
+gráficos `fractions_plot` e `connector_plot`:
+
+```{r fracoes, fig.height=6}
+conectividade_pc <- land_connectivity(poligonos, max_dist = 300,
+  metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300)
+conectividade_pc$fractions_plot
+```
