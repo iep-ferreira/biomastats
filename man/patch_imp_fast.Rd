@@ -26,8 +26,10 @@ geometrias ou recalcular distancias a cada remocao de fragmento.
 }
 \details{
 IIC usa caminhos topologicos nao ponderados, arestas com
-0 < distancia < max_dist e exclui vertices isolados, reproduzindo
-lconnect 0.1.2. A area do limite permanece fixa em todas as remocoes.
+distancia < max_dist (inclusive contatos a distancia zero) e exclui
+vertices isolados. Diferentemente de lconnect 0.1.2, que descarta
+distancias zero, fragmentos que se tocam sao considerados conectados;
+prefira dissolve-los antes com \code{\link[=reclass_to_polygons]{reclass_to_polygons()}}. A area do limite permanece fixa em todas as remocoes.
 AWF usa exp(-k*d), k = -log(0.5)/(max_dist/2), sem diagonal, para todos
 os pares, mesmo alem do limiar. Sua contribuicao marginal e calculada
 por operacoes matriciais, incluindo corretamente as duas parcelas da

@@ -11,8 +11,10 @@
 #'   prioritization (reducao percentual do indice apos remover cada fragmento).
 #'   O atributo metric identifica o indice. Nao escreve arquivos.
 #' @details IIC usa caminhos topologicos nao ponderados, arestas com
-#'   0 < distancia < max_dist e exclui vertices isolados, reproduzindo
-#'   lconnect 0.1.2. A area do limite permanece fixa em todas as remocoes.
+#'   distancia < max_dist (inclusive contatos a distancia zero) e exclui
+#'   vertices isolados. Diferentemente de lconnect 0.1.2, que descarta
+#'   distancias zero, fragmentos que se tocam sao considerados conectados;
+#'   prefira dissolve-los antes com [reclass_to_polygons()]. A area do limite permanece fixa em todas as remocoes.
 #'   AWF usa exp(-k*d), k = -log(0.5)/(max_dist/2), sem diagonal, para todos
 #'   os pares, mesmo alem do limiar. Sua contribuicao marginal e calculada
 #'   por operacoes matriciais, incluindo corretamente as duas parcelas da
@@ -72,9 +74,11 @@ patch_imp_fast <- function(landscape, metric = c("IIC", "AWF"), parallel = FALSE
     units::set_units(1, crs$ud_unit, mode = "standard"), "m")), 1)), error = function(e) FALSE)
 }
 
-# Metric graph: lconnect 0.1.2 drops zero distances and isolated vertices.
+# Metric graph: touching fragments (distance 0) are linked and isolated
+# vertices dropped. lconnect 0.1.2 drops zero distances, which would make
+# touching fragments less connected than nearby ones.
 .build_lconnect_graph <- function(D, max_dist) {
-  idx <- which(D > 0 & D < max_dist & upper.tri(D), arr.ind = TRUE)
+  idx <- which(D < max_dist & upper.tri(D), arr.ind = TRUE)
   if (!nrow(idx)) return(igraph::make_empty_graph(n = 0, directed = FALSE))
   igraph::graph_from_data_frame(data.frame(from = as.character(idx[, 1]),
     to = as.character(idx[, 2])), directed = FALSE)

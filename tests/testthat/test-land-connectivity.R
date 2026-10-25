@@ -103,9 +103,13 @@ test_that("threshold boundaries and zero-distance contacts have explicit semanti
   touching <- land_connectivity(connectivity_patches(c(0, 10)), max_dist = 5, build_plot = FALSE)
   expect_equal(touching$metrics$LNK, 1)
   expect_equal(touching$metrics$NC, 1)
-  expect_equal(touching$metrics$IIC, 0)
+  # Touching fragments are linked: (a^2 + a^2 + 2 * a^2 / 2) / area_l^2.
+  a <- 100
+  expect_equal(touching$metrics$IIC, 3 * a^2 / touching$metadata$landscape_area_m2^2)
+  expect_equal(touching$metrics$CPL, 1)
   expect_equal(igraph::ecount(touching$scenarios[[1]]$graph), 1)
-  expect_false(any(touching$patch_metrics$iic_included))
+  expect_true(all(touching$patch_metrics$iic_included))
+  expect_equal(touching$patch_metrics$dIIC, c(100, 100))
 })
 
 test_that("single patches and zero baselines mark relative priority undefined", {
