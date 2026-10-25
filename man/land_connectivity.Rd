@@ -113,7 +113,8 @@ representam a linha da menor distancia entre bordas. cluster_plot usa cores
 categoricas de componentes (nao classes de uso). importance_plot usa escala
 continua da reducao percentual. fractions_plot empilha intra, fluxo e
 conector dos 15 fragmentos mais importantes por indice e limiar;
-connector_plot mapeia a fracao de conector (IIC e PC). Todos aceitam labs, temas e escalas ggplot2;
+connector_plot mapeia a fracao de conector (IIC e PC).
+Todos aceitam labs, temas e escalas ggplot2;
 use ggsave/st_write/write.csv/write_graph/saveRDS nos retornos para escrita.
 O pacote lconnect e opcional: os objetos land/pimp sao construidos em memoria
 com seu contrato e podem ser consumidos pelas suas funcoes quando instalado.

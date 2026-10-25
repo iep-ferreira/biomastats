@@ -231,6 +231,14 @@ test_that("native vectorization, plots, dictionary and RDS remain interoperable"
   expect_equal(restored$class_dictionary, out$class_dictionary)
   expect_equal(restored$metadata, out$metadata)
   expect_equal(restored$plot$labels$title, "Custom connectivity")
+  expect_equal(restored$fraction_metrics, out$fraction_metrics)
+  expect_equal(restored$patch_metrics, out$patch_metrics)
+  expect_equal(attributes(restored$scenarios[[1]]$patch_importance$IIC),
+               attributes(out$scenarios[[1]]$patch_importance$IIC))
+  for (name in c("fractions_plot", "connector_plot")) {
+    expect_s3_class(ggplot2::ggplot_build(restored[[name]]), "ggplot_built")
+  }
+  expect_equal(restored$metadata$schema_version, "1.1")
   expect_equal(igraph::as_data_frame(restored$scenarios[[1]]$graph),
                igraph::as_data_frame(out$scenarios[[1]]$graph))
 })

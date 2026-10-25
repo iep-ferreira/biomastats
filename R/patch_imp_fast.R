@@ -73,23 +73,8 @@ patch_imp_fast <- function(landscape, metric = c("IIC", "PC", "AWF"), parallel =
   .as_pimp(landscape, res, metric, iic_rule)
 }
 
-.as_pimp <- function(landscape, res, metric, iic_rule) {
-  p <- landscape$landscape
-  if (!"fragment_id" %in% names(p)) {
-    p$fragment_id <- if (!is.null(landscape$fragment_id)) landscape$fragment_id else seq_len(nrow(p))
-  }
-  p$attributes <- res$importance
-  status <- if (all(is.nan(res$importance))) "undefined_baseline" else "ok"
-  structure(list(landscape = p, prioritization = res$importance, fractions = res$fractions),
-    class = "pimp", metric = metric, status = status, index = res$index, k = res$k,
-    method = res$method, iic_rule = if (metric == "IIC") iic_rule else NA_character_,
-    connector_candidates = res$candidates)
-}
-
-.connectivity_check_flag <- function(x, name) {
-  if (!is.logical(x) || length(x) != 1L || is.na(x)) stop(paste(name, "deve ser logico escalar."))
-}
-
+# lconnect object (from land_connectivity or lconnect::upload_land) checked
+# for metric CRS and coherent distances, areas, area_l and max_dist.
 .connectivity_check_land <- function(landscape) {
   if (!inherits(landscape, "lconnect") || !inherits(landscape$landscape, "sf")) {
     stop("landscape deve ser um objeto lconnect com landscape sf.")
@@ -109,10 +94,4 @@ patch_imp_fast <- function(landscape, metric = c("IIC", "PC", "AWF"), parallel =
     stop("Distancias, areas, area_l e max_dist devem ser validos e compativeis.")
   }
   list(D = d, areas = a)
-}
-
-.connectivity_metres <- function(crs) {
-  if (is.null(crs$ud_unit)) return(FALSE)
-  tryCatch(isTRUE(all.equal(as.numeric(units::set_units(
-    units::set_units(1, crs$ud_unit, mode = "standard"), "m")), 1)), error = function(e) FALSE)
 }

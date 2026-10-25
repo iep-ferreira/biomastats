@@ -1,16 +1,29 @@
-# Motor de IIC, PC e AWF com a decomposicao de Saura & Rubio (2010).
+# Shared connectivity engine for patch_imp_fast() and land_connectivity():
+# IIC, PC and AWF with the Saura & Rubio (2010) decomposition.
 #
-# IIC e PC tem a forma I = sum_ij a_i a_j M_ij / A_L^2, com M_ii = 1:
-#   IIC: M_ij = 1 / (1 + nl_ij), nl = passos no grafo d_ij < max_dist;
-#   PC:  M_ij = p*_ij = exp(-k d*_ij), d* = menor soma de distancias.
-# A soma inclui todos os fragmentos, inclusive i = j e isolados
+# IIC and PC share the form I = sum_ij a_i a_j M_ij / A_L^2 with M_ii = 1:
+#   IIC: M_ij = 1 / (1 + nl_ij), nl = steps in the graph d_ij < max_dist;
+#   PC:  M_ij = p*_ij = exp(-k d*_ij), d* = shortest sum of distances.
+# The sum covers every patch, including i = j and isolates
 # (Pascual-Hortal & Saura 2006; Saura & Pascual-Hortal 2007).
 
-# Constante k de p_ij = exp(-k d_ij): k informado ou p_ref na distancia
-# d_ref. O padrao reproduz o lconnect: p = 0,5 a max_dist / 2.
+.connectivity_check_flag <- function(x, name) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) stop(paste(name, "deve ser logico escalar."))
+}
+
+.connectivity_metres <- function(crs) {
+  if (is.null(crs$ud_unit)) return(FALSE)
+  tryCatch(isTRUE(all.equal(as.numeric(units::set_units(
+    units::set_units(1, crs$ud_unit, mode = "standard"), "m")), 1)), error = function(e) FALSE)
+}
+
+# Decay constant of p_ij = exp(-k d_ij): k itself, or probability p_ref at
+# distance d_ref. The default reproduces lconnect: p = 0.5 at max_dist / 2.
 .calibrate_k <- function(max_dist, k = NULL, p_ref = 0.5, d_ref = NULL) {
   if (!is.null(k)) {
-    if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k <= 0) stop("k deve ser um numero positivo.")
+    if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k <= 0) {
+      stop("k deve ser um numero positivo.")
+    }
     return(k)
   }
   if (is.null(d_ref)) d_ref <- max_dist / 2
@@ -23,19 +36,19 @@
   -log(p_ref) / d_ref
 }
 
-# Arestas uteis do grafo completo do PC. A aresta i-j e descartada quando
-# ao menos dois fragmentos m oferecem desvio estritamente mais curto,
-# d_im + d_mj < d_ij: removido qualquer r, ainda resta um desvio, logo a
-# aresta nunca integra um melhor caminho de G nem de G - r. Theta(n^3).
+# Useful edges of the complete PC graph. Edge i-j is dropped when at least two
+# patches m offer a strictly shorter detour, d_im + d_mj < d_ij: after removing
+# any single r a detour remains, so the edge is never on a shortest path of
+# G or G - r. Theta(n^3) once.
 .pc_edges <- function(D) {
   shortcuts <- matrix(0L, nrow(D), ncol(D))
   for (m in seq_len(nrow(D))) shortcuts <- shortcuts + (outer(D[, m], D[m, ], "+") < D)
   shortcuts < 2L
 }
 
-# Grafo com todos os fragmentos como vertices (isolados inclusive).
-# IIC: aresta binaria d_ij < max_dist, inclusive contato (d = 0).
-# PC: arestas podadas com peso d_ij.
+# Graph with every patch as a vertex, isolates included.
+# IIC: binary edge d_ij < max_dist, contacts (d = 0) included.
+# PC: pruned edges weighted by d_ij.
 .path_graph <- function(D, metric, max_dist) {
   keep <- upper.tri(D) & if (metric == "IIC") D < max_dist else .pc_edges(D)
   idx <- which(keep, arr.ind = TRUE)
@@ -44,6 +57,7 @@
   g
 }
 
+# Best-path lengths: steps (IIC) or summed distance (PC).
 .path_lengths <- function(g, metric, from = igraph::V(g), to = igraph::V(g)) {
   if (metric == "IIC") igraph::distances(g, v = from, to = to, weights = NA)
   else igraph::distances(g, v = from, to = to)
@@ -59,7 +73,7 @@
 
 .awf_value <- function(D, areas, k) sum(areas * as.numeric(.awf_kernel(D, k) %*% areas))
 
-# Indice sem A_L^2 (IIC/PC) ou AWF.
+# Index without the A_L^2 denominator (IIC, PC) or AWF.
 .index_sum <- function(D, areas, max_dist, metric, k = NULL) {
   if (!length(areas)) return(0)
   if (metric == "AWF") return(.awf_value(D, areas, k))
@@ -67,8 +81,8 @@
   sum(areas * as.numeric(M %*% areas))
 }
 
-# Fragmentos i != r com algum melhor caminho por r: L_ir + L_rj = L_ij.
-# Somente pares com i e j nesse conjunto perdem afinidade quando r sai.
+# Patches i != r with some best path through r (L_ir + L_rj = L_ij). Only
+# pairs with both ends in this set can lose affinity when r is removed.
 .through_set <- function(L, r, tol) {
   lr <- L[, r]
   ok <- is.finite(lr)
@@ -82,11 +96,11 @@
   idx[rowSums(tight) > 0]
 }
 
-# dI_r = intra + fluxo + conector (Saura & Rubio 2010), com
-#   intra_r = a_r^2, fluxo_r = 2 a_r sum_{i != r} a_i M_ir,
-#   conector_r = sum_{i,j != r} a_i a_j (M_ij - M^(-r)_ij).
-# Intra e fluxo tem forma fechada; o conector so e recalculado para
-# candidatos e apenas entre as origens e destinos que passam por r.
+# dI_r = intra + flux + connector (Saura & Rubio 2010):
+#   intra_r = a_r^2, flux_r = 2 a_r sum_{i != r} a_i M_ir,
+#   connector_r = sum_{i,j != r} a_i a_j (M_ij - M^(-r)_ij).
+# Intra and flux are closed-form; the connector is recomputed only for
+# candidates and only between the origins and destinations routed through r.
 .decomposed_importance <- function(D, areas, max_dist, metric, k = NULL, parallel = FALSE) {
   g <- .path_graph(D, metric, max_dist)
   L <- .path_lengths(g, metric)
@@ -98,8 +112,9 @@
   candidates <- which(lengths(through) >= 2L)
   connector_of <- function(r) {
     s <- through[[r]]
-    M_r <- .affinity(.path_lengths(igraph::delete_vertices(g, r), metric,
-      from = s - (s > r), to = s - (s > r)), metric, k)
+    s_r <- s - (s > r)  # vertex ids shift after deleting r
+    M_r <- .affinity(.path_lengths(igraph::delete_vertices(g, r), metric, from = s_r, to = s_r),
+                     metric, k)
     sum(outer(areas[s], areas[s]) * (M[s, s, drop = FALSE] - M_r))
   }
   connector <- numeric(length(areas))
@@ -109,12 +124,13 @@
     } else vapply(candidates, connector_of, numeric(1))
   }
   fractions <- data.frame(intra = 100 * areas^2 / total,
-    flux = 100 * 2 * areas * (Ma - areas) / total, connector = 100 * connector / total)
+                          flux = 100 * 2 * areas * (Ma - areas) / total,
+                          connector = 100 * connector / total)
   list(importance = unname(rowSums(fractions)), fractions = fractions, index = total,
        candidates = length(candidates))
 }
 
-# Remocao explicita, referencia de validacao: n + 1 indices.
+# Explicit removal, the validation reference: n + 1 index evaluations.
 .removal_importance <- function(D, areas, max_dist, metric, k = NULL) {
   full <- .index_sum(D, areas, max_dist, metric, k)
   imp <- vapply(seq_along(areas), function(r) {
@@ -123,8 +139,8 @@
   list(importance = imp, fractions = NULL, index = full, candidates = NA_integer_)
 }
 
-# IIC do lconnect 0.1.2 (R/con_metric.R, linhas 188-194): omite fragmentos
-# isolados e contatos a distancia zero. Apenas para compatibilidade.
+# IIC of lconnect 0.1.2 (R/con_metric.R, lines 188-194): drops isolates and
+# zero-distance contacts. Kept only for compatibility (iic_rule = "lconnect").
 .iic_lconnect <- function(D, areas, max_dist, area_l) {
   idx <- which(D > 0 & D < max_dist & upper.tri(D), arr.ind = TRUE)
   if (!nrow(idx)) return(0)
@@ -136,58 +152,62 @@
   sum(contribution) / area_l^2
 }
 
-# Importancia de cada fragmento. Retorna importance (%), fractions
-# (intra, flux, connector em % do indice, ou NULL), index (na escala do
-# indice), k, method e candidates (numero de candidatos a conector).
+.iic_lconnect_importance <- function(D, areas, max_dist, area_l) {
+  full <- .iic_lconnect(D, areas, max_dist, area_l)
+  imp <- vapply(seq_along(areas), function(r) {
+    keep <- seq_along(areas)[-r]
+    100 * (full - .iic_lconnect(D[keep, keep, drop = FALSE], areas[keep], max_dist, area_l)) / full
+  }, numeric(1))
+  list(importance = imp, fractions = NULL, index = full, candidates = NA_integer_)
+}
+
+.awf_importance <- function(D, areas, k) {
+  weighted <- as.numeric(.awf_kernel(D, k) %*% areas)
+  full <- sum(areas * weighted)
+  imp <- 100 * (2 * areas * weighted) / full
+  list(importance = imp, fractions = data.frame(intra = 0, flux = imp, connector = 0),
+       index = full, candidates = 0L)
+}
+
+# Importance of every patch. Returns importance (%), fractions (intra, flux,
+# connector as % of the index, or NULL), index (on the index scale), k,
+# method and candidates (number of connector candidates).
 .patch_imp_engine <- function(D, areas, max_dist, area_l, metric, parallel = FALSE,
                               method = "decomposition", iic_rule = "definition", k = NULL) {
-  n <- length(areas)
-  kk <- if (metric == "IIC") NA_real_ else k
-  undefined <- function(index, method) list(importance = rep(NaN, n), fractions = NULL,
-    index = index, k = kk, method = method, candidates = NA_integer_)
-  if (metric == "AWF") {
-    weighted <- as.numeric(.awf_kernel(D, k) %*% areas)
-    full <- sum(areas * weighted)
-    if (n < 2L || !is.finite(full) || full == 0) return(undefined(full, "closed_form"))
-    imp <- 100 * (2 * areas * weighted) / full
-    return(list(importance = imp, fractions = data.frame(intra = 0, flux = imp, connector = 0),
-      index = full, k = kk, method = "closed_form", candidates = 0L))
+  if (metric == "AWF") method <- "closed_form"
+  if (metric == "IIC" && iic_rule == "lconnect") method <- "removal"
+  res <- if (metric == "AWF") {
+    .awf_importance(D, areas, k)
+  } else if (metric == "IIC" && iic_rule == "lconnect") {
+    .iic_lconnect_importance(D, areas, max_dist, area_l)
+  } else {
+    out <- if (method == "removal") .removal_importance(D, areas, max_dist, metric, k)
+      else .decomposed_importance(D, areas, max_dist, metric, k, parallel)
+    out$index <- out$index / area_l^2
+    out
   }
-  if (metric == "IIC" && iic_rule == "lconnect") {
-    full <- .iic_lconnect(D, areas, max_dist, area_l)
-    if (n < 2L || !is.finite(full) || full == 0) return(undefined(full, "removal"))
-    imp <- vapply(seq_len(n), function(i) {
-      keep <- seq_len(n)[-i]
-      100 * (full - .iic_lconnect(D[keep, keep, drop = FALSE], areas[keep], max_dist, area_l)) / full
-    }, numeric(1))
-    return(list(importance = imp, fractions = NULL, index = full, k = kk,
-      method = "removal", candidates = NA_integer_))
+  # One patch has no relative ranking; a zero index makes every ratio undefined.
+  if (length(areas) < 2L || !is.finite(res$index) || res$index == 0) {
+    res$importance <- rep(NaN, length(areas))
+    res$fractions <- NULL
+    res$candidates <- NA_integer_
   }
-  if (n < 2L) return(undefined(if (n) 1 * areas^2 / area_l^2 else 0, method))
-  res <- if (method == "removal") .removal_importance(D, areas, max_dist, metric, k)
-    else .decomposed_importance(D, areas, max_dist, metric, k, parallel)
-  res$index <- res$index / area_l^2
-  res$k <- kk
+  res$k <- if (metric == "IIC") NA_real_ else k
   res$method <- method
   res
 }
 
-# Todos os indices de paisagem sem recalcular geometrias ou distancias.
-# NC e componentes seguem o single linkage do lconnect (d <= max_dist).
-.lconnect_metrics_fast <- function(D, areas, max_dist, area_l, k_awf = NULL, pc = NA_real_) {
-  if (is.null(k_awf)) k_awf <- .calibrate_k(max_dist)
-  inclusive <- D <= max_dist
-  diag(inclusive) <- FALSE
-  clusters <- igraph::components(igraph::graph_from_adjacency_matrix(
-    inclusive * 1, mode = "undirected", diag = FALSE))$membership
-  component_areas <- as.numeric(rowsum(areas, clusters))
-  paths <- .path_lengths(.path_graph(D, "IIC", max_dist), "IIC")
-  connected <- paths[upper.tri(paths) & is.finite(paths)]
-  c(NC = length(component_areas), LNK = sum(D[upper.tri(D)] < max_dist),
-    SLC = max(component_areas), MSC = sum(areas) / length(component_areas),
-    CCP = sum((component_areas / sum(areas))^2), LCP = sum((component_areas / area_l)^2),
-    CPL = if (length(connected)) mean(connected) else NA_real_,
-    ECS = sum(component_areas^2) / sum(areas), AWF = .awf_value(D, areas, k_awf),
-    IIC = sum(areas * as.numeric((1 / (1 + paths)) %*% areas)) / area_l^2,
-    IIC_lconnect = .iic_lconnect(D, areas, max_dist, area_l), PC = pc)
+# pimp object with the lconnect contract plus fractions and engine attributes.
+.as_pimp <- function(landscape, res, metric, iic_rule) {
+  p <- landscape$landscape
+  if (!"fragment_id" %in% names(p)) {
+    p$fragment_id <- if (!is.null(landscape$fragment_id)) landscape$fragment_id
+      else seq_len(nrow(p))
+  }
+  p$attributes <- res$importance
+  status <- if (all(is.nan(res$importance))) "undefined_baseline" else "ok"
+  structure(list(landscape = p, prioritization = res$importance, fractions = res$fractions),
+    class = "pimp", metric = metric, status = status, index = res$index, k = res$k,
+    method = res$method, iic_rule = if (metric == "IIC") iic_rule else NA_character_,
+    connector_candidates = res$candidates)
 }

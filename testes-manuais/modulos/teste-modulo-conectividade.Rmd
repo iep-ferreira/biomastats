@@ -81,7 +81,7 @@ uma projeção adequada informada explicitamente.
 
 ```{r conectar}
 conectividade <- land_connectivity(
-  poligonos, max_dist = c(30, 100, 300)
+  poligonos, max_dist = c(30, 100, 300), metric_patch = c("IIC", "PC", "AWF")
 )
 conectividade$metadata[c("year", "max_dist_m", "reprojected", "boundary_method",
                         "source_crs_wkt", "analysis_crs_wkt")]
@@ -114,29 +114,36 @@ conectividade$cluster_plot + ggplot2::labs(title = "Componentes do grafo por dis
 
 # Índices de conectividade
 
-`metrics` contém os dez índices do `lconnect`, calculados pelas rotinas
-otimizadas: NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF e IIC. SLC, MSC e ECS
-estão em m²; AWF em m⁴; CPL em número de passos; CCP, LCP e IIC são
-adimensionais. `graph_components` e `isolates` descrevem o grafo de exploração.
+`metrics` contém NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS e AWF, calculados como
+no `lconnect` pelas rotinas otimizadas, e três índices integrais: IIC pela
+definição de Pascual-Hortal e Saura (2006), que inclui os fragmentos isolados;
+IIC_lconnect, o valor do `lconnect` 0.1.2, que os omite; e PC (Saura e
+Pascual-Hortal, 2007), com caminhos indiretos. `k` é a constante de decaimento
+usada por PC e AWF em cada limiar. SLC, MSC e ECS estão em m²; AWF em m⁴; CPL em
+número de passos; CCP, LCP, IIC e PC são adimensionais. `graph_components` e
+`isolates` descrevem o grafo de exploração.
 
 ```{r indices}
 knitr::kable(conectividade$metrics[, c("max_dist_m", "NC", "LNK", "graph_components",
-                                    "isolates", "IIC", "AWF")], digits = 6)
+                                    "isolates", "IIC", "IIC_lconnect", "PC", "AWF", "k")],
+             digits = 6)
 knitr::kable(conectividade$metrics[, c("max_dist_m", "SLC", "MSC", "CCP", "LCP", "CPL", "ECS")], digits = 4)
 conectividade$range_plot + ggplot2::labs(title = "Sensibilidade dos índices ao limiar")
 ```
 
-Para reproduzir o `lconnect` 0.1.2, algumas convenções precisam ser observadas:
+As convenções seguidas são:
 
-- O grafo de exploração usa distância **menor que** o limiar e mantém isolados.
+- O grafo de exploração, o IIC e o CPL usam distância **menor que** o limiar,
+  incluindo contatos a distância zero, e mantêm os isolados.
 - NC e os índices de componentes usam distância **menor ou igual**, seguindo
   o agrupamento single linkage original. Em empates exatos, NC pode diferir de
   `graph_components`.
-- IIC e CPL usam somente distâncias **positivas e menores que** o limiar e
-  excluem isolados, como a implementação original. Assim, contato a distância
-  zero entra no grafo, mas não como aresta no cálculo de IIC/CPL.
-- AWF usa todos os pares, sem a diagonal; o limiar controla o decaimento,
-  com probabilidade de 50% na metade da distância especificada.
+- O IIC soma todos os fragmentos, inclusive os isolados. O `lconnect` 0.1.2 usa
+  apenas distâncias positivas e omite os isolados; esse valor está em
+  `IIC_lconnect`, e `iic_rule = "lconnect"` reproduz a priorização original.
+- PC e AWF usam p = exp(-k d). Por padrão, p = 50% na metade do limiar; `k`,
+  ou `p_ref` e `d_ref`, permitem calibrar pela dispersão da espécie. O AWF usa
+  todos os pares, sem a diagonal; o PC usa o melhor caminho, direto ou indireto.
 
 Essas convenções constam dos metadados e foram comparadas com as funções do
 [pacote lconnect](https://cran.r-project.org/package=lconnect). São índices
@@ -144,10 +151,13 @@ estruturais: não demonstram, por si só, conectividade funcional para uma espé
 
 # Priorização rápida dos fragmentos
 
-`dIIC` e `dAWF` medem a redução percentual do índice ao remover cada fragmento,
-mantendo fixa a área da paisagem. O IIC reutiliza as distâncias e recalcula
-caminhos; o AWF obtém as contribuições marginais por operações matriciais.
-O cálculo AWF remove corretamente as parcelas da diagonal. Quando o índice
+`dIIC`, `dPC` e `dAWF` medem a redução percentual do índice ao remover cada
+fragmento, mantendo fixa a área da paisagem. IIC e PC usam a decomposição de
+Saura e Rubio (2010): a importância se divide em intra (área do próprio
+fragmento), fluxo (ligação com os demais) e conector (papel de trampolim), e o
+conector só é recalculado para fragmentos que estão em algum melhor caminho. O
+AWF obtém as contribuições marginais por operações matriciais e é todo fluxo,
+removendo corretamente as parcelas da diagonal. Quando o índice
 inicial é zero, a prioridade fica indefinida (`NaN`) e o objeto `pimp` recebe
 o estado `undefined_baseline`. Isso evita apresentar ausência de conexão como
 uma prioridade ecológica igual a zero. Uma paisagem com um fragmento também não
@@ -156,8 +166,19 @@ tem ranking relativo.
 ```{r priorizar}
 knitr::kable(head(sf::st_drop_geometry(conectividade$patch_metrics)[,
   c("fragment_id", "max_dist_m", "area_ha", "component", "cluster_lconnect",
-    "iic_included", "dIIC", "dAWF")], 18), digits = 4)
+    "iic_included", "dIIC", "dPC", "dPC_intra", "dPC_flux", "dPC_connector", "dAWF")], 18),
+  digits = 4)
 conectividade$importance_plot + ggplot2::labs(title = "Contribuição individual para a conectividade")
+```
+
+As frações também estão em `fraction_metrics`, em formato longo, e em dois
+gráficos: as barras empilhadas dos fragmentos mais importantes e o mapa da
+fração de conector.
+
+```{r fracoes}
+head(conectividade$fraction_metrics)
+conectividade$fractions_plot
+conectividade$connector_plot
 ```
 
 # Interoperabilidade com lconnect e igraph
@@ -188,7 +209,9 @@ pelas suas funções. A integração não precisa escrever um shapefile temporá
 
 ```{r lconnect}
 if (requireNamespace("lconnect", quietly = TRUE)) {
-  lconnect::con_metric(cenario$land, metric = c("NC", "LNK", "IIC", "AWF"))
+  original <- lconnect::con_metric(cenario$land, metric = c("NC", "LNK", "IIC", "AWF"))
+  nativo <- unlist(cenario$metrics[c("NC", "LNK", "IIC_lconnect", "AWF")])
+  rbind(lconnect = original[c("NC", "LNK", "IIC", "AWF")], biomastats = unname(nativo))
 }
 ```
 
@@ -206,10 +229,15 @@ saveRDS(conectividade, file.path(destino, "conectividade.rds"))
 recuperada <- readRDS(file.path(destino, "conectividade.rds"))
 identical(recuperada$distance, conectividade$distance)
 identical(recuperada$metrics, conectividade$metrics)
+identical(recuperada$fraction_metrics, conectividade$fraction_metrics)
 grafico <- recuperada$plot + ggplot2::labs(title = "Rede de conectividade — floresta")
 ggplot2::ggsave(file.path(destino, "grafo.png"), plot = grafico, width = 11, height = 7)
 ggplot2::ggsave(file.path(destino, "priorizacao.png"), plot = recuperada$importance_plot,
                 width = 11, height = 9)
+ggplot2::ggsave(file.path(destino, "fracoes.png"), plot = recuperada$fractions_plot,
+                width = 11, height = 7)
+utils::write.csv(recuperada$fraction_metrics, file.path(destino, "fracoes.csv"),
+                 row.names = FALSE, fileEncoding = "UTF-8")
 sf::st_write(recuperada$patch_metrics, file.path(destino, "fragmentos.gpkg"),
               delete_layer = TRUE, quiet = TRUE)
 igraph::write_graph(recuperada$scenarios[["100"]]$graph,
