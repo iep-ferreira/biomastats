@@ -18,7 +18,7 @@ land_connectivity(
 \arguments{
 \item{polygons}{Objeto sf de reclass_to_polygons, inclusive apos readRDS,
 ou sua lista temporal nomeada. Coluna value, quando presente, seleciona
-somente presenca (1). Fragmentos devem ser POLYGON validos e sem sobreposicao
+somente presenca (1). Fragmentos devem ser POLYGON/MULTIPOLYGON validos e sem sobreposicao
 de interiores. fragment_id e preservado; frag_id de SHP e reconhecido.}
 
 \item{max_dist}{Uma ou varias distancias positivas em metros (default 300).
@@ -65,8 +65,10 @@ e ECS sao m2; AWF e m4; CPL e numero de passos; IIC, CCP e LCP sao adimensionais
 O grafo de exploracao usa distancia < max_dist, incluindo contatos a distancia
 zero, e preserva isolados. Para compatibilidade, NC e indices de componentes
 usam distancia <= max_dist (single linkage de lconnect), enquanto IIC e CPL
-usam 0 < distancia < max_dist e excluem isolados. Assim, em empates ou contatos
-de distancia zero, NC pode diferir de graph_components e componentes do grafo.
+usam distancia < max_dist e excluem isolados. Contatos a distancia zero
+contam como ligacoes (lconnect 0.1.2 os descarta); o ideal e dissolve-los
+antes, com reclass_to_polygons(directions = 8). Em empates no limiar,
+NC pode diferir de graph_components e componentes do grafo.
 patch_metrics distingue cluster_lconnect, component e iic_included.
 Estas diferencas sao explicitas; nao se deve interpretar NC como contagem
 dos componentes do grafo estrito nos casos de fronteira do limiar.

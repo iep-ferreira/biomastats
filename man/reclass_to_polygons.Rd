@@ -8,6 +8,7 @@ reclass_to_polygons(
   obj,
   years = NULL,
   dissolve = TRUE,
+  directions = 8,
   only_class = TRUE,
   crs = NULL,
   save_shp = TRUE,
@@ -22,6 +23,10 @@ e \code{classes}. Execute as metricas com \code{export.raster = TRUE}.}
 \item{years}{Anos inteiros desejados; NULL seleciona todos os anos.}
 
 \item{dissolve}{Dissolver pixels adjacentes de mesma classe (default TRUE).}
+
+\item{directions}{Vizinhanca usada para unir pixels quando dissolve = TRUE:
+8 (padrao) tambem une pixels que se tocam apenas por um vertice; 4 une
+somente pixels que compartilham uma aresta.}
 
 \item{only_class}{Retornar somente a classe de interesse (default TRUE).}
 
@@ -45,9 +50,11 @@ Vetoriza os rasters reclassificados em poligonos sf
 }
 \details{
 Codigos preservados pela reclassificacao de uma unica classe sao
-convertidos para 1. NA e excluido. Fragmentos conectados somente por um
-vertice permanecem separados (conectividade por aresta), diferentemente
-das metricas de paisagem com oito vizinhos. A area e calculada com sf e
+convertidos para 1. NA e excluido. Com directions = 8, pixels conectados
+somente por um vertice formam um unico fragmento, seguindo a recomendacao
+do Conefor de dissolver poligonos contiguos; assim, fragmentos distintos
+nao se tocam (distancia > 0). A geometria e sempre MULTIPOLYGON, pois um
+fragmento unido por vertices tem partes que se tocam em pontos. A area e calculada com sf e
 convertida explicitamente para hectares, inclusive em CRS com pes.
 No shapefile, fragment_id e abreviado para frag_id (limite de 10 caracteres).
 collection e class_dictionary sao herdados do resultado das metricas.

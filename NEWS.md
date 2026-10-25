@@ -1,3 +1,15 @@
+# biomastats (desenvolvimento)
+
+## Mudanças de comportamento
+
+* `reclass_to_polygons()` ganha `directions` (padrão 8): com `dissolve = TRUE`,
+  pixels que se tocam só por um vértice formam um único fragmento, seguindo a
+  recomendação do Conefor de dissolver polígonos contíguos. Fragmentos são
+  sempre `MULTIPOLYGON`; `directions = 4` reproduz a vetorização anterior.
+* IIC e CPL (`land_connectivity()`, `patch_imp_fast()`) passam a ligar
+  fragmentos à distância zero. Antes, como no lconnect 0.1.2, fragmentos que
+  se tocavam ficavam desconectados. `land_connectivity()` aceita `MULTIPOLYGON`.
+
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o

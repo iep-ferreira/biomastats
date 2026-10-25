@@ -5,7 +5,7 @@
 #' nao grava shapefiles e nao recalcula distancias nas remocoes de fragmentos.
 #' @param polygons Objeto sf de reclass_to_polygons, inclusive apos readRDS,
 #'   ou sua lista temporal nomeada. Coluna value, quando presente, seleciona
-#'   somente presenca (1). Fragmentos devem ser POLYGON validos e sem sobreposicao
+#'   somente presenca (1). Fragmentos devem ser POLYGON/MULTIPOLYGON validos e sem sobreposicao
 #'   de interiores. fragment_id e preservado; frag_id de SHP e reconhecido.
 #' @param max_dist Uma ou varias distancias positivas em metros (default 300).
 #'   A matriz de distancias e calculada uma vez e reutilizada em todos os cenarios.
@@ -36,8 +36,10 @@
 #'   O grafo de exploracao usa distancia < max_dist, incluindo contatos a distancia
 #'   zero, e preserva isolados. Para compatibilidade, NC e indices de componentes
 #'   usam distancia <= max_dist (single linkage de lconnect), enquanto IIC e CPL
-#'   usam 0 < distancia < max_dist e excluem isolados. Assim, em empates ou contatos
-#'   de distancia zero, NC pode diferir de graph_components e componentes do grafo.
+#'   usam distancia < max_dist e excluem isolados. Contatos a distancia zero
+#'   contam como ligacoes (lconnect 0.1.2 os descarta); o ideal e dissolve-los
+#'   antes, com reclass_to_polygons(directions = 8). Em empates no limiar,
+#'   NC pode diferir de graph_components e componentes do grafo.
 #'   patch_metrics distingue cluster_lconnect, component e iic_included.
 #'   Estas diferencas sao explicitas; nao se deve interpretar NC como contagem
 #'   dos componentes do grafo estrito nos casos de fronteira do limiar.
@@ -98,8 +100,8 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   }
   if (!nrow(polygons)) stop("Nenhum fragmento de habitat disponivel.")
   if (any(sf::st_is_empty(polygons)) || any(!sf::st_is_valid(polygons)) ||
-      any(as.character(sf::st_geometry_type(polygons)) != "POLYGON")) {
-    stop("Fragmentos devem ser POLYGON validos e nao vazios; use reclass_to_polygons.")
+      any(!as.character(sf::st_geometry_type(polygons)) %in% c("POLYGON", "MULTIPOLYGON"))) {
+    stop("Fragmentos devem ser POLYGON/MULTIPOLYGON validos e nao vazios; use reclass_to_polygons.")
   }
   if (!"fragment_id" %in% names(polygons)) {
     polygons$fragment_id <- if ("frag_id" %in% names(polygons)) polygons$frag_id else seq_len(nrow(polygons))
@@ -162,7 +164,7 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     pp$cluster_lconnect <- as.integer(clusters)
     pp$clusters <- as.integer(clusters)
     pp$degree <- as.numeric(igraph::degree(graph))
-    pp$iic_included <- rowSums(distance > 0 & distance < md) > 0
+    pp$iic_included <- rowSums(distance < md) > 1
     pp$max_dist_m <- md
     # Keep the native landscape schema so plot.lconnect draws one cluster map.
     # IDs remain available explicitly without becoming extra native map panels.
@@ -217,7 +219,7 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     area_unit = "m2", distance_unit = "m", awf_unit = "m4", compatibility = "lconnect 0.1.2",
     graph_rule = "distance < max_dist; zero-distance links and isolated vertices retained",
     components_rule = "lconnect NC and area components: distance <= max_dist",
-    iic_rule = "0 < distance < max_dist; isolated vertices omitted; fixed landscape denominator",
+    iic_rule = "distance < max_dist, zero-distance contacts linked; isolated vertices omitted; fixed landscape denominator",
     awf_rule = "exponential all-pairs kernel, diagonal zero; half-probability at max_dist/2",
     zero_baseline = "priority NaN; pimp status undefined_baseline; CPL NA without connected pairs",
     upstream = inherited)

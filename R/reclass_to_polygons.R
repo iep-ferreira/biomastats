@@ -4,6 +4,9 @@
 #'   e `classes`. Execute as metricas com `export.raster = TRUE`.
 #' @param years Anos inteiros desejados; NULL seleciona todos os anos.
 #' @param dissolve Dissolver pixels adjacentes de mesma classe (default TRUE).
+#' @param directions Vizinhanca usada para unir pixels quando dissolve = TRUE:
+#'   8 (padrao) tambem une pixels que se tocam apenas por um vertice; 4 une
+#'   somente pixels que compartilham uma aresta.
 #' @param only_class Retornar somente a classe de interesse (default TRUE).
 #' @param crs CRS de saida. NULL (padrao) herda o CRS de cada raster;
 #'   um CRS explicito solicita reprojecao.
@@ -15,9 +18,11 @@
 #'   collection, classes (codigos selecionados) e geometry. O atributo shp_paths
 #'   contem os caminhos salvos. Anos sem pixels selecionados retornam sf vazio.
 #' @details Codigos preservados pela reclassificacao de uma unica classe sao
-#'   convertidos para 1. NA e excluido. Fragmentos conectados somente por um
-#'   vertice permanecem separados (conectividade por aresta), diferentemente
-#'   das metricas de paisagem com oito vizinhos. A area e calculada com sf e
+#'   convertidos para 1. NA e excluido. Com directions = 8, pixels conectados
+#'   somente por um vertice formam um unico fragmento, seguindo a recomendacao
+#'   do Conefor de dissolver poligonos contiguos; assim, fragmentos distintos
+#'   nao se tocam (distancia > 0). A geometria e sempre MULTIPOLYGON, pois um
+#'   fragmento unido por vertices tem partes que se tocam em pontos. A area e calculada com sf e
 #'   convertida explicitamente para hectares, inclusive em CRS com pes.
 #'   No shapefile, fragment_id e abreviado para frag_id (limite de 10 caracteres).
 #'   collection e class_dictionary sao herdados do resultado das metricas.
@@ -33,7 +38,7 @@
 #'   as colunas, mas os atributos completos do objeto requerem serializacao RDS.
 #' @export
 reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
-                                only_class = TRUE, crs = NULL,
+                                directions = 8, only_class = TRUE, crs = NULL,
                                 save_shp = TRUE, output_dir = "./source_codes/shp",
                                 file_prefix = "reclass_polygons") {
   if (!is.list(obj) || !all(c("rec_map", "start", "end", "classes") %in% names(obj))) {
@@ -62,6 +67,10 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
       stop("dissolve, only_class e save_shp devem ser logicos escalares.")
     }
   }
+  if (!is.numeric(directions) || length(directions) != 1L || !directions %in% c(4, 8)) {
+    stop("directions deve ser 4 ou 8.")
+  }
+  directions <- as.integer(directions)
   target_crs <- if (is.null(crs)) NULL else sf::st_crs(crs)
   if (!is.null(target_crs) && is.na(target_crs)) stop("crs deve especificar um CRS valido.")
   collection <- obj$collection
@@ -86,7 +95,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
   }), as.character(years))
   metadata <- list(schema_version = "1.0", collection = collection,
     classes = obj$classes, years = years, source = source,
-    dissolve = dissolve, only_class = only_class, connectivity = 4L,
+    dissolve = dissolve, only_class = only_class, connectivity = if (dissolve) directions else NA_integer_,
     area_unit = "ha", upstream = obj$metadata)
   if (save_shp && (!is.character(output_dir) || length(output_dir) != 1L ||
       is.na(output_dir) || !nzchar(output_dir) || !is.character(file_prefix) ||
@@ -112,11 +121,13 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
                        geometry = sf::st_sfc(crs = year_crs)))
     }
     r <- raster::setValues(r, values)
-    p <- .vectorize_raster(r, dissolve)
-    names(p)[1L] <- "value"
-    # Homogenize mixed POLYGON/MULTIPOLYGON before splitting fragments.
+    p <- if (dissolve) .vectorize_fragments(r, directions) else {
+      cells <- .vectorize_raster(r, dissolve = FALSE)
+      names(cells)[1L] <- "value"
+      # Homogenize mixed POLYGON/MULTIPOLYGON before splitting cells.
+      sf::st_cast(sf::st_cast(cells, "MULTIPOLYGON", warn = FALSE), "POLYGON", warn = FALSE)
+    }
     p <- sf::st_cast(p, "MULTIPOLYGON", warn = FALSE)
-    p <- sf::st_cast(p, "POLYGON", warn = FALSE)
     p <- sf::st_transform(p, year_crs)
     p$area_ha <- as.numeric(units::set_units(sf::st_area(p), "ha"))
     p$year <- rep(yr, nrow(p))
@@ -175,4 +186,19 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
 # (dissolved per value when dissolve = TRUE), in the raster's own CRS.
 .vectorize_raster <- function(r, dissolve = TRUE) {
   sf::st_as_sf(terra::as.polygons(.as_terra(r), aggregate = dissolve, na.rm = TRUE))
+}
+
+# One feature per fragment: cells of each value are labelled as patches with
+# the requested neighbourhood and dissolved by label, so fragments joined only
+# by a vertex (directions = 8) become a single MULTIPOLYGON.
+.vectorize_fragments <- function(r, directions = 8L) {
+  r <- .as_terra(r)
+  values <- sort(unique(stats::na.omit(terra::values(r, mat = FALSE))))
+  parts <- lapply(values, function(v) {
+    labels <- terra::patches(terra::ifel(r == v, 1, NA), directions = directions)
+    p <- sf::st_as_sf(terra::as.polygons(labels, aggregate = TRUE, na.rm = TRUE))
+    p <- p[order(p[[1L]]), ]
+    sf::st_sf(value = rep(v, nrow(p)), geometry = sf::st_geometry(p))
+  })
+  do.call(rbind, parts)
 }
