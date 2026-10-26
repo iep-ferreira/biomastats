@@ -28,18 +28,30 @@
 #'   uma unica vez para todos os limiares e indices e fechados ao final.
 #' @param prune Poda das arestas do PC: "auto" (padrao), TRUE ou FALSE; ver
 #'   [patch_imp_fast()].
+#' @param distance Distancias externas entre fragmentos; NULL (padrao) usa a
+#'   distancia minima entre bordas, em metros. Aceita matriz quadrada (com
+#'   nomes iguais a fragment_id ou na ordem dos fragmentos), objeto dist ou
+#'   tabela com colunas From, To e Distance, como as de
+#'   `Makurhini::distancefile()`, e o resultado de [cost_distance()]. NA e Inf
+#'   significam ausencia de ligacao (barreira). max_dist, d_ref e as colunas
+#'   terminadas em _m passam a usar a unidade dessas distancias.
+#' @param link_importance Calcular a importancia de cada ligacao para IIC e PC
+#'   (FALSE por padrao); ver link_metrics em Value.
 #' @param language Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.
 #' @param build_plot Construir ggplots (TRUE por padrao).
 #' @return Lista biomastats_connectivity com source_polygons, analysis_polygons,
-#'   boundary, distance (matriz em metros), metrics (data.frame por limiar),
+#'   boundary, distance (matriz em metros ou na unidade externa), metrics
+#'   (data.frame por limiar, com ECA, fracoes da paisagem e indicadores no
+#'   formato do ProtConn),
 #'   patch_metrics (sf por fragmento/limiar, com dIIC, dPC, dAWF e suas fracoes
 #'   dX_intra, dX_flux e dX_connector), fraction_metrics (data.frame longo das
 #'   fracoes por fragmento, limiar e indice), edge_metrics (data.frame),
+#'   link_metrics (importancia das ligacoes, ou NULL),
 #'   scenarios (lista nomeada por limiar, cada item com land de classe lconnect,
 #'   graph igraph com todos os fragmentos e patch_importance com objetos pimp),
 #'   class_dictionary, metadata, plot (grafo espacial ggplot), cluster_plot,
-#'   importance_plot, fractions_plot, connector_plot e range_plot. Todos sao
-#'   reutilizaveis apos saveRDS/readRDS.
+#'   importance_plot, fractions_plot, connector_plot, range_plot e link_plot
+#'   (NULL sem link_importance). Todos sao reutilizaveis apos saveRDS/readRDS.
 #' @details Distancias sao minimas entre bordas de poligonos, nao entre centroides.
 #'   NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS e AWF reproduzem as convencoes de
 #'   lconnect 0.1.2 com rotinas nativas otimizadas. IIC segue a definicao de
@@ -68,6 +80,25 @@
 #'   relativo e recebe o mesmo status. CPL sem pares conectados e NA. Nenhum
 #'   indice prova conectividade funcional.
 #'
+#'   A area conectada equivalente (Saura et al. 2011) e ECA_IIC = A_L sqrt(IIC)
+#'   e ECA_PC = A_L sqrt(PC), em m2; ECAnorm_IIC e ECAnorm_PC a expressam em %
+#'   da area de habitat. As fracoes da paisagem seguem a saida overall do
+#'   Makurhini, em % do numerador: X_intra (soma de a_i^2), X_direct (pares
+#'   ligados diretamente: um passo no IIC, probabilidade direta p_ij no PC) e
+#'   X_step (ganho por trampolins). Com o PC, metrics traz tambem os indicadores
+#'   do ProtConn (Saura et al. 2017) tomando o habitat como area protegida e o
+#'   limite como regiao: Prot = 100 habitat / A_L, ProtConn = 100 ECA_PC / A_L,
+#'   ProtUnconn = Prot - ProtConn e RelConn = 100 ProtConn / Prot. Para areas
+#'   protegidas reais e fracoes Within, Contig, Trans e Unprot, use
+#'   [as_makurhini()] com target = "ProtConn".
+#'
+#'   link_metrics traz, por limiar e indice (IIC, PC), a reducao percentual do
+#'   numerador quando apenas aquela ligacao e removida. So uma ligacao que e
+#'   ela propria o melhor caminho entre suas pontas pode importar; as demais
+#'   (inclusive as podadas do PC) valem zero e nao sao listadas. Ligacoes com
+#'   caminho alternativo de mesmo custo tambem valem zero. link_plot mapeia
+#'   essas importancias.
+#'
 #'   A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 #'   convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva
 #'   desta analise metrica e registra CRS de origem/analise. IDs, ano, selecao,
@@ -89,6 +120,9 @@
 #' @references Pascual-Hortal, L. & Saura, S. (2006) Landscape Ecology 21:
 #'   959-967. Saura, S. & Pascual-Hortal, L. (2007) Landscape and Urban
 #'   Planning 83: 91-103. Saura, S. & Rubio, L. (2010) Ecography 33: 523-537.
+#'   Saura, S. et al. (2011) Ecological Indicators 11: 407-416. Saura, S. et
+#'   al. (2017) Ecological Indicators 76: 144-158. Godinez-Gomez, O. &
+#'   Correa Ayram, C. A. (2020) Makurhini, <https://github.com/connectscape/Makurhini>.
 #'   [lconnect 0.1.2](https://cran.r-project.org/package=lconnect).
 #' @md
 #' @examples
@@ -106,10 +140,13 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
                               crs = NULL, metric_patch = c("IIC", "AWF"),
                               iic_rule = c("definition", "lconnect"),
                               k = NULL, p_ref = 0.5, d_ref = NULL, parallel = FALSE,
-                              prune = "auto", language = c("pt", "en"), build_plot = TRUE) {
+                              prune = "auto", distance = NULL, link_importance = FALSE,
+                              language = c("pt", "en"), build_plot = TRUE) {
   language <- match.arg(language)
   iic_rule <- match.arg(iic_rule)
   .connectivity_check_flag(build_plot, "build_plot")
+  .connectivity_check_flag(link_importance, "link_importance")
+  external <- distance
   .connectivity_check_parallel(parallel)
   invisible(.resolve_prune(prune, "IIC", matrix(0)))  # validates prune early
   if (!is.numeric(max_dist) || !length(max_dist) || any(!is.finite(max_dist) | max_dist <= 0)) {
@@ -182,8 +219,17 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   if (!is.finite(area_l) || area_l <= 0 || area_l + max(1, area_l) * 1e-8 < sum(areas)) {
     stop("Area do limite deve ser positiva e nao inferior a area de habitat.")
   }
-  distance <- matrix(as.numeric(units::set_units(sf::st_distance(p), "m")), nrow(p), nrow(p))
-  dimnames(distance) <- list(as.character(p$fragment_id), as.character(p$fragment_id))
+  if (is.null(external)) {
+    distance <- matrix(as.numeric(units::set_units(sf::st_distance(p), "m")), nrow(p), nrow(p))
+    dimnames(distance) <- list(as.character(p$fragment_id), as.character(p$fragment_id))
+    distance_source <- "edge-to-edge (sf::st_distance)"
+    distance_unit <- "m"
+  } else {
+    distance <- .connectivity_distance(external, p$fragment_id)
+    distance_source <- if (!is.null(attr(external, "method"))) attr(external, "method") else "external"
+    distance_unit <- if (!is.null(attr(distance, "unit"))) attr(distance, "unit") else "external"
+    attr(distance, "unit") <- NULL
+  }
   # A number of processes opens one temporary plan for every threshold and
   # index (opening costs about a second); the user's plan is restored.
   if (is.numeric(parallel)) {
@@ -244,8 +290,20 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     graph <- igraph::set_graph_attr(graph, "analysis_crs_wkt", analysis_crs$wkt)
     graph <- igraph::set_graph_attr(graph, "edge_rule", "distance < max_dist; isolates retained")
     pc <- if ("PC" %in% metric_patch) attr(importance$PC, "index") else NA_real_
+    pc_landscape <- if ("PC" %in% metric_patch) attr(importance$PC, "landscape_fractions")
     metrics <- as.data.frame(as.list(.connectivity_indices(unname(distance), areas, md, area_l,
-      k = k_md, pc = pc)))
+      k = k_md, pc = pc, pc_landscape = pc_landscape)))
+    links <- if (link_importance) {
+      do.call(rbind, lapply(intersect(metric_patch, c("IIC", "PC")), function(metric) {
+        D <- unname(distance)
+        out <- .link_importance(D, areas, md, metric, if (metric == "IIC") NULL else k_md,
+          !isFALSE(parallel), .resolve_prune(prune, metric, D))
+        data.frame(from = as.character(pp$fragment_id[out$from]),
+          to = as.character(pp$fragment_id[out$to]), distance_m = D[cbind(out$from, out$to)],
+          max_dist_m = rep(md, nrow(out)), metric = rep(metric, nrow(out)),
+          importance = out$importance)
+      }))
+    }
     metrics$max_dist_m <- md
     metrics$k <- k_md
     metrics$pc_pruned <- if ("PC" %in% metric_patch) attr(importance$PC, "pruned") else NA
@@ -253,31 +311,45 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     metrics$graph_components <- igraph::components(graph)$no
     metrics$isolates <- sum(pp$degree == 0)
     list(land = land, graph = graph, patch_importance = importance,
-      patches = pp, edges = edges, metrics = metrics)
+      patches = pp, edges = edges, metrics = metrics, links = links)
   })
   names(scenarios) <- as.character(max_dist)
   patches <- do.call(rbind, lapply(scenarios, `[[`, "patches"))
   edges <- do.call(rbind, lapply(scenarios, `[[`, "edges"))
   metrics <- do.call(rbind, lapply(scenarios, `[[`, "metrics"))
+  links <- if (link_importance) do.call(rbind, lapply(scenarios, `[[`, "links"))
+  for (i in seq_along(scenarios)) scenarios[[i]]$links <- NULL
   rownames(metrics) <- rownames(edges) <- rownames(patches) <- NULL
+  if (!is.null(links)) rownames(links) <- NULL
   fractions <- .connectivity_fractions(patches, metric_patch)
   plots <- if (build_plot) .connectivity_plots(patches, edges, dictionary, language, metric_patch)
     else list(plot = NULL, cluster_plot = NULL, importance_plot = NULL, connector_plot = NULL)
   plots$fractions_plot <- if (build_plot) .connectivity_fractions_plot(fractions, language)
   plots$range_plot <- if (build_plot) .connectivity_range_plot(metrics, language)
+  plots$link_plot <- if (build_plot && !is.null(links) && nrow(links)) {
+    .connectivity_link_plot(patches, links, language)
+  }
   iic_definition <- paste("Pascual-Hortal & Saura 2006: all patches incl. isolates and i = j;",
     "distance < max_dist, zero-distance contacts linked; fixed landscape denominator")
   iic_lconnect <- paste("lconnect 0.1.2: 0 < distance < max_dist; isolated vertices omitted;",
     "fixed landscape denominator")
-  # Schema 1.2: optional PC pruning and parallel blocks (1.1: IIC by definition,
-  # PC, fractions and k calibration; 1.0: lconnect IIC).
-  metadata <- list(schema_version = "1.2",
+  # Schema 1.3: external distances, ECA, landscape fractions, ProtConn
+  # indicators and link importance (1.2: optional PC pruning and parallel
+  # blocks; 1.1: IIC by definition, PC, fractions and k calibration; 1.0:
+  # lconnect IIC).
+  metadata <- list(schema_version = "1.3",
     package_version = as.character(utils::packageVersion("biomastats")),
     collection = collection, classes = classes, year = if ("year" %in% names(p)) unique(p$year) else year,
     max_dist_m = max_dist, metric_patch = metric_patch, source_crs_wkt = original_crs$wkt,
     analysis_crs_wkt = analysis_crs$wkt, reprojected = !isTRUE(original_crs == analysis_crs),
     boundary_method = boundary_method, landscape_area_m2 = area_l, habitat_area_m2 = sum(areas),
-    area_unit = "m2", distance_unit = "m", awf_unit = "m4",
+    area_unit = "m2", distance_unit = distance_unit, distance_source = distance_source,
+    awf_unit = "m4", eca_unit = "m2",
+    landscape_fractions = paste("Saura et al. 2011 / Makurhini overall: intra, direct",
+      "(one step; PC direct p_ij) and step (stepping stones), % of the numerator"),
+    protconn_rule = paste("Saura et al. 2017 with habitat as protected area and boundary",
+      "as region: ProtConn = 100 ECA_PC / A_L"),
+    link_importance = link_importance,
     compatibility = "lconnect 0.1.2: NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF and IIC_lconnect",
     graph_rule = "distance < max_dist; zero-distance links and isolated vertices retained",
     components_rule = "lconnect NC and area components: distance <= max_dist",
@@ -294,7 +366,7 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     upstream = inherited)
   structure(c(list(source_polygons = source, analysis_polygons = p, boundary = bound,
     distance = distance, metrics = metrics, patch_metrics = patches,
-    fraction_metrics = fractions, edge_metrics = edges,
+    fraction_metrics = fractions, edge_metrics = edges, link_metrics = links,
     scenarios = scenarios, class_dictionary = dictionary, metadata = metadata), plots),
     class = c("biomastats_connectivity", "list"))
 }
@@ -483,8 +555,10 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
 # Landscape indices for one threshold, reusing the distance matrix. NC and
 # component indices follow lconnect single linkage (d <= max_dist); IIC
 # follows the original definition and IIC_lconnect reproduces lconnect 0.1.2.
-# PC comes from the patch-importance step (NA when not requested).
-.connectivity_indices <- function(D, areas, max_dist, area_l, k, pc = NA_real_) {
+# PC and its landscape fractions come from the patch-importance step (NA when
+# not requested). ECA = A_L sqrt(index); ProtConn indicators use ECA_PC.
+.connectivity_indices <- function(D, areas, max_dist, area_l, k, pc = NA_real_,
+                                  pc_landscape = NULL) {
   inclusive <- D <= max_dist
   diag(inclusive) <- FALSE
   clusters <- igraph::components(igraph::graph_from_adjacency_matrix(
@@ -492,14 +566,56 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   component_areas <- as.numeric(rowsum(areas, clusters))
   paths <- .path_lengths(.path_graph(D, "IIC", max_dist), "IIC")
   connected <- paths[upper.tri(paths) & is.finite(paths)]
+  M <- 1 / (1 + paths)
+  numerator <- sum(areas * as.numeric(M %*% areas))
+  iic_landscape <- .landscape_fractions(D, paths, M, areas, "IIC", NULL, numerator)
+  if (is.null(pc_landscape)) pc_landscape <- c(intra = NA_real_, direct = NA_real_, step = NA_real_)
+  habitat <- sum(areas)
+  eca_iic <- sqrt(numerator)
+  eca_pc <- area_l * sqrt(pc)
   c(NC = length(component_areas), LNK = sum(D[upper.tri(D)] < max_dist),
-    SLC = max(component_areas), MSC = sum(areas) / length(component_areas),
-    CCP = sum((component_areas / sum(areas))^2), LCP = sum((component_areas / area_l)^2),
+    SLC = max(component_areas), MSC = habitat / length(component_areas),
+    CCP = sum((component_areas / habitat)^2), LCP = sum((component_areas / area_l)^2),
     CPL = if (length(connected)) mean(connected) else NA_real_,
-    ECS = sum(component_areas^2) / sum(areas), AWF = .awf_value(D, areas, k),
-    IIC = sum(areas * as.numeric((1 / (1 + paths)) %*% areas)) / area_l^2,
-    IIC_lconnect = .iic_lconnect(D, areas, max_dist, area_l), PC = pc)
+    ECS = sum(component_areas^2) / habitat, AWF = .awf_value(D, areas, k),
+    IIC = numerator / area_l^2,
+    IIC_lconnect = .iic_lconnect(D, areas, max_dist, area_l), PC = pc,
+    ECA_IIC = eca_iic, ECA_PC = eca_pc,
+    ECAnorm_IIC = 100 * eca_iic / habitat, ECAnorm_PC = 100 * eca_pc / habitat,
+    IIC_intra = iic_landscape[["intra"]], IIC_direct = iic_landscape[["direct"]],
+    IIC_step = iic_landscape[["step"]], PC_intra = pc_landscape[["intra"]],
+    PC_direct = pc_landscape[["direct"]], PC_step = pc_landscape[["step"]],
+    Prot = 100 * habitat / area_l, ProtConn = 100 * eca_pc / area_l,
+    ProtUnconn = 100 * (habitat - eca_pc) / area_l, RelConn = 100 * eca_pc / habitat)
+}
+
+# Map of link importance: patches in grey and links coloured by the drop of
+# the index when each one alone is removed, faceted by index and threshold.
+.connectivity_link_plot <- function(patches, links, language) {
+  points <- suppressWarnings(sf::st_point_on_surface(patches))
+  coords <- sf::st_coordinates(points)
+  key <- paste(patches$max_dist_m, patches$fragment_id, sep = ":")
+  a <- match(paste(links$max_dist_m, links$from, sep = ":"), key)
+  b <- match(paste(links$max_dist_m, links$to, sep = ":"), key)
+  e <- links
+  e$x <- coords[a, 1]; e$y <- coords[a, 2]; e$xend <- coords[b, 1]; e$yend <- coords[b, 2]
+  thresholds <- paste0(sort(unique(patches$max_dist_m)), " m")
+  e$scenario <- factor(paste0(e$max_dist_m, " m"), levels = thresholds)
+  e$panel <- paste0("d", e$metric, "_link")
+  e <- e[order(e$importance), , drop = FALSE]
+  p <- patches
+  p$scenario <- factor(paste0(p$max_dist_m, " m"), levels = thresholds)
+  p <- do.call(rbind, lapply(unique(e$panel), function(panel) { p$panel <- panel; p }))
+  ggplot2::ggplot() +
+    ggplot2::geom_sf(data = p, fill = "#d9d9d9", colour = "#8c8c8c", linewidth = 0.15) +
+    ggplot2::geom_segment(data = e, ggplot2::aes(x = x, y = y, xend = xend, yend = yend,
+      colour = importance, linewidth = importance), lineend = "round") +
+    ggplot2::scale_colour_gradient(low = "#c6dbef", high = "#08306b",
+      name = .tr(language, "Import\u00e2ncia da liga\u00e7\u00e3o (%)", "Link importance (%)")) +
+    ggplot2::scale_linewidth_continuous(range = c(0.2, 1.6), guide = "none") +
+    ggplot2::facet_grid(panel ~ scenario) + ggplot2::coord_sf(datum = NA) +
+    ggplot2::labs(x = NULL, y = NULL) + ggplot2::theme_minimal(base_size = 12)
 }
 
 utils::globalVariables(c("area_ha", "class_id", "status", "scenario", "component_id",
-                        "importance", "max_dist_m", "metric", "value", "key", "fraction"))
+                        "importance", "max_dist_m", "metric", "value", "key", "fraction", "panel"))

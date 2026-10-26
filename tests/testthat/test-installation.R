@@ -19,6 +19,8 @@ test_that("NAMESPACE exports exactly the public functions", {
     "lulc_metrics", "biomastats_metrics", "reclass_map", "fragment_metrics", "class_diversity",
     # change, adjacency, vectorization and connectivity
     "land_change", "land_to_graph", "reclass_to_polygons", "land_connectivity", "patch_imp_fast",
+    # resistance, least-cost distance, temporal connectivity and Makurhini
+    "resistance_surface", "cost_distance", "connectivity_change", "as_makurhini",
     # time series
     "land_time_series", "series_correlation", "series_fit_regime", "series_diagnostics",
     "series_forecast",

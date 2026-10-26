@@ -62,6 +62,10 @@ For full documentation, run `?function_name` in R.
 | `reclass_to_polygons()` | Converts the reclassified maps into `sf` polygons | `biomastats_metrics()` |
 | `land_connectivity()` | Fragment connectivity at several distance thresholds | `reclass_to_polygons()` |
 | `patch_imp_fast()` | Importance of each fragment (IIC, PC or AWF) and its intra, flux and connector fractions | a `land_connectivity()` scenario |
+| `resistance_surface()` | Cost surface from land use, with barriers | maps |
+| `cost_distance()` | Least-cost distance between fragments, from edge to edge | `reclass_to_polygons()` and `resistance_surface()` |
+| `connectivity_change()` | ECA, dECA, fractions and link importance over the years, with plots and animation | `reclass_to_polygons()` or `land_connectivity()` |
+| `as_makurhini()` | Arguments (and results) of Makurhini's `MK_dPCIIC()`, `MK_dECA()` and `MK_ProtConn()` | `land_connectivity()` or `connectivity_change()` |
 
 ## External layers {- #functions-external-layers}
 

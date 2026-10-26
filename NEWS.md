@@ -35,6 +35,46 @@
   `connector_plot` (mapa da fração de conector). `patch_imp_fast()` devolve
   `fractions` e os atributos `index`, `k`, `method` e `iic_rule`.
 
+## Integração com o Makurhini e análise temporal
+
+* `land_connectivity(distance = )` aceita distâncias externas: matriz (com
+  nomes iguais a `fragment_id` ou na ordem dos fragmentos), `dist` ou tabela
+  `From`/`To`/`Distance`, como a de `Makurhini::distancefile()`. `NA` e `Inf`
+  são barreiras. Unidade e origem ficam em `metadata`.
+* **ECA** nativa em `metrics`: `ECA_IIC` e `ECA_PC` (m²), `ECAnorm_IIC` e
+  `ECAnorm_PC` (% do habitat), e as **frações da paisagem** do Makurhini,
+  `X_intra`, `X_direct` e `X_step` (% do numerador, para IIC e PC). Com o PC,
+  `metrics` traz `Prot`, `ProtConn`, `ProtUnconn` e `RelConn` (Saura et al.
+  2017), tomando o habitat como área protegida e o limite como região.
+  ECA, frações, dPC e dIIC coincidem com `MK_dPCIIC(overall = TRUE)`, e os
+  indicadores, com `MK_ProtConn()`, nos mesmos dados.
+* **Importância das ligações** (`link_importance = TRUE`): `link_metrics` dá a
+  queda do IIC e do PC quando cada ligação é removida, recalculando só os pares
+  que passam por ela, em blocos paralelizáveis; `link_plot` a mapeia. Na Lagoa
+  do Sino (461 fragmentos, 300 m), IIC e PC com ligações levam 47 s.
+* `resistance_surface()`: superfície de custo a partir do uso do solo de um
+  ano, com custo por classe, custo padrão e barreiras `sf` (intransponíveis ou
+  com custo próprio). Devolve um `RasterLayer` serializável, aceito pelo
+  Makurhini e pelo gdistance.
+* `cost_distance()`: distância de menor custo **de borda a borda** em grafo de
+  células com vizinhança de 8, sem atalhos por fragmentos nem por cantos de
+  barreiras; com custo 1, reproduz a distância entre bordas na grade.
+  `method = "makurhini"` delega a `Makurhini::distancefile()` (centroides). Na
+  Lagoa do Sino (315 mil células, 461 fragmentos), 64 s, ou 42 s com 4
+  processos.
+* `connectivity_change()`: série temporal de habitat, ECA, dA, dECA, rECA e
+  tipo de mudança (classes do `MK_dECA()`), frações da paisagem por ano,
+  resumo da participação das ligações e os gráficos `eca_plot`, `change_plot`,
+  `fractions_plot`, `map_plot` e `link_plot`. Com `animate = TRUE`, devolve uma
+  animação gganimate do mapa de importância ano a ano. `gganimate` entra em
+  Suggests.
+* `as_makurhini()`: argumentos prontos para `MK_dPCIIC()`, `MK_dECA()` e
+  `MK_ProtConn()` (nós com área em m², limite como `LA` ou região, matriz de
+  distâncias, `probability` e `distance_thresholds` equivalentes ao k,
+  `pij_min = 0`) e, com `run = TRUE`, os resultados. O Makurhini, instalado do
+  GitHub, continua opcional e fora de Suggests.
+* `metadata$schema_version` passa a 1.3.
+
 ## Desempenho
 
 * **Poda opcional do PC** (`prune = "auto"`, `TRUE` ou `FALSE`) em

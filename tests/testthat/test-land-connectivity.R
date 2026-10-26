@@ -238,7 +238,7 @@ test_that("native vectorization, plots, dictionary and RDS remain interoperable"
   for (name in c("fractions_plot", "connector_plot")) {
     expect_s3_class(ggplot2::ggplot_build(restored[[name]]), "ggplot_built")
   }
-  expect_equal(restored$metadata$schema_version, "1.2")
+  expect_equal(restored$metadata$schema_version, "1.3")
   expect_equal(igraph::as_data_frame(restored$scenarios[[1]]$graph),
                igraph::as_data_frame(out$scenarios[[1]]$graph))
 })

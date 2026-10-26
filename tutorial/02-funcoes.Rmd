@@ -62,6 +62,10 @@ Para a documentação completa, use `?nome_da_função` no R.
 | `reclass_to_polygons()` | Converte os mapas reclassificados em polígonos `sf` | `biomastats_metrics()` |
 | `land_connectivity()` | Conectividade dos fragmentos em vários limiares de distância | `reclass_to_polygons()` |
 | `patch_imp_fast()` | Importância de cada fragmento (IIC, PC ou AWF) e suas frações intra, fluxo e conector | cenário de `land_connectivity()` |
+| `resistance_surface()` | Superfície de custo a partir do uso do solo, com barreiras | mapas |
+| `cost_distance()` | Distância de menor custo entre os fragmentos, de borda a borda | `reclass_to_polygons()` e `resistance_surface()` |
+| `connectivity_change()` | ECA, dECA, frações e importância das ligações ao longo dos anos, com gráficos e animação | `reclass_to_polygons()` ou `land_connectivity()` |
+| `as_makurhini()` | Argumentos (e resultados) de `MK_dPCIIC()`, `MK_dECA()` e `MK_ProtConn()` do Makurhini | `land_connectivity()` ou `connectivity_change()` |
 
 ## Camadas externas {-}
 

@@ -170,7 +170,105 @@
                           flux = 100 * 2 * areas * (Ma - areas) / total,
                           connector = 100 * connector / total)
   list(importance = unname(rowSums(fractions)), fractions = fractions, index = total,
-       candidates = candidates, edges = igraph::ecount(g))
+       candidates = candidates, edges = igraph::ecount(g),
+       landscape = .landscape_fractions(D, L, M, areas, metric, k, total))
+}
+
+# Landscape fractions of the index numerator (%), as Makurhini's overall
+# output (Saura et al. 2011): intra = sum a_i^2; direct = pairs joined by one
+# link (IIC: one step, a_i a_j / 2; PC: direct probability p_ij); step = the
+# remainder, gained through stepping stones (IIC: two or more steps; PC:
+# p*_ij - p_ij). The three add up to 100.
+.landscape_fractions <- function(D, L, M, areas, metric, k, total) {
+  if (!is.finite(total) || total <= 0) return(c(intra = NaN, direct = NaN, step = NaN))
+  aa <- outer(areas, areas)
+  diag(aa) <- 0
+  direct <- if (metric == "IIC") sum(aa[L == 1]) / 2 else sum(aa * exp(-k * D))
+  intra <- sum(areas^2)
+  out <- 100 * c(intra = intra, direct = direct, step = total - intra - direct) / total
+  out[abs(out) < 1e-10] <- 0  # rounding residue of the subtraction
+  out
+}
+
+# Importance of each link: the drop (%) of the index numerator when that edge
+# alone is removed. Only an edge that is itself a best path between its ends
+# can matter (others, and PC edges dropped by pruning, are zero and are not
+# returned). As for the connector, only pairs routed through the edge,
+# L_iu + w + L_vj = L_ij, are recomputed without it. Blocks of edges run in
+# parallel.
+.link_importance <- function(D, areas, max_dist, metric, k = NULL, parallel = FALSE,
+                             prune = FALSE) {
+  g <- .path_graph(D, metric, max_dist, prune, parallel)
+  empty <- data.frame(from = integer(), to = integer(), importance = numeric())
+  if (!igraph::ecount(g)) return(empty)
+  L <- .path_lengths(g, metric)
+  M <- .affinity(L, metric, k)
+  total <- sum(areas * as.numeric(M %*% areas))
+  ends <- igraph::ends(g, igraph::E(g), names = FALSE)
+  w <- if (metric == "IIC") rep(1, nrow(ends)) else igraph::E(g)$weight
+  tol <- if (metric == "IIC") 0 else 1e-9
+  candidates <- which(abs(L[ends] - w) <= tol * pmax(1, w))
+  if (!length(candidates) || !is.finite(total) || total <= 0) return(empty)
+  link_block <- function(es) {
+    vapply(candidates[es], function(e) {
+      u <- ends[e, 1]; v <- ends[e, 2]
+      via <- outer(L[, u], w[e] + L[v, ], "+")
+      tight <- is.finite(via) & abs(via - L) <= tol * pmax(1, L)
+      s <- which(rowSums(tight) > 0 | colSums(tight) > 0)
+      M_e <- .affinity(.path_lengths(igraph::delete_edges(g, e), metric, from = s, to = s),
+                       metric, k)
+      sum(outer(areas[s], areas[s]) * (M[s, s, drop = FALSE] - M_e))
+    }, numeric(1))
+  }
+  delta <- .map_chunks(length(candidates), link_block, parallel)
+  data.frame(from = ends[candidates, 1], to = ends[candidates, 2],
+             importance = 100 * delta / total)
+}
+
+# External distances aligned with the patch ids: a square matrix (reordered
+# by its dimnames when present), a dist object, or a From/To/Distance table
+# such as Makurhini's (missing pairs have no link). NA and Inf mean no link
+# (a barrier); the diagonal is zero. Asymmetry up to 1e-6 (relative) is
+# averaged out; larger asymmetry is an error.
+.connectivity_distance <- function(distance, ids) {
+  ids <- as.character(ids)
+  n <- length(ids)
+  unit <- attr(distance, "unit")
+  if (inherits(distance, "dist")) distance <- as.matrix(distance)
+  if (is.data.frame(distance)) {
+    cols <- match(c("from", "to", "distance"), tolower(names(distance)))
+    if (anyNA(cols)) stop("Tabela de distancias deve ter colunas From, To e Distance.")
+    i <- match(as.character(distance[[cols[1]]]), ids)
+    j <- match(as.character(distance[[cols[2]]]), ids)
+    if (anyNA(i) || anyNA(j)) stop("Tabela de distancias com ids ausentes em fragment_id.")
+    value <- as.numeric(distance[[cols[3]]])
+    distance <- matrix(Inf, n, n, dimnames = list(ids, ids))
+    distance[cbind(i, j)] <- value
+    distance <- pmin(distance, t(distance))
+  }
+  if (!is.matrix(distance) || !is.numeric(distance) || any(dim(distance) != n)) {
+    stop("distance deve ser matriz quadrada, dist ou tabela From/To/Distance com um valor por fragmento.")
+  }
+  rn <- rownames(distance); cn <- colnames(distance)
+  if (!is.null(rn) || !is.null(cn)) {
+    if (is.null(rn) || is.null(cn) || !setequal(rn, ids) || !setequal(cn, ids)) {
+      stop("Nomes da matriz de distancias devem coincidir com fragment_id.")
+    }
+    distance <- distance[ids, ids, drop = FALSE]
+  }
+  D <- matrix(as.numeric(distance), n, n)
+  D[is.na(D)] <- Inf
+  if (any(D < 0)) stop("Distancias devem ser nao negativas.")
+  if (any(is.finite(D) != is.finite(t(D)))) stop("Matriz de distancias deve ser simetrica.")
+  finite <- is.finite(D)
+  if (any(abs(D - t(D))[finite] > 1e-6 * pmax(1, D[finite]))) {
+    stop("Matriz de distancias deve ser simetrica.")
+  }
+  D[finite] <- ((D + t(D)) / 2)[finite]
+  diag(D) <- 0
+  dimnames(D) <- list(ids, ids)
+  attr(D, "unit") <- unit
+  D
 }
 
 # Explicit removal, the validation reference. The (pruned or full) graph is
@@ -261,5 +359,6 @@
   structure(list(landscape = p, prioritization = res$importance, fractions = res$fractions),
     class = "pimp", metric = metric, status = status, index = res$index, k = res$k,
     method = res$method, iic_rule = if (metric == "IIC") iic_rule else NA_character_,
-    connector_candidates = res$candidates, pruned = res$pruned, edges = res$edges)
+    connector_candidates = res$candidates, pruned = res$pruned, edges = res$edges,
+    landscape_fractions = res$landscape)
 }

@@ -165,7 +165,7 @@ O mesmo status se aplica a uma paisagem de um fragmento, que nao tem ranking
 relativo. CPL sem pares conectados e NA. A matriz de distancias e densa, e a
 poda do PC custa n^3 operacoes; paisagens muito grandes requerem outro desenho.
 
-O resultado biomastats_connectivity (metadata$schema_version 1.1) oferece
+O resultado biomastats_connectivity (metadata$schema_version 1.3) oferece
 scenarios com objetos lconnect, pimp e igraph, sf enriquecido por limiar (dX e
 fracoes dX_intra, dX_flux, dX_connector), fraction_metrics em formato longo,
 matrizes, tabelas e seis ggplots: grafo espacial, componentes, importancia,
@@ -183,6 +183,40 @@ originais e upload_land (regra lconnect), decomposicao contra remocao e contra
 Floyd-Warshall independente, poda do PC, papel de trampolim, calibracao de k,
 diagonal AWF, isolados, contatos/empates de limiar, unidades, heranca de
 limite, recuperacao RDS das fracoes e graficos e fluxo completo com o recorte.
+
+### Distancias externas, custo, ECA, ligacoes e Makurhini
+
+A matriz de distancias e a unica entrada geometrica do motor; por isso
+`land_connectivity(distance = )` aceita distancias externas (matriz nomeada por
+fragment_id, dist ou tabela From/To/Distance do Makurhini), validadas e
+alinhadas em `.connectivity_distance()`. NA e Inf sao barreiras; assimetria
+acima de 1e-6 e erro. Unidade e origem vao para metadata (schema 1.3).
+
+`resistance_surface()` e `cost_distance()` ficam em arquivos proprios.
+A superficie e um RasterLayer em memoria (serializavel e aceito por Makurhini e
+gdistance), projetado em metros. A distancia nativa usa um grafo igraph dirigido
+de celulas (8 vizinhos, custo = passo x media dos custos, como gdistance), com
+uma origem e um sumidouro virtuais por fragmento ligados por meio passo as
+celulas vizinhas fora dele: a medida vai de borda a borda e os fragmentos nao
+viram atalhos gratuitos (o trampolim continua no grafo de conectividade).
+Diagonais entre duas barreiras sao bloqueadas. Origens sao divididas em blocos
+com `.map_chunks()`. O custo cresce com celulas x fragmentos.
+
+ECA = A_L sqrt(indice). As fracoes da paisagem (intra, direct, step) seguem a
+saida overall do Makurhini e saem de L e M ja calculados na decomposicao;
+ProtConn, Prot, ProtUnconn e RelConn derivam de ECA_PC. A importancia de uma
+ligacao usa o mesmo teste de caminho justo do conector, com a aresta no lugar
+do vertice: so arestas que sao o melhor caminho entre suas pontas sao
+candidatas, e so os pares que passam por elas sao recalculados.
+
+`connectivity_change()` apenas reune objetos de land_connectivity por ano
+(executando-os quando recebe poligonos), sem novo calculo de indices, e
+produz tabelas longas e ggplots; a animacao e um objeto gganim que o usuario
+renderiza. `as_makurhini()` so monta argumentos (nos com area em m2, LA, matriz,
+probability/distance_thresholds equivalentes a k, pij_min = 0) e, com run =
+TRUE, chama o Makurhini por `.makurhini_fun()`, via nome em variavel, porque o
+pacote vem do GitHub e nao esta em Suggests. Testes comparam ECA, fracoes,
+dIIC/dPC e ProtConn com o Makurhini quando ele esta instalado (fora do CRAN).
 
 ### Mudancas temporais: land_change
 
