@@ -98,3 +98,9 @@ connectivity_pc <- land_connectivity(polygons, max_dist = 300,
   metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300, language = "en")
 connectivity_pc$fractions_plot
 ```
+
+PC is the most demanding index. In landscapes with hundreds of fragments,
+`parallel = 4` (or another number of processes) splits the work across cores and
+gives the same result; with a few dozen fragments, starting the processes costs
+more than it saves. Exact pruning of PC links (`prune = "auto"`) is applied on its
+own from 50 fragments upwards.

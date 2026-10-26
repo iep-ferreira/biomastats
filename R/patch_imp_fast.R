@@ -6,8 +6,18 @@
 #' @param landscape Objeto de classe lconnect, produzido por
 #'   [land_connectivity()] ou lconnect::upload_land(). Deve usar CRS em metros.
 #' @param metric Indice de priorizacao: "IIC" (padrao), "PC" ou "AWF".
-#' @param parallel Paralelizar o calculo do conector com future.apply, usando
-#'   o plano definido pelo usuario. FALSE por padrao; nao altera o plano global.
+#' @param parallel Paraleliza o teste de candidatos, o conector e a poda (IIC e
+#'   PC por decomposicao), que dominam o tempo. FALSE (padrao) roda em
+#'   sequencia; TRUE usa o plano future ja definido pelo usuario; um numero
+#'   abre um plano multisession temporario com esse numero de processos e
+#'   restaura o anterior. Requer future.apply. Compensa a partir de algumas
+#'   centenas de fragmentos (PC da Lagoa do Sino, 461 fragmentos: cerca de 4
+#'   vezes mais rapido com 8 processos); em paisagens pequenas, abrir e
+#'   alimentar os processos custa mais que o ganho.
+#' @param prune Poda exata das arestas do PC: "auto" (padrao) poda redes densas
+#'   (ao menos 50 fragmentos e 25% dos pares com ligacao finita); TRUE e FALSE
+#'   forcam a escolha. O resultado e o mesmo com ou sem poda; so o tempo muda
+#'   (ate 20 vezes com 400 fragmentos). Sem efeito em IIC e AWF.
 #' @param method "decomposition" (padrao), pela identidade de Saura & Rubio
 #'   (2010), ou "removal", que recalcula o indice apos cada remocao e serve
 #'   de referencia. Sem efeito para AWF, calculado em forma fechada.
@@ -24,7 +34,8 @@
 #'   e fractions (data.frame com intra, flux e connector, em % do indice, que
 #'   somam prioritization; NULL na regra lconnect e no metodo removal).
 #'   Atributos: metric, status, index (valor do indice na paisagem), k,
-#'   method, iic_rule e connector_candidates. Nao escreve arquivos.
+#'   method, iic_rule, connector_candidates, pruned (se houve poda) e edges
+#'   (arestas do grafo de caminhos). Nao escreve arquivos.
 #' @details IIC e PC tem a forma I = sum_ij a_i a_j M_ij / A_L^2, somada em
 #'   todos os fragmentos, inclusive i = j e os isolados (M_ii = 1). No IIC,
 #'   M_ij = 1 / (1 + nl_ij), com ligacao quando d_ij < max_dist, inclusive
@@ -37,7 +48,9 @@
 #'   A decomposicao calcula intra (a_r^2) e fluxo em forma fechada e recalcula
 #'   o conector apenas para fragmentos que estao em algum melhor caminho entre
 #'   outros dois, e so entre esses pares. No PC, arestas com dois ou mais
-#'   desvios estritamente mais curtos sao podadas sem alterar o resultado.
+#'   desvios estritamente mais curtos podem ser podadas sem alterar o
+#'   resultado, tambem no metodo removal, que monta o grafo uma vez e apaga
+#'   um vertice por remocao.
 #'   A area do limite permanece fixa em todas as remocoes.
 #'
 #'   Quando o indice inicial e zero ou ha um unico fragmento, a prioridade e
@@ -53,23 +66,27 @@
 #' land <- land_connectivity(poligonos, max_dist = 300)$scenarios[[1]]$land
 #' pc <- patch_imp_fast(land, metric = "PC", p_ref = 0.05, d_ref = 300)
 #' head(pc$fractions)
+#' # paisagens grandes: 4 processos temporarios
+#' pc4 <- patch_imp_fast(land, metric = "PC", parallel = 4)
 #' }
 #' @export
 patch_imp_fast <- function(landscape, metric = c("IIC", "PC", "AWF"), parallel = FALSE,
                            method = c("decomposition", "removal"),
                            iic_rule = c("definition", "lconnect"),
-                           k = NULL, p_ref = 0.5, d_ref = NULL) {
+                           k = NULL, p_ref = 0.5, d_ref = NULL, prune = "auto") {
   metric <- match.arg(metric)
   method <- match.arg(method)
   iic_rule <- match.arg(iic_rule)
-  .connectivity_check_flag(parallel, "parallel")
-  if (parallel && !requireNamespace("future.apply", quietly = TRUE)) {
-    stop("Instale future.apply para parallel = TRUE.")
-  }
+  .connectivity_check_parallel(parallel)
   checked <- .connectivity_check_land(landscape)
   kk <- if (metric == "IIC") NULL else .calibrate_k(landscape$max_dist, k, p_ref, d_ref)
+  # A number of processes opens a temporary plan; the user's plan is restored.
+  if (is.numeric(parallel)) {
+    old_plan <- future::plan(future::multisession, workers = parallel)
+    on.exit(future::plan(old_plan), add = TRUE)
+  }
   res <- .patch_imp_engine(checked$D, checked$areas, landscape$max_dist,
-    as.numeric(landscape$area_l), metric, parallel, method, iic_rule, kk)
+    as.numeric(landscape$area_l), metric, !isFALSE(parallel), method, iic_rule, kk, prune)
   .as_pimp(landscape, res, metric, iic_rule)
 }
 

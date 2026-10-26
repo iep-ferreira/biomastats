@@ -99,3 +99,9 @@ conectividade_pc <- land_connectivity(poligonos, max_dist = 300,
   metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300)
 conectividade_pc$fractions_plot
 ```
+
+O PC é o índice mais custoso. Em paisagens com centenas de fragmentos,
+`parallel = 4` (ou outro número de processos) divide o cálculo entre núcleos e
+dá o mesmo resultado; com poucas dezenas de fragmentos, abrir os processos custa
+mais do que economiza. A poda exata das ligações do PC (`prune = "auto"`) já é
+aplicada sozinha a partir de 50 fragmentos.

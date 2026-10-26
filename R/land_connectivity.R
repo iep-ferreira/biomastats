@@ -23,7 +23,11 @@
 #' @param iic_rule "definition" (padrao) ou "lconnect"; ver [patch_imp_fast()].
 #' @param k,p_ref,d_ref Calibracao de k para PC e AWF, como em
 #'   [patch_imp_fast()]. Sem k nem d_ref, cada limiar usa p = 0,5 a max_dist / 2.
-#' @param parallel Paralelizar o conector com future.apply (FALSE por padrao).
+#' @param parallel FALSE (padrao), TRUE (plano future do usuario) ou numero de
+#'   processos; ver [patch_imp_fast()]. Com um numero, os processos sao abertos
+#'   uma unica vez para todos os limiares e indices e fechados ao final.
+#' @param prune Poda das arestas do PC: "auto" (padrao), TRUE ou FALSE; ver
+#'   [patch_imp_fast()].
 #' @param language Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.
 #' @param build_plot Construir ggplots (TRUE por padrao).
 #' @return Lista biomastats_connectivity com source_polygons, analysis_polygons,
@@ -102,14 +106,12 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
                               crs = NULL, metric_patch = c("IIC", "AWF"),
                               iic_rule = c("definition", "lconnect"),
                               k = NULL, p_ref = 0.5, d_ref = NULL, parallel = FALSE,
-                              language = c("pt", "en"), build_plot = TRUE) {
+                              prune = "auto", language = c("pt", "en"), build_plot = TRUE) {
   language <- match.arg(language)
   iic_rule <- match.arg(iic_rule)
   .connectivity_check_flag(build_plot, "build_plot")
-  .connectivity_check_flag(parallel, "parallel")
-  if (parallel && !requireNamespace("future.apply", quietly = TRUE)) {
-    stop("Instale future.apply para parallel = TRUE.")
-  }
+  .connectivity_check_parallel(parallel)
+  invisible(.resolve_prune(prune, "IIC", matrix(0)))  # validates prune early
   if (!is.numeric(max_dist) || !length(max_dist) || any(!is.finite(max_dist) | max_dist <= 0)) {
     stop("max_dist deve conter distancias positivas em metros.")
   }
@@ -182,6 +184,13 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   }
   distance <- matrix(as.numeric(units::set_units(sf::st_distance(p), "m")), nrow(p), nrow(p))
   dimnames(distance) <- list(as.character(p$fragment_id), as.character(p$fragment_id))
+  # A number of processes opens one temporary plan for every threshold and
+  # index (opening costs about a second); the user's plan is restored.
+  if (is.numeric(parallel)) {
+    old_plan <- future::plan(future::multisession, workers = parallel)
+    on.exit(future::plan(old_plan), add = TRUE)
+  }
+  workers <- if (isFALSE(parallel)) 1L else future::nbrOfWorkers()
   scenarios <- lapply(max_dist, function(md) {
     adjacency <- distance < md
     diag(adjacency) <- FALSE
@@ -207,8 +216,8 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
       distance = stats::as.dist(distance), boundary = bound,
       area_l = units::set_units(area_l, "m^2")), class = "lconnect")
     importance <- lapply(metric_patch, function(metric) {
-      res <- .patch_imp_engine(unname(distance), areas, md, area_l, metric, parallel,
-        "decomposition", iic_rule, if (metric == "IIC") NULL else k_md)
+      res <- .patch_imp_engine(unname(distance), areas, md, area_l, metric, !isFALSE(parallel),
+        "decomposition", iic_rule, if (metric == "IIC") NULL else k_md, prune)
       .as_pimp(list(landscape = pp), res, metric, iic_rule)
     })
     names(importance) <- metric_patch
@@ -239,6 +248,8 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
       k = k_md, pc = pc)))
     metrics$max_dist_m <- md
     metrics$k <- k_md
+    metrics$pc_pruned <- if ("PC" %in% metric_patch) attr(importance$PC, "pruned") else NA
+    metrics$pc_edges <- if ("PC" %in% metric_patch) attr(importance$PC, "edges") else NA_integer_
     metrics$graph_components <- igraph::components(graph)$no
     metrics$isolates <- sum(pp$degree == 0)
     list(land = land, graph = graph, patch_importance = importance,
@@ -258,8 +269,9 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     "distance < max_dist, zero-distance contacts linked; fixed landscape denominator")
   iic_lconnect <- paste("lconnect 0.1.2: 0 < distance < max_dist; isolated vertices omitted;",
     "fixed landscape denominator")
-  # Schema 1.1: IIC by definition, PC, fractions and k calibration (1.0: lconnect IIC).
-  metadata <- list(schema_version = "1.1",
+  # Schema 1.2: optional PC pruning and parallel blocks (1.1: IIC by definition,
+  # PC, fractions and k calibration; 1.0: lconnect IIC).
+  metadata <- list(schema_version = "1.2",
     package_version = as.character(utils::packageVersion("biomastats")),
     collection = collection, classes = classes, year = if ("year" %in% names(p)) unique(p$year) else year,
     max_dist_m = max_dist, metric_patch = metric_patch, source_crs_wkt = original_crs$wkt,
@@ -276,6 +288,8 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     k_calibration = if (!is.null(k)) list(k = k) else list(p_ref = p_ref,
       d_ref = if (is.null(d_ref)) "max_dist / 2" else d_ref),
     importance_method = "Saura & Rubio 2010 decomposition: intra + flux + connector",
+    pc_prune = if (is.logical(prune)) prune else "auto: >= 50 patches and >= 25% finite links",
+    parallel_workers = workers,
     zero_baseline = "priority NaN; pimp status undefined_baseline; CPL NA without connected pairs",
     upstream = inherited)
   structure(c(list(source_polygons = source, analysis_polygons = p, boundary = bound,

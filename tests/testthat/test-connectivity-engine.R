@@ -74,9 +74,9 @@ test_that("a poda do PC preserva os melhores caminhos com e sem cada fragmento",
   land <- random_engine_land(5)
   D <- unname(as.matrix(land$distance))
   full <- floyd(D)
-  pruned <- .path_lengths(.path_graph(D, "PC", land$max_dist), "PC")
+  pruned <- .path_lengths(.path_graph(D, "PC", land$max_dist, prune = TRUE), "PC")
   expect_equal(pruned, full, tolerance = 1e-9)
-  g <- .path_graph(D, "PC", land$max_dist)
+  g <- .path_graph(D, "PC", land$max_dist, prune = TRUE)
   for (r in c(1, 7, 13)) {
     expect_equal(.path_lengths(igraph::delete_vertices(g, r), "PC"), floyd(D[-r, -r]), tolerance = 1e-9)
   }
@@ -128,11 +128,69 @@ test_that("regra lconnect reproduz lconnect::patch_imp", {
   }
 })
 
+test_that("a poda do PC e exata, opcional e automatica so em redes densas", {
+  land <- random_engine_land(6)
+  for (method in c("decomposition", "removal")) {
+    on <- patch_imp_fast(land, "PC", method = method, prune = TRUE)
+    off <- patch_imp_fast(land, "PC", method = method, prune = FALSE)
+    expect_equal(on$prioritization, off$prioritization, tolerance = 1e-10)
+    expect_true(attr(on, "pruned"))
+    expect_false(attr(off, "pruned"))
+    expect_lt(attr(on, "edges"), attr(off, "edges"))
+  }
+  expect_equal(attr(patch_imp_fast(land, "PC", prune = FALSE), "edges"), 25 * 24 / 2)
+  # "auto": below 50 patches nothing is pruned; IIC and AWF are never pruned.
+  expect_false(attr(patch_imp_fast(land, "PC"), "pruned"))
+  expect_false(attr(patch_imp_fast(land, "IIC", prune = TRUE), "pruned"))
+  expect_false(attr(patch_imp_fast(land, "AWF", prune = TRUE), "pruned"))
+  dense <- matrix(1, 60, 60)
+  expect_true(.resolve_prune("auto", "PC", dense))
+  sparse <- dense
+  sparse[upper.tri(sparse)] <- Inf
+  sparse[1, 2] <- 1
+  expect_false(.resolve_prune("auto", "PC", sparse))
+  expect_error(patch_imp_fast(land, "PC", prune = "sim"), "prune")
+})
+
 test_that("parallel coincide com o calculo sequencial", {
   skip_if_not_installed("future.apply")
   land <- random_engine_land(2)
+  # TRUE with no plan opened by the user runs on the sequential plan.
   expect_equal(patch_imp_fast(land, "PC", parallel = TRUE)$prioritization,
                patch_imp_fast(land, "PC")$prioritization)
+  expect_error(patch_imp_fast(land, "PC", parallel = 1.5), "parallel")
+  expect_error(patch_imp_fast(land, "PC", parallel = NA), "parallel")
+  expect_error(patch_imp_fast(land, "PC", parallel = 0), "parallel")
+})
+
+test_that("processos em paralelo reproduzem o sequencial e restauram o plano", {
+  skip_on_cran()
+  skip_if_not_installed("future.apply")
+  land <- random_engine_land(3)
+  before <- class(future::plan())[2]
+  for (metric in c("IIC", "PC")) {
+    seq_res <- patch_imp_fast(land, metric, prune = TRUE)
+    par_res <- patch_imp_fast(land, metric, prune = TRUE, parallel = 2)
+    expect_equal(par_res$prioritization, seq_res$prioritization, tolerance = 1e-12)
+    expect_equal(par_res$fractions, seq_res$fractions, tolerance = 1e-12)
+  }
+  expect_equal(class(future::plan())[2], before)
+  D <- unname(as.matrix(land$distance))
+  future::plan(future::multisession, workers = 2)
+  on.exit(future::plan(future::sequential), add = TRUE)
+  expect_identical(.pc_edges(D, TRUE), .pc_edges(D))
+  p <- sf::st_sf(value = 1, fragment_id = seq_len(nrow(land$landscape)),
+                 geometry = sf::st_geometry(land$landscape))
+  seq_lc <- land_connectivity(p, max_dist = c(150, 400), metric_patch = c("IIC", "PC"),
+                              prune = TRUE, build_plot = FALSE)
+  par_lc <- land_connectivity(p, max_dist = c(150, 400), metric_patch = c("IIC", "PC"),
+                              prune = TRUE, parallel = TRUE, build_plot = FALSE)
+  expect_equal(sf::st_drop_geometry(par_lc$patch_metrics),
+               sf::st_drop_geometry(seq_lc$patch_metrics), tolerance = 1e-12)
+  expect_equal(par_lc$metadata$parallel_workers, 2L)
+  expect_equal(seq_lc$metadata$parallel_workers, 1L)
+  expect_true(all(seq_lc$metrics$pc_pruned))
+  expect_true(all(seq_lc$metrics$pc_edges < 25 * 24 / 2))
 })
 
 test_that("land_connectivity entrega PC, fracoes e graficos", {

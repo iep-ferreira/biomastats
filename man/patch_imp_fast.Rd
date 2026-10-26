@@ -12,7 +12,8 @@ patch_imp_fast(
   iic_rule = c("definition", "lconnect"),
   k = NULL,
   p_ref = 0.5,
-  d_ref = NULL
+  d_ref = NULL,
+  prune = "auto"
 )
 }
 \arguments{
@@ -21,8 +22,14 @@ patch_imp_fast(
 
 \item{metric}{Indice de priorizacao: "IIC" (padrao), "PC" ou "AWF".}
 
-\item{parallel}{Paralelizar o calculo do conector com future.apply, usando
-o plano definido pelo usuario. FALSE por padrao; nao altera o plano global.}
+\item{parallel}{Paraleliza o teste de candidatos, o conector e a poda (IIC e
+PC por decomposicao), que dominam o tempo. FALSE (padrao) roda em
+sequencia; TRUE usa o plano future ja definido pelo usuario; um numero
+abre um plano multisession temporario com esse numero de processos e
+restaura o anterior. Requer future.apply. Compensa a partir de algumas
+centenas de fragmentos (PC da Lagoa do Sino, 461 fragmentos: cerca de 4
+vezes mais rapido com 8 processos); em paisagens pequenas, abrir e
+alimentar os processos custa mais que o ganho.}
 
 \item{method}{"decomposition" (padrao), pela identidade de Saura & Rubio
 (2010), ou "removal", que recalcula o indice apos cada remocao e serve
@@ -38,6 +45,11 @@ PC e AWF. Tem prioridade sobre p_ref e d_ref.}
 \item{p_ref, d_ref}{Calibracao de k pela probabilidade de dispersao p_ref na
 distancia d_ref (m): k = -log(p_ref) / d_ref. Padrao: p = 0,5 a
 max_dist / 2, como no lconnect.}
+
+\item{prune}{Poda exata das arestas do PC: "auto" (padrao) poda redes densas
+(ao menos 50 fragmentos e 25\% dos pares com ligacao finita); TRUE e FALSE
+forcam a escolha. O resultado e o mesmo com ou sem poda; so o tempo muda
+(ate 20 vezes com 400 fragmentos). Sem efeito em IIC e AWF.}
 }
 \value{
 Objeto de classe pimp com landscape (sf com coluna attributes),
@@ -45,7 +57,8 @@ prioritization (reducao percentual do indice apos remover cada fragmento)
 e fractions (data.frame com intra, flux e connector, em \% do indice, que
 somam prioritization; NULL na regra lconnect e no metodo removal).
 Atributos: metric, status, index (valor do indice na paisagem), k,
-method, iic_rule e connector_candidates. Nao escreve arquivos.
+method, iic_rule, connector_candidates, pruned (se houve poda) e edges
+(arestas do grafo de caminhos). Nao escreve arquivos.
 }
 \description{
 Reutiliza a matriz de distancias de um objeto lconnect, sem reconstruir
@@ -65,7 +78,9 @@ i != j, mesmo alem do limiar; sua importancia e toda fluxo.
 A decomposicao calcula intra (a_r^2) e fluxo em forma fechada e recalcula
 o conector apenas para fragmentos que estao em algum melhor caminho entre
 outros dois, e so entre esses pares. No PC, arestas com dois ou mais
-desvios estritamente mais curtos sao podadas sem alterar o resultado.
+desvios estritamente mais curtos podem ser podadas sem alterar o
+resultado, tambem no metodo removal, que monta o grafo uma vez e apaga
+um vertice por remocao.
 A area do limite permanece fixa em todas as remocoes.
 
 Quando o indice inicial e zero ou ha um unico fragmento, a prioridade e
@@ -77,6 +92,8 @@ numero de fragmentos; a poda do PC custa n^3 operacoes.
 land <- land_connectivity(poligonos, max_dist = 300)$scenarios[[1]]$land
 pc <- patch_imp_fast(land, metric = "PC", p_ref = 0.05, d_ref = 300)
 head(pc$fractions)
+# paisagens grandes: 4 processos temporarios
+pc4 <- patch_imp_fast(land, metric = "PC", parallel = 4)
 }
 }
 \references{

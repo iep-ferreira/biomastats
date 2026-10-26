@@ -137,8 +137,22 @@ fragmentos que estao em algum melhor caminho entre outros dois, e so entre
 esses pares. `method = "removal"` mantem a remocao explicita como referencia.
 AWF usa operacoes matriciais e diagonal zero, e sua importancia e toda fluxo.
 patch_imp_fast e API publica para objetos lconnect ja existentes e retorna
-pimp sem escrita, com `fractions` e os atributos index, k, method e iic_rule.
-Paralelizacao do conector e optativa e herda o plano do usuario.
+pimp sem escrita, com `fractions` e os atributos index, k, method, iic_rule,
+pruned e edges.
+
+A poda do PC e opcional (`prune`): "auto" poda redes densas (>= 50 fragmentos e
+>= 25% dos pares com ligacao finita), TRUE e FALSE forcam; o resultado e o mesmo,
+so o tempo muda. A remocao explicita monta o grafo (podado ou nao) uma vez e
+apaga um vertice por remocao, o que a regra das duas testemunhas mantem exato.
+
+Paralelizacao (`parallel`): o teste de candidatos e o conector de cada fragmento
+formam um laco unico, dividido em blocos (cerca de 4 por processo) e distribuido
+com future.apply; a poda divide os fragmentos intermediarios em blocos. FALSE e
+o padrao; TRUE herda o plano do usuario; um numero abre um plano multisession
+temporario e restaura o anterior (em land_connectivity, uma vez para todos os
+limiares). Os processos carregam o pacote instalado: testes de paralelismo
+exigem o pacote instalado (R CMD check ou workflow connectivity-tests), nao
+pkgload::load_all().
 
 As convencoes devem ficar explicitas: NC usa agrupamento <= limiar; LNK, grafo
 exploratorio, IIC e CPL usam < limiar, incluem contatos de distancia zero e

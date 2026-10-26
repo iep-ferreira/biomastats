@@ -16,6 +16,7 @@ land_connectivity(
   p_ref = 0.5,
   d_ref = NULL,
   parallel = FALSE,
+  prune = "auto",
   language = c("pt", "en"),
   build_plot = TRUE
 )
@@ -49,7 +50,12 @@ AWF. O PC e o mais custoso (poda n^3 e caminhos ponderados).}
 \item{k, p_ref, d_ref}{Calibracao de k para PC e AWF, como em
 \code{\link[=patch_imp_fast]{patch_imp_fast()}}. Sem k nem d_ref, cada limiar usa p = 0,5 a max_dist / 2.}
 
-\item{parallel}{Paralelizar o conector com future.apply (FALSE por padrao).}
+\item{parallel}{FALSE (padrao), TRUE (plano future do usuario) ou numero de
+processos; ver \code{\link[=patch_imp_fast]{patch_imp_fast()}}. Com um numero, os processos sao abertos
+uma unica vez para todos os limiares e indices e fechados ao final.}
+
+\item{prune}{Poda das arestas do PC: "auto" (padrao), TRUE ou FALSE; ver
+\code{\link[=patch_imp_fast]{patch_imp_fast()}}.}
 
 \item{language}{Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.}
 

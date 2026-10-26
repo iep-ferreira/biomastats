@@ -35,6 +35,29 @@
   `connector_plot` (mapa da fração de conector). `patch_imp_fast()` devolve
   `fractions` e os atributos `index`, `k`, `method` e `iic_rule`.
 
+## Desempenho
+
+* **Poda opcional do PC** (`prune = "auto"`, `TRUE` ou `FALSE`) em
+  `patch_imp_fast()` e `land_connectivity()`. `"auto"` poda redes densas
+  (ao menos 50 fragmentos e 25% dos pares com ligação finita); o resultado é o
+  mesmo com ou sem poda. PC com 200 fragmentos: 2,8 s com poda e 12,3 s sem.
+* **Paralelismo por blocos** (`parallel = FALSE`, `TRUE` ou número de
+  processos): o teste de candidatos, o conector e a poda são divididos entre
+  processos `future`. Um número abre um plano temporário e restaura o do
+  usuário; `land_connectivity()` o abre uma vez para todos os limiares. PC com
+  8 processos: Lagoa do Sino (461 fragmentos) de 26,8 para 5,8 s e grade de
+  400 fragmentos de 21,2 para 4,8 s, com resultados idênticos. Em paisagens
+  pequenas e no IIC, abrir os processos custa mais que o ganho, por isso o
+  padrão continua sequencial.
+* `method = "removal"` monta o grafo, podado ou não, uma única vez e apaga um
+  vértice por remoção: o PC com 200 fragmentos caiu de 41 para 3 s.
+* `metrics` ganha `pc_pruned` e `pc_edges`; `metadata`, `pc_prune` e
+  `parallel_workers` (`schema_version` 1.2). Os objetos `pimp` ganham os
+  atributos `pruned` e `edges`. `future` entra em Suggests.
+* Novo workflow `connectivity-tests.yml`: instala o pacote e roda só os testes
+  de conectividade e vetorização, inclusive os de processos paralelos (que o
+  `R CMD check` pula como no CRAN), em Linux e Windows.
+
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o
