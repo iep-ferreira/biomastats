@@ -120,30 +120,44 @@ source_polygons conserva as geometrias originais; metadados registram CRS
 de origem/analise, area do limite e unidades. Esta copia metrica nao altera o
 contrato da vetorizacao, que continua herdando seu CRS por padrao.
 
-As rotinas internas otimizadas reproduzem os dez indices do lconnect 0.1.2.
-IIC recalcula caminhos em submatrizes, sem recalcular distancias; AWF usa
-operacoes matriciais e diagonal zero, inclusive na contribuicao marginal.
-patch_imp_fast e API publica para objetos lconnect ja existentes e retorna
-pimp sem escrita. Paralelizacao IIC e optativa e herda o plano do usuario.
+O motor fica em `R/connectivity_engine.R`, compartilhado por land_connectivity
+e patch_imp_fast. NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS e AWF reproduzem o
+lconnect 0.1.2. IIC segue a definicao de Pascual-Hortal & Saura (2006): soma
+todos os fragmentos, inclusive i = j e os isolados (o lconnect os omite em
+R/con_metric.R, linhas 188-194). O valor do lconnect continua em IIC_lconnect, e
+`iic_rule = "lconnect"` reproduz a priorizacao original apenas para comparacao.
+PC (Saura & Pascual-Hortal 2007) usa a probabilidade maxima de caminho,
+exp(-k d*), com d* por Dijkstra; arestas com dois ou mais desvios estritamente
+mais curtos sao podadas sem alterar d* de G nem de G - r. PC e AWF usam k
+calibrado por `k` ou `p_ref`/`d_ref` (padrao: p = 0,5 a max_dist / 2).
 
-As convencoes originais devem ficar explicitas: NC usa agrupamento <= limiar;
-LNK e grafo exploratorio usam < limiar; IIC/CPL usam 0 < distancia < limiar e
-descartam isolados. O grafo exploratorio preserva todos os fragmentos e inclui
-contatos de distancia zero. Campos cluster_lconnect, component, iic_included,
+A importancia de IIC e PC usa a decomposicao de Saura & Rubio (2010):
+intra (a_r^2) e fluxo em forma fechada; o conector e recalculado so para os
+fragmentos que estao em algum melhor caminho entre outros dois, e so entre
+esses pares. `method = "removal"` mantem a remocao explicita como referencia.
+AWF usa operacoes matriciais e diagonal zero, e sua importancia e toda fluxo.
+patch_imp_fast e API publica para objetos lconnect ja existentes e retorna
+pimp sem escrita, com `fractions` e os atributos index, k, method e iic_rule.
+Paralelizacao do conector e optativa e herda o plano do usuario.
+
+As convencoes devem ficar explicitas: NC usa agrupamento <= limiar; LNK, grafo
+exploratorio, IIC e CPL usam < limiar, incluem contatos de distancia zero e
+preservam todos os fragmentos. Campos cluster_lconnect, component, iic_included,
 graph_components e isolates distinguem essas interpretacoes em empates/contatos.
 AWF usa todos os pares e seu limiar controla o decaimento. Se o indice inicial
 for zero, a priorizacao por remocao e matematicamente indefinida: patch_imp_fast
 retorna NaN por fragmento e anexa status "undefined_baseline" ao objeto pimp.
 O mesmo status se aplica a uma paisagem de um fragmento, que nao tem ranking
-relativo. O indice basal continua disponivel (IIC=0/AWF=0) para distinguir esse
-caso; CPL sem pares conectados e NA. A matriz de distancias e densa, portanto
-memoria cresce quadraticamente e paisagens muito grandes requerem outro desenho.
+relativo. CPL sem pares conectados e NA. A matriz de distancias e densa, e a
+poda do PC custa n^3 operacoes; paisagens muito grandes requerem outro desenho.
 
-O resultado biomastats_connectivity oferece scenarios com objetos lconnect,
-pimp e igraph, sf enriquecido por limiar, matrizes, tabelas e quatro ggplots:
-grafo espacial, componentes, importancia e resposta ao range de distancias.
-Cores de habitat vem do dicionario; componentes usam paleta categorica propria
-e importancias usam escala continua. Nenhuma identidade individual e inventada
+O resultado biomastats_connectivity (metadata$schema_version 1.1) oferece
+scenarios com objetos lconnect, pimp e igraph, sf enriquecido por limiar (dX e
+fracoes dX_intra, dX_flux, dX_connector), fraction_metrics em formato longo,
+matrizes, tabelas e seis ggplots: grafo espacial, componentes, importancia,
+fracoes, mapa do conector e resposta ao range de distancias. Textos passam por
+`.tr()`. Cores de habitat vem do dicionario; componentes usam paleta categorica
+propria e importancias usam escala continua. Nenhuma identidade individual e inventada
 para habitat composto de classes fundidas. O desenho de ligacoes entre pontos
 interiores e apenas ilustrativo, sem inferir corredores ou distancia centroide.
 Os objetos sao serializaveis e salvos por ferramentas padrao do R.
@@ -151,8 +165,10 @@ Os objetos sao serializaveis e salvos por ferramentas padrao do R.
 O exemplo executavel esta em
 `testes-manuais/modulos/teste-modulo-conectividade.Rmd`, com HTML na mesma
 pasta ignorada pelo Git. Testes incluem equivalencia com con_metric/patch_imp
-originais e upload_land, diagonal AWF, isolados, contatos/empates de limiar,
-unidades, heranca de limite, recuperacao RDS e fluxo completo com o recorte.
+originais e upload_land (regra lconnect), decomposicao contra remocao e contra
+Floyd-Warshall independente, poda do PC, papel de trampolim, calibracao de k,
+diagonal AWF, isolados, contatos/empates de limiar, unidades, heranca de
+limite, recuperacao RDS das fracoes e graficos e fluxo completo com o recorte.
 
 ### Mudancas temporais: land_change
 
@@ -228,8 +244,10 @@ class_dictionary e metadata ficam em atributos do sf e da lista temporal.
 Uma unica classe selecionada identifica a presenca; varias classes fundidas
 conservam seus codigos em classes/dicionario e deixam a identidade individual
 como NA. SHP conserva as colunas; RDS conserva tambem os atributos completos.
-Os fragmentos usam conectividade por aresta; as metricas existentes usam oito
-vizinhos, portanto a contagem pode diferir para pixels em contato diagonal.
+Com `dissolve = TRUE`, os fragmentos usam `directions = 8` por padrao, como as
+metricas de paisagem: pixels em contato diagonal formam um unico MULTIPOLYGON,
+de modo que fragmentos distintos nao se tocam (recomendacao do Conefor).
+`directions = 4` reproduz a vetorizacao anterior, por aresta.
 
 O antigo ramo de consultas ao Overpass (`load_osm_data`, `rasterize_osm`,
 `distance_to_feature`, `density_of_feature`, `integrate_feature`) foi removido

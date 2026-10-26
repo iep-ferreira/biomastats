@@ -18,38 +18,51 @@
 #'   projetado em metros. Caso contrario escolhe UTM local para extensoes de ate
 #'   seis graus de longitude entre 80S e 84N; regioes maiores exigem CRS explicito.
 #'   A geometria original e preservada em source_polygons.
-#' @param metric_patch Indices de priorizacao, IIC e/ou AWF; padrao ambos.
+#' @param metric_patch Indices de priorizacao: IIC, PC e/ou AWF; padrao IIC e
+#'   AWF. O PC e o mais custoso (poda n^3 e caminhos ponderados).
+#' @param iic_rule "definition" (padrao) ou "lconnect"; ver [patch_imp_fast()].
+#' @param k,p_ref,d_ref Calibracao de k para PC e AWF, como em
+#'   [patch_imp_fast()]. Sem k nem d_ref, cada limiar usa p = 0,5 a max_dist / 2.
+#' @param parallel Paralelizar o conector com future.apply (FALSE por padrao).
 #' @param language Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.
 #' @param build_plot Construir ggplots (TRUE por padrao).
 #' @return Lista biomastats_connectivity com source_polygons, analysis_polygons,
 #'   boundary, distance (matriz em metros), metrics (data.frame por limiar),
-#'   patch_metrics (sf por fragmento/limiar), edge_metrics (data.frame),
+#'   patch_metrics (sf por fragmento/limiar, com dIIC, dPC, dAWF e suas fracoes
+#'   dX_intra, dX_flux e dX_connector), fraction_metrics (data.frame longo das
+#'   fracoes por fragmento, limiar e indice), edge_metrics (data.frame),
 #'   scenarios (lista nomeada por limiar, cada item com land de classe lconnect,
 #'   graph igraph com todos os fragmentos e patch_importance com objetos pimp),
 #'   class_dictionary, metadata, plot (grafo espacial ggplot), cluster_plot,
-#'   importance_plot e range_plot. Todos sao reutilizaveis apos saveRDS/readRDS.
+#'   importance_plot, fractions_plot, connector_plot e range_plot. Todos sao
+#'   reutilizaveis apos saveRDS/readRDS.
 #' @details Distancias sao minimas entre bordas de poligonos, nao entre centroides.
-#'   Os indices NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF e IIC reproduzem as
-#'   convencoes de lconnect 0.1.2 com rotinas nativas otimizadas. Areas SLC, MSC
-#'   e ECS sao m2; AWF e m4; CPL e numero de passos; IIC, CCP e LCP sao adimensionais.
+#'   NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS e AWF reproduzem as convencoes de
+#'   lconnect 0.1.2 com rotinas nativas otimizadas. IIC segue a definicao de
+#'   Pascual-Hortal & Saura (2006), que inclui os fragmentos isolados; o valor do
+#'   lconnect, que os omite, fica em IIC_lconnect. PC (Saura & Pascual-Hortal 2007)
+#'   usa a probabilidade maxima de caminho e so e calculado quando pedido em
+#'   metric_patch (NA caso contrario). Areas SLC, MSC e ECS sao m2; AWF e m4; CPL e
+#'   numero de passos; IIC, PC, CCP e LCP sao adimensionais.
 #'
-#'   O grafo de exploracao usa distancia < max_dist, incluindo contatos a distancia
-#'   zero, e preserva isolados. Para compatibilidade, NC e indices de componentes
-#'   usam distancia <= max_dist (single linkage de lconnect), enquanto IIC e CPL
-#'   usam distancia < max_dist e excluem isolados. Contatos a distancia zero
-#'   contam como ligacoes (lconnect 0.1.2 os descarta); o ideal e dissolve-los
-#'   antes, com reclass_to_polygons(directions = 8). Em empates no limiar,
-#'   NC pode diferir de graph_components e componentes do grafo.
-#'   patch_metrics distingue cluster_lconnect, component e iic_included.
-#'   Estas diferencas sao explicitas; nao se deve interpretar NC como contagem
-#'   dos componentes do grafo estrito nos casos de fronteira do limiar.
+#'   O grafo de exploracao, o IIC e o CPL usam distancia < max_dist, incluindo
+#'   contatos a distancia zero, e preservam isolados. Para compatibilidade, NC e
+#'   indices de componentes usam distancia <= max_dist (single linkage de
+#'   lconnect). O ideal e dissolver contatos antes, com
+#'   reclass_to_polygons(directions = 8). Em empates no limiar, NC pode diferir
+#'   de graph_components e componentes do grafo. patch_metrics distingue
+#'   cluster_lconnect, component e iic_included (todos os fragmentos na regra
+#'   "definition"; somente os com ligacao a d > 0 na regra "lconnect").
 #'
-#'   IIC mantem o denominador area_l fixo na remocao de fragmentos. AWF nao corta
-#'   pares pelo limiar; max_dist controla seu decaimento exponencial. Em indices
-#'   inicialmente zero, a priorizacao e indefinida (NaN), com status
-#'   "undefined_baseline" no objeto pimp. Um fragmento nao tem ranking relativo e
-#'   recebe o mesmo status. CPL sem pares conectados e NA. Nenhum indice prova
-#'   conectividade funcional.
+#'   A importancia e decomposta segundo Saura & Rubio (2010) em intra (area do
+#'   proprio fragmento), fluxo (ligacao com os demais) e conector (papel de
+#'   trampolim nos melhores caminhos entre outros fragmentos). No AWF tudo e
+#'   fluxo. IIC e PC mantem o denominador area_l fixo na remocao de fragmentos.
+#'   AWF nao corta pares pelo limiar; max_dist controla seu decaimento
+#'   exponencial. Em indices inicialmente zero, a priorizacao e indefinida (NaN),
+#'   com status "undefined_baseline" no objeto pimp. Um fragmento nao tem ranking
+#'   relativo e recebe o mesmo status. CPL sem pares conectados e NA. Nenhum
+#'   indice prova conectividade funcional.
 #'
 #'   A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 #'   convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva
@@ -61,34 +74,53 @@
 #'   ligam pontos interiores apenas para visualizacao; nao sao corredores nem
 #'   representam a linha da menor distancia entre bordas. cluster_plot usa cores
 #'   categoricas de componentes (nao classes de uso). importance_plot usa escala
-#'   continua da reducao percentual. Todos aceitam labs, temas e escalas ggplot2;
+#'   continua da reducao percentual. fractions_plot empilha intra, fluxo e
+#'   conector dos 15 fragmentos mais importantes por indice e limiar;
+#'   connector_plot mapeia a fracao de conector (IIC e PC).
+#'   Todos aceitam labs, temas e escalas ggplot2;
 #'   use ggsave/st_write/write.csv/write_graph/saveRDS nos retornos para escrita.
 #'   O pacote lconnect e opcional: os objetos land/pimp sao construidos em memoria
 #'   com seu contrato e podem ser consumidos pelas suas funcoes quando instalado.
 #'   A matriz de distancias e os calculos de caminhos requerem memoria quadratica.
-#' @references [lconnect 0.1.2](https://cran.r-project.org/package=lconnect).
+#' @references Pascual-Hortal, L. & Saura, S. (2006) Landscape Ecology 21:
+#'   959-967. Saura, S. & Pascual-Hortal, L. (2007) Landscape and Urban
+#'   Planning 83: 91-103. Saura, S. & Rubio, L. (2010) Ecography 33: 523-537.
+#'   [lconnect 0.1.2](https://cran.r-project.org/package=lconnect).
 #' @md
 #' @examples
 #' \dontrun{
 #' poligonos <- reclass_to_polygons(metricas, save_shp = FALSE)
-#' conectividade <- land_connectivity(poligonos, max_dist = c(30, 100, 300))
+#' conectividade <- land_connectivity(poligonos, max_dist = c(30, 100, 300),
+#'   metric_patch = c("IIC", "PC", "AWF"))
 #' conectividade$plot + ggplot2::labs(title = "Conectividade dos fragmentos")
 #' conectividade$metrics
+#' conectividade$fractions_plot
 #' lconnect::con_metric(conectividade$scenarios[[1]]$land, c("NC", "LNK", "IIC"))
 #' }
 #' @export
 land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = NULL,
                               crs = NULL, metric_patch = c("IIC", "AWF"),
+                              iic_rule = c("definition", "lconnect"),
+                              k = NULL, p_ref = 0.5, d_ref = NULL, parallel = FALSE,
                               language = c("pt", "en"), build_plot = TRUE) {
   language <- match.arg(language)
+  iic_rule <- match.arg(iic_rule)
   .connectivity_check_flag(build_plot, "build_plot")
+  .connectivity_check_flag(parallel, "parallel")
+  if (parallel && !requireNamespace("future.apply", quietly = TRUE)) {
+    stop("Instale future.apply para parallel = TRUE.")
+  }
   if (!is.numeric(max_dist) || !length(max_dist) || any(!is.finite(max_dist) | max_dist <= 0)) {
     stop("max_dist deve conter distancias positivas em metros.")
   }
   max_dist <- sort(unique(max_dist))
   if (!is.character(metric_patch) || !length(metric_patch) || anyNA(metric_patch) ||
-      any(!metric_patch %in% c("IIC", "AWF"))) stop("metric_patch deve conter IIC e/ou AWF.")
+      any(!metric_patch %in% c("IIC", "PC", "AWF"))) {
+    stop("metric_patch deve conter IIC, PC e/ou AWF.")
+  }
   metric_patch <- unique(metric_patch)
+  # Validate the k calibration before any geometric work.
+  invisible(.calibrate_k(max_dist[1], k, p_ref, d_ref))
   polygons <- .connectivity_select_year(polygons, year)
   inherited <- attr(polygons, "metadata")
   dictionary <- attr(polygons, "class_dictionary")
@@ -164,8 +196,10 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     pp$cluster_lconnect <- as.integer(clusters)
     pp$clusters <- as.integer(clusters)
     pp$degree <- as.numeric(igraph::degree(graph))
-    pp$iic_included <- rowSums(distance < md) > 1
+    pp$iic_included <- if (iic_rule == "definition") rep(TRUE, nrow(pp))
+      else rowSums(distance > 0 & distance < md) > 0
     pp$max_dist_m <- md
+    k_md <- .calibrate_k(md, k, p_ref, d_ref)
     # Keep the native landscape schema so plot.lconnect draws one cluster map.
     # IDs remain available explicitly without becoming extra native map panels.
     land <- structure(list(landscape = pp[, "clusters", drop = FALSE],
@@ -173,15 +207,19 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
       distance = stats::as.dist(distance), boundary = bound,
       area_l = units::set_units(area_l, "m^2")), class = "lconnect")
     importance <- lapply(metric_patch, function(metric) {
-      values <- .patch_imp_engine(distance, areas, md, area_l, metric)
-      out <- pp
-      out$attributes <- values
-      status <- if (all(is.nan(values))) "undefined_baseline" else "ok"
-      structure(list(landscape = out, prioritization = values), class = "pimp",
-        metric = metric, status = status)
+      res <- .patch_imp_engine(unname(distance), areas, md, area_l, metric, parallel,
+        "decomposition", iic_rule, if (metric == "IIC") NULL else k_md)
+      .as_pimp(list(landscape = pp), res, metric, iic_rule)
     })
     names(importance) <- metric_patch
-    for (metric in metric_patch) pp[[paste0("d", metric)]] <- importance[[metric]]$prioritization
+    for (metric in metric_patch) {
+      imp <- importance[[metric]]
+      pp[[paste0("d", metric)]] <- imp$prioritization
+      for (part in c("intra", "flux", "connector")) {
+        value <- if (is.null(imp$fractions)) NA_real_ else imp$fractions[[part]]
+        pp[[paste0("d", metric, "_", part)]] <- value
+      }
+    }
     graph <- igraph::set_vertex_attr(graph, "name", value = as.character(pp$fragment_id))
     for (field in setdiff(names(sf::st_drop_geometry(pp)), "geometry")) {
       graph <- igraph::set_vertex_attr(graph, field, value = pp[[field]])
@@ -196,8 +234,11 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     graph <- igraph::set_graph_attr(graph, "max_dist_m", md)
     graph <- igraph::set_graph_attr(graph, "analysis_crs_wkt", analysis_crs$wkt)
     graph <- igraph::set_graph_attr(graph, "edge_rule", "distance < max_dist; isolates retained")
-    metrics <- as.data.frame(as.list(.lconnect_metrics_fast(distance, areas, md, area_l)))
+    pc <- if ("PC" %in% metric_patch) attr(importance$PC, "index") else NA_real_
+    metrics <- as.data.frame(as.list(.connectivity_indices(unname(distance), areas, md, area_l,
+      k = k_md, pc = pc)))
     metrics$max_dist_m <- md
+    metrics$k <- k_md
     metrics$graph_components <- igraph::components(graph)$no
     metrics$isolates <- sum(pp$degree == 0)
     list(land = land, graph = graph, patch_importance = importance,
@@ -208,23 +249,38 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   edges <- do.call(rbind, lapply(scenarios, `[[`, "edges"))
   metrics <- do.call(rbind, lapply(scenarios, `[[`, "metrics"))
   rownames(metrics) <- rownames(edges) <- rownames(patches) <- NULL
+  fractions <- .connectivity_fractions(patches, metric_patch)
   plots <- if (build_plot) .connectivity_plots(patches, edges, dictionary, language, metric_patch)
-    else list(plot = NULL, cluster_plot = NULL, importance_plot = NULL, range_plot = NULL)
-  plots$range_plot <- if (build_plot) .connectivity_range_plot(metrics, language) else NULL
-  metadata <- list(schema_version = "1.0", package_version = as.character(utils::packageVersion("biomastats")),
+    else list(plot = NULL, cluster_plot = NULL, importance_plot = NULL, connector_plot = NULL)
+  plots$fractions_plot <- if (build_plot) .connectivity_fractions_plot(fractions, language)
+  plots$range_plot <- if (build_plot) .connectivity_range_plot(metrics, language)
+  iic_definition <- paste("Pascual-Hortal & Saura 2006: all patches incl. isolates and i = j;",
+    "distance < max_dist, zero-distance contacts linked; fixed landscape denominator")
+  iic_lconnect <- paste("lconnect 0.1.2: 0 < distance < max_dist; isolated vertices omitted;",
+    "fixed landscape denominator")
+  # Schema 1.1: IIC by definition, PC, fractions and k calibration (1.0: lconnect IIC).
+  metadata <- list(schema_version = "1.1",
+    package_version = as.character(utils::packageVersion("biomastats")),
     collection = collection, classes = classes, year = if ("year" %in% names(p)) unique(p$year) else year,
     max_dist_m = max_dist, metric_patch = metric_patch, source_crs_wkt = original_crs$wkt,
     analysis_crs_wkt = analysis_crs$wkt, reprojected = !isTRUE(original_crs == analysis_crs),
     boundary_method = boundary_method, landscape_area_m2 = area_l, habitat_area_m2 = sum(areas),
-    area_unit = "m2", distance_unit = "m", awf_unit = "m4", compatibility = "lconnect 0.1.2",
+    area_unit = "m2", distance_unit = "m", awf_unit = "m4",
+    compatibility = "lconnect 0.1.2: NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF and IIC_lconnect",
     graph_rule = "distance < max_dist; zero-distance links and isolated vertices retained",
     components_rule = "lconnect NC and area components: distance <= max_dist",
-    iic_rule = "distance < max_dist, zero-distance contacts linked; isolated vertices omitted; fixed landscape denominator",
-    awf_rule = "exponential all-pairs kernel, diagonal zero; half-probability at max_dist/2",
+    iic_rule = if (iic_rule == "definition") iic_definition else iic_lconnect,
+    pc_rule = paste("Saura & Pascual-Hortal 2007: maximum-product path probability",
+      "exp(-k d*), all patches incl. i = j"),
+    awf_rule = "exponential all-pairs kernel, diagonal zero",
+    k_calibration = if (!is.null(k)) list(k = k) else list(p_ref = p_ref,
+      d_ref = if (is.null(d_ref)) "max_dist / 2" else d_ref),
+    importance_method = "Saura & Rubio 2010 decomposition: intra + flux + connector",
     zero_baseline = "priority NaN; pimp status undefined_baseline; CPL NA without connected pairs",
     upstream = inherited)
   structure(c(list(source_polygons = source, analysis_polygons = p, boundary = bound,
-    distance = distance, metrics = metrics, patch_metrics = patches, edge_metrics = edges,
+    distance = distance, metrics = metrics, patch_metrics = patches,
+    fraction_metrics = fractions, edge_metrics = edges,
     scenarios = scenarios, class_dictionary = dictionary, metadata = metadata), plots),
     class = c("biomastats_connectivity", "list"))
 }
@@ -270,19 +326,20 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
 }
 
 .connectivity_plots <- function(patches, edges, dictionary, language, metric_patch) {
-  tr <- function(pt, en) if (language == "pt") pt else en
   p <- patches
   # Geometry may represent a merged selection: do not invent a single class.
   p$class_id <- if ("code" %in% names(p)) as.character(p$code) else NA_character_
   p$class_id[is.na(p$class_id)] <- "habitat"
   codes <- unique(p$class_id)
   colors <- stats::setNames(rep("#999999", length(codes)), codes)
-  labels <- stats::setNames(rep(tr("Habitat selecionado", "Selected habitat"), length(codes)), codes)
+  labels <- stats::setNames(rep(.tr(language, "Habitat selecionado", "Selected habitat"),
+                                length(codes)), codes)
   if (!is.null(dictionary)) {
     ids <- match(codes, as.character(dictionary$code))
     known <- !is.na(ids)
     colors[known] <- dictionary$color[ids[known]]
-    labels[known] <- paste(codes[known], if (language == "pt") dictionary$classe[ids[known]] else dictionary$class[ids[known]])
+    labels[known] <- paste(codes[known],
+      .tr(language, dictionary$classe[ids[known]], dictionary$class[ids[known]]))
   }
   labels <- vapply(labels, function(x) paste(strwrap(x, 32), collapse = "\n"), character(1))
   p$scenario <- paste0(p$max_dist_m, " m")
@@ -290,7 +347,9 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   points <- suppressWarnings(sf::st_point_on_surface(p))
   coords <- sf::st_coordinates(points)
   p$x <- coords[, 1]; p$y <- coords[, 2]
-  p$status <- ifelse(p$degree == 0, tr("Isolado", "Isolated"), tr("Conectado", "Connected"))
+  connected <- .tr(language, "Conectado", "Connected")
+  isolated <- .tr(language, "Isolado", "Isolated")
+  p$status <- ifelse(p$degree == 0, isolated, connected)
   nodes <- sf::st_drop_geometry(p)
   e <- edges
   key <- paste(p$max_dist_m, p$fragment_id, sep = ":")
@@ -305,44 +364,128 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     ggplot2::geom_point(data = nodes, ggplot2::aes(x = x, y = y, size = area_ha, shape = status),
       colour = "#202020", fill = "white") +
     ggplot2::scale_fill_manual(values = colors, breaks = names(colors), labels = labels,
-      name = tr("Habitat (c\u00f3digo)", "Habitat (code)")) +
-    ggplot2::scale_shape_manual(values = stats::setNames(c(21, 4),
-      c(tr("Conectado", "Connected"), tr("Isolado", "Isolated"))), name = tr("Situa\u00e7\u00e3o", "Status")) +
-    ggplot2::scale_size_continuous(range = c(1.5, 6), name = tr("\u00c1rea (ha)", "Area (ha)")) +
+      name = .tr(language, "Habitat (c\u00f3digo)", "Habitat (code)")) +
+    ggplot2::scale_shape_manual(values = stats::setNames(c(21, 4), c(connected, isolated)),
+      name = .tr(language, "Situa\u00e7\u00e3o", "Status")) +
+    ggplot2::scale_size_continuous(range = c(1.5, 6),
+      name = .tr(language, "\u00c1rea (ha)", "Area (ha)")) +
     ggplot2::facet_wrap(~scenario) + ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(x = NULL, y = NULL) + ggplot2::theme_minimal(base_size = 12)
   p$component_id <- factor(p$component)
   clusters <- ggplot2::ggplot(p) + ggplot2::geom_sf(ggplot2::aes(fill = component_id),
     colour = "#555555", linewidth = 0.2) + ggplot2::facet_wrap(~scenario) +
-    ggplot2::labs(fill = tr("Componente do grafo", "Graph component"), x = NULL, y = NULL) +
+    ggplot2::labs(fill = .tr(language, "Componente do grafo", "Graph component"),
+      x = NULL, y = NULL) +
     ggplot2::coord_sf(datum = NA) + ggplot2::theme_minimal(base_size = 12)
-  imp <- lapply(metric_patch, function(metric) {
+  importance <- .connectivity_map(p, metric_patch, "",
+    .tr(language, "Redu\u00e7\u00e3o (%)", "Reduction (%)"), "#f3f6f1", "#125c40")
+  path_metrics <- intersect(metric_patch, c("IIC", "PC"))
+  connector <- if (length(path_metrics)) {
+    .connectivity_map(p, path_metrics, "_connector", .tr(language, "Conector (%)", "Connector (%)"),
+                      "#f6f3ee", "#9c5a12", .tr(language, " conector", " connector"))
+  } else NULL
+  list(plot = graph, cluster_plot = clusters, importance_plot = importance,
+       connector_plot = connector)
+}
+
+# Map of one patch_metrics column per index ("dIIC", "dIIC_connector", ...),
+# faceted by index and threshold.
+.connectivity_map <- function(p, metrics, suffix, legend, low, high, label = "") {
+  data <- do.call(rbind, lapply(metrics, function(metric) {
     out <- p
-    out$metric <- paste0("d", metric, " (%)")
-    out$importance <- out[[paste0("d", metric)]]
+    out$metric <- paste0("d", metric, label, " (%)")
+    out$importance <- out[[paste0("d", metric, suffix)]]
     out
+  }))
+  ggplot2::ggplot(data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = importance), colour = "#555555", linewidth = 0.2) +
+    ggplot2::scale_fill_gradient(low = low, high = high, name = legend) +
+    ggplot2::facet_grid(metric ~ scenario) + ggplot2::labs(x = NULL, y = NULL) +
+    ggplot2::coord_sf(datum = NA) + ggplot2::theme_minimal(base_size = 12)
+}
+
+# Saura & Rubio (2010) fractions in long format: one row per patch,
+# threshold, index and fraction.
+.connectivity_fractions <- function(patches, metric_patch) {
+  p <- sf::st_drop_geometry(patches)
+  parts <- c("intra", "flux", "connector")
+  rows <- lapply(metric_patch, function(metric) {
+    do.call(rbind, lapply(parts, function(part) data.frame(
+      fragment_id = p$fragment_id, max_dist_m = p$max_dist_m, metric = metric, fraction = part,
+      value = p[[paste0("d", metric, "_", part)]], importance = p[[paste0("d", metric)]])))
   })
-  imp <- do.call(rbind, imp)
-  importance <- ggplot2::ggplot(imp) + ggplot2::geom_sf(ggplot2::aes(fill = importance),
-    colour = "#555555", linewidth = 0.2) + ggplot2::scale_fill_gradient(low = "#f3f6f1", high = "#125c40",
-      name = tr("Redu\u00e7\u00e3o (%)", "Reduction (%)")) + ggplot2::facet_grid(metric ~ scenario) +
-    ggplot2::labs(x = NULL, y = NULL) + ggplot2::coord_sf(datum = NA) + ggplot2::theme_minimal(base_size = 12)
-  list(plot = graph, cluster_plot = clusters, importance_plot = importance)
+  out <- do.call(rbind, rows)
+  out$fraction <- factor(out$fraction, levels = parts)
+  rownames(out) <- NULL
+  out
+}
+
+# Stacked fractions of the `top` most important patches per index and threshold.
+.connectivity_fractions_plot <- function(fractions, language, top = 15L) {
+  f <- fractions[is.finite(fractions$value) & is.finite(fractions$importance), , drop = FALSE]
+  if (!nrow(f)) return(NULL)
+  keep <- unlist(lapply(split(seq_len(nrow(f)), paste(f$metric, f$max_dist_m)), function(i) {
+    ranked <- unique(f$fragment_id[i][order(-f$importance[i])])
+    i[f$fragment_id[i] %in% utils::head(ranked, top)]
+  }))
+  f <- f[keep, , drop = FALSE]
+  thresholds <- paste0(sort(unique(f$max_dist_m)), " m")
+  f$scenario <- factor(paste0(f$max_dist_m, " m"), levels = thresholds)
+  f$panel <- paste0("d", f$metric)
+  # One bar per panel and patch, ordered by importance inside each panel.
+  f$key <- paste(f$panel, f$scenario, f$fragment_id, sep = "|")
+  order_key <- unique(f$key[order(f$panel, f$scenario, f$importance)])
+  f$key <- factor(f$key, levels = order_key)
+  ggplot2::ggplot(f, ggplot2::aes(x = key, y = value, fill = fraction)) +
+    ggplot2::geom_col(width = 0.8) + ggplot2::coord_flip() +
+    ggplot2::scale_x_discrete(labels = stats::setNames(sub(".*\\|", "", order_key), order_key)) +
+    ggplot2::scale_fill_manual(
+      values = c(intra = "#2e74b5", flux = "#5b8c2d", connector = "#d08c2d"),
+      labels = c(intra = "intra", flux = .tr(language, "fluxo", "flux"),
+                 connector = .tr(language, "conector", "connector")),
+      name = .tr(language, "Fra\u00e7\u00e3o", "Fraction")) +
+    ggplot2::facet_wrap(panel ~ scenario, scales = "free") +
+    ggplot2::labs(x = .tr(language, "Fragmento", "Patch"),
+                  y = .tr(language, "Redu\u00e7\u00e3o do \u00edndice (%)", "Index reduction (%)")) +
+    ggplot2::theme_minimal(base_size = 11)
 }
 
 .connectivity_range_plot <- function(metrics, language) {
-  fields <- c("NC", "LNK", "IIC", "AWF", "graph_components", "isolates")
+  fields <- c("NC", "LNK", "IIC", if (any(is.finite(metrics$PC))) "PC", "AWF",
+              "graph_components", "isolates")
   rows <- lapply(fields, function(field) data.frame(max_dist_m = metrics$max_dist_m,
     metric = field, value = metrics[[field]]))
   out <- do.call(rbind, rows)
   plot <- ggplot2::ggplot(out, ggplot2::aes(x = max_dist_m, y = value)) +
     ggplot2::geom_point(colour = "#245b78", size = 2) +
     ggplot2::facet_wrap(~metric, scales = "free_y") +
-    ggplot2::labs(x = if (language == "pt") "Dist\u00e2ncia de conex\u00e3o (m)" else "Connection distance (m)",
-      y = if (language == "pt") "Valor do \u00edndice" else "Index value") + ggplot2::theme_minimal(base_size = 12)
+    ggplot2::labs(x = .tr(language, "Dist\u00e2ncia de conex\u00e3o (m)", "Connection distance (m)"),
+      y = .tr(language, "Valor do \u00edndice", "Index value")) +
+    ggplot2::theme_minimal(base_size = 12)
   if (nrow(metrics) > 1L) plot <- plot + ggplot2::geom_line(colour = "#245b78")
   plot
 }
 
+# Landscape indices for one threshold, reusing the distance matrix. NC and
+# component indices follow lconnect single linkage (d <= max_dist); IIC
+# follows the original definition and IIC_lconnect reproduces lconnect 0.1.2.
+# PC comes from the patch-importance step (NA when not requested).
+.connectivity_indices <- function(D, areas, max_dist, area_l, k, pc = NA_real_) {
+  inclusive <- D <= max_dist
+  diag(inclusive) <- FALSE
+  clusters <- igraph::components(igraph::graph_from_adjacency_matrix(
+    inclusive * 1, mode = "undirected", diag = FALSE))$membership
+  component_areas <- as.numeric(rowsum(areas, clusters))
+  paths <- .path_lengths(.path_graph(D, "IIC", max_dist), "IIC")
+  connected <- paths[upper.tri(paths) & is.finite(paths)]
+  c(NC = length(component_areas), LNK = sum(D[upper.tri(D)] < max_dist),
+    SLC = max(component_areas), MSC = sum(areas) / length(component_areas),
+    CCP = sum((component_areas / sum(areas))^2), LCP = sum((component_areas / area_l)^2),
+    CPL = if (length(connected)) mean(connected) else NA_real_,
+    ECS = sum(component_areas^2) / sum(areas), AWF = .awf_value(D, areas, k),
+    IIC = sum(areas * as.numeric((1 / (1 + paths)) %*% areas)) / area_l^2,
+    IIC_lconnect = .iic_lconnect(D, areas, max_dist, area_l), PC = pc)
+}
+
 utils::globalVariables(c("area_ha", "class_id", "status", "scenario", "component_id",
-                        "importance", "max_dist_m", "metric", "value"))
+                        "importance", "max_dist_m", "metric", "value", "key", "fraction"))

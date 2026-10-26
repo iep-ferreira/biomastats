@@ -9,6 +9,31 @@
 * IIC e CPL (`land_connectivity()`, `patch_imp_fast()`) passam a ligar
   fragmentos à distância zero. Antes, como no lconnect 0.1.2, fragmentos que
   se tocavam ficavam desconectados. `land_connectivity()` aceita `MULTIPOLYGON`.
+* O IIC segue a definição de Pascual-Hortal & Saura (2006) e inclui os
+  fragmentos isolados, que o lconnect 0.1.2 omite (`R/con_metric.R`, linhas
+  188–194). `metrics$IIC` e `dIIC` mudam sempre que há isolados; o valor do
+  lconnect fica em `metrics$IIC_lconnect`, e `iic_rule = "lconnect"` reproduz
+  a priorização antiga.
+
+## Novidades
+
+* **PC** (Saura & Pascual-Hortal 2007) em `patch_imp_fast(metric = "PC")` e
+  `land_connectivity(metric_patch = "PC")`: probabilidade máxima de caminho,
+  que capta o papel de trampolim por caminhos indiretos. Arestas dominadas
+  são podadas sem alterar o resultado.
+* **Decomposição de Saura & Rubio (2010)**, método padrão de IIC e PC: a
+  importância é dividida em intra, fluxo e conector, e o conector só é
+  recalculado para os fragmentos que estão em algum melhor caminho. Na Lagoa
+  do Sino (642 fragmentos), o IIC caiu de 5,4 para 0,18 s e o PC, de cerca de
+  72 min para 54 s. `method = "removal"` mantém a remoção explícita.
+* **Calibração de k** para PC e AWF: `k` ou `p_ref` e `d_ref`
+  (`k = -log(p_ref) / d_ref`); o padrão continua p = 0,5 a `max_dist / 2`.
+* Novas saídas de `land_connectivity()`: colunas `dX_intra`, `dX_flux` e
+  `dX_connector` em `patch_metrics`, `fraction_metrics` (formato longo),
+  `metrics$PC`, `metrics$IIC_lconnect` e `metrics$k`, e os gráficos
+  `fractions_plot` (frações dos 15 fragmentos mais importantes) e
+  `connector_plot` (mapa da fração de conector). `patch_imp_fast()` devolve
+  `fractions` e os atributos `index`, `k`, `method` e `iic_rule`.
 
 # biomastats 2.1.0
 

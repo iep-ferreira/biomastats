@@ -22,9 +22,11 @@ test_that("connectivity inherits polygons and retains isolates and IDs", {
   expect_equal(out$metrics$graph_components, 2)
   expect_equal(out$metrics$isolates, 1)
   expect_equal(out$patch_metrics$component, c(1L, 1L, 1L, 2L))
-  expect_equal(out$patch_metrics$iic_included, c(TRUE, TRUE, TRUE, FALSE))
-  expect_equal(out$patch_metrics$dIIC[4], 0)
-  expect_equal(out$patch_metrics$dIIC[2], 100)
+  # Definicao original: o isolado (40) entra com a^2; o fragmento 20 liga 10 e 30.
+  expect_equal(out$patch_metrics$iic_included, rep(TRUE, 4))
+  expect_equal(out$patch_metrics$dIIC, c(40, 55, 40, 15))
+  expect_equal(out$patch_metrics$dIIC_intra, rep(15, 4))
+  expect_equal(out$patch_metrics$dIIC_connector, c(0, 10, 0, 0))
   expect_equal(out$metadata$upstream, attr(p, "metadata"))
   expect_equal(out$class_dictionary, attr(p, "class_dictionary"))
   g <- out$scenarios[[1]]$graph
@@ -37,8 +39,13 @@ test_that("connectivity inherits polygons and retains isolates and IDs", {
   expect_equal(out$scenarios[[1]]$land$fragment_id, p$fragment_id)
   expect_s3_class(out$scenarios[[1]]$patch_importance$IIC, "pimp")
   expect_null(out$plot)
-  expected <- (3 * 100^2 + 4 * 100^2 / 2 + 2 * 100^2 / 3) / 1300^2
-  expect_equal(out$metrics$IIC, expected)
+  expect_equal(out$metrics$IIC, (4 * 100^2 + 4 * 100^2 / 2 + 2 * 100^2 / 3) / 1300^2)
+  expect_equal(out$metrics$IIC_lconnect, (3 * 100^2 + 4 * 100^2 / 2 + 2 * 100^2 / 3) / 1300^2)
+  expect_true(is.na(out$metrics$PC))
+  lc <- land_connectivity(p, max_dist = 30, build_plot = FALSE, iic_rule = "lconnect")
+  expect_equal(lc$patch_metrics$iic_included, c(TRUE, TRUE, TRUE, FALSE))
+  expect_equal(lc$patch_metrics$dIIC[c(2, 4)], c(100, 0))
+  expect_true(all(is.na(lc$patch_metrics$dIIC_connector)))
 })
 
 test_that("fast metrics and patch importance agree with installed lconnect", {
@@ -46,11 +53,12 @@ test_that("fast metrics and patch importance agree with installed lconnect", {
   out <- land_connectivity(connectivity_patches(), max_dist = 30, build_plot = FALSE)
   land <- out$scenarios[[1]]$land
   names <- c("NC", "LNK", "SLC", "MSC", "CCP", "LCP", "CPL", "ECS", "AWF", "IIC")
+  ours <- sub("^IIC$", "IIC_lconnect", names)
   original <- suppressWarnings(lconnect::con_metric(land, metric = names))
-  expect_equal(as.numeric(out$metrics[1, names]), as.numeric(original), tolerance = 1e-10)
+  expect_equal(as.numeric(out$metrics[1, ours]), as.numeric(original), tolerance = 1e-10)
   for (metric in c("IIC", "AWF")) {
     capture.output(native <- suppressWarnings(lconnect::patch_imp(land, metric = metric)))
-    fast <- patch_imp_fast(land, metric = metric)
+    fast <- patch_imp_fast(land, metric = metric, iic_rule = "lconnect")
     expect_equal(fast$prioritization, native$prioritization, tolerance = 1e-9)
     expect_equal(fast$landscape$attributes, fast$prioritization)
     expect_equal(attr(fast, "metric"), metric)
@@ -68,7 +76,7 @@ test_that("fast metrics and patch importance agree with installed lconnect", {
   sf::st_write(out$analysis_polygons[, "value", drop = FALSE], file.path(dir, "habitat.shp"), quiet = TRUE)
   native <- lconnect::upload_land(land_path = file.path(dir, "habitat.shp"), habitat = 1, max_dist = 30)
   original <- suppressWarnings(lconnect::con_metric(native, metric = names))
-  expect_equal(as.numeric(out$metrics[1, names]), as.numeric(original), tolerance = 1e-10)
+  expect_equal(as.numeric(out$metrics[1, ours]), as.numeric(original), tolerance = 1e-10)
   expect_equal(patch_imp_fast(native, "AWF")$prioritization,
     out$scenarios[[1]]$patch_importance$AWF$prioritization, tolerance = 1e-9)
 })
@@ -96,7 +104,8 @@ test_that("threshold boundaries and zero-distance contacts have explicit semanti
   expect_equal(out$metrics$NC[1], 3)
   expect_equal(out$metrics$graph_components[1], 4)
   expect_equal(out$metrics$LNK[1], 0)
-  expect_equal(out$metrics$IIC[1], 0)
+  expect_equal(out$metrics$IIC_lconnect[1], 0)
+  expect_equal(out$metrics$IIC[1], 4 * 100^2 / out$metadata$landscape_area_m2^2)
   expect_true(is.na(out$metrics$CPL[1]))
   expect_equal(out$metrics$isolates[3], 0)
   expect_true(all(diff(out$metrics$LNK) >= 0))
@@ -109,22 +118,28 @@ test_that("threshold boundaries and zero-distance contacts have explicit semanti
   expect_equal(touching$metrics$CPL, 1)
   expect_equal(igraph::ecount(touching$scenarios[[1]]$graph), 1)
   expect_true(all(touching$patch_metrics$iic_included))
-  expect_equal(touching$patch_metrics$dIIC, c(100, 100))
+  # Sem um deles, resta a^2 do outro: dIIC = 100 * 2 / 3.
+  expect_equal(touching$patch_metrics$dIIC, rep(200 / 3, 2))
+  expect_equal(touching$metrics$IIC_lconnect, 0)
 })
 
 test_that("single patches and zero baselines mark relative priority undefined", {
   for (positions in list(0, c(0, 20, 45))) {
     out <- land_connectivity(connectivity_patches(positions), max_dist = 1, build_plot = FALSE)
-    expect_equal(out$metrics$IIC, 0)
-    expect_true(all(is.nan(out$patch_metrics$dIIC)))
-    expect_equal(attr(out$scenarios[[1]]$patch_importance$IIC, "status"), "undefined_baseline")
+    expect_equal(out$metrics$IIC_lconnect, 0)
+    expect_equal(out$metrics$IIC, length(positions) * 100^2 / out$metadata$landscape_area_m2^2)
     expect_true(is.na(out$metrics$CPL))
     expect_equal(igraph::vcount(out$scenarios[[1]]$graph), length(positions))
     if (length(positions) == 1L) {
+      expect_true(all(is.nan(out$patch_metrics$dIIC)))
+      expect_equal(attr(out$scenarios[[1]]$patch_importance$IIC, "status"), "undefined_baseline")
       expect_true(all(is.nan(out$patch_metrics$dAWF)))
       expect_equal(attr(out$scenarios[[1]]$patch_importance$AWF, "status"), "undefined_baseline")
       expect_true(all(is.nan(patch_imp_fast(out$scenarios[[1]]$land, "AWF")$prioritization)))
     } else {
+      # Isolados de mesma area: cada um responde por 1/3 do IIC, todo intra.
+      expect_equal(out$patch_metrics$dIIC, rep(100 / 3, 3))
+      expect_equal(out$patch_metrics$dIIC_intra, rep(100 / 3, 3))
       expect_true(all(is.finite(out$patch_metrics$dAWF)))
       expect_equal(attr(out$scenarios[[1]]$patch_importance$AWF, "status"), "ok")
     }
@@ -195,12 +210,13 @@ test_that("native vectorization, plots, dictionary and RDS remain interoperable"
   expect_equal(out$metadata$boundary_method, "inherited")
   if (requireNamespace("lconnect", quietly = TRUE)) {
     native <- suppressWarnings(lconnect::con_metric(out$scenarios[["100"]]$land, c("AWF", "IIC")))
-    expect_equal(as.numeric(out$metrics[out$metrics$max_dist_m == 100, c("AWF", "IIC")]),
+    expect_equal(as.numeric(out$metrics[out$metrics$max_dist_m == 100, c("AWF", "IIC_lconnect")]),
                  as.numeric(native), tolerance = 1e-9)
   }
   expect_equal(nrow(out$patch_metrics), 3 * nrow(polygons))
   expect_equal(sort(unique(out$patch_metrics$fragment_id)), polygons$fragment_id)
-  for (name in c("plot", "cluster_plot", "importance_plot", "range_plot")) {
+  for (name in c("plot", "cluster_plot", "importance_plot", "connector_plot", "fractions_plot",
+                 "range_plot")) {
     expect_s3_class(out[[name]], "ggplot")
     expect_s3_class(ggplot2::ggplot_build(out[[name]]), "ggplot_built")
   }
@@ -215,6 +231,14 @@ test_that("native vectorization, plots, dictionary and RDS remain interoperable"
   expect_equal(restored$class_dictionary, out$class_dictionary)
   expect_equal(restored$metadata, out$metadata)
   expect_equal(restored$plot$labels$title, "Custom connectivity")
+  expect_equal(restored$fraction_metrics, out$fraction_metrics)
+  expect_equal(restored$patch_metrics, out$patch_metrics)
+  expect_equal(attributes(restored$scenarios[[1]]$patch_importance$IIC),
+               attributes(out$scenarios[[1]]$patch_importance$IIC))
+  for (name in c("fractions_plot", "connector_plot")) {
+    expect_s3_class(ggplot2::ggplot_build(restored[[name]]), "ggplot_built")
+  }
+  expect_equal(restored$metadata$schema_version, "1.1")
   expect_equal(igraph::as_data_frame(restored$scenarios[[1]]$graph),
                igraph::as_data_frame(out$scenarios[[1]]$graph))
 })

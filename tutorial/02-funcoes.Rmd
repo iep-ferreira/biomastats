@@ -61,7 +61,7 @@ Para a documentação completa, use `?nome_da_função` no R.
 | `fragment_metrics()` | Métricas de cada fragmento e distribuições por classe, na grade nativa | mapas |
 | `reclass_to_polygons()` | Converte os mapas reclassificados em polígonos `sf` | `biomastats_metrics()` |
 | `land_connectivity()` | Conectividade dos fragmentos em vários limiares de distância | `reclass_to_polygons()` |
-| `patch_imp_fast()` | Importância de cada fragmento para a conectividade | cenário de `land_connectivity()` |
+| `patch_imp_fast()` | Importância de cada fragmento (IIC, PC ou AWF) e suas frações intra, fluxo e conector | cenário de `land_connectivity()` |
 
 ## Camadas externas {-}
 

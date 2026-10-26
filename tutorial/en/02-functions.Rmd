@@ -61,7 +61,7 @@ For full documentation, run `?function_name` in R.
 | `fragment_metrics()` | Metrics for each fragment and distributions by class, on the native grid | maps |
 | `reclass_to_polygons()` | Converts the reclassified maps into `sf` polygons | `biomastats_metrics()` |
 | `land_connectivity()` | Fragment connectivity at several distance thresholds | `reclass_to_polygons()` |
-| `patch_imp_fast()` | Importance of each fragment for connectivity | a `land_connectivity()` scenario |
+| `patch_imp_fast()` | Importance of each fragment (IIC, PC or AWF) and its intra, flux and connector fractions | a `land_connectivity()` scenario |
 
 ## External layers {- #functions-external-layers}
 

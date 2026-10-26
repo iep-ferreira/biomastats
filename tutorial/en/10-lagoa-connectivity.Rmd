@@ -63,3 +63,38 @@ and the map shows how much the index would drop without each fragment:
 ```{r importance, fig.height=6}
 connectivity$importance_plot
 ```
+
+The IIC follows the definition of Pascual-Hortal and Saura (2006): isolated
+fragments also count, through their own area. The `lconnect` value, which omits
+them, is kept in `connectivity$metrics$IIC_lconnect`.
+
+## Stepping stones and importance fractions {-}
+
+Each fragment's importance splits into three parts (Saura and Rubio, 2010): the
+fragment's own area (intra), its direct links to the others (flux), and its role
+as a **stepping stone**, when it lies on the best path between two others
+(connector). The probability of connectivity (PC; Saura and Pascual-Hortal,
+2007) accounts for indirect paths and is the most suitable metric to identify
+stepping stones. Here, with a 5% dispersal probability at 300 m:
+
+```{r}
+pc <- patch_imp_fast(scenario_300, metric = "PC", p_ref = 0.05, d_ref = 300)
+head(pc$fractions)
+```
+
+```{r include=FALSE}
+f <- pc$fractions
+stepping <- sum(f$connector > 0.5 * pc$prioritization)
+```
+
+In `r stepping` fragments, more than half of the importance comes from the
+connector role: small patches that matter more for their position than for their
+area. In `land_connectivity()`, the fractions are stored in `patch_metrics`
+(columns `dPC_intra`, `dPC_flux` and `dPC_connector`) and in `fraction_metrics`,
+with the `fractions_plot` and `connector_plot` charts:
+
+```{r fractions, fig.height=6}
+connectivity_pc <- land_connectivity(polygons, max_dist = 300,
+  metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300, language = "en")
+connectivity_pc$fractions_plot
+```
