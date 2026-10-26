@@ -150,9 +150,9 @@ formam um laco unico, dividido em blocos (cerca de 4 por processo) e distribuido
 com future.apply; a poda divide os fragmentos intermediarios em blocos. FALSE e
 o padrao; TRUE herda o plano do usuario; um numero abre um plano multisession
 temporario e restaura o anterior (em land_connectivity, uma vez para todos os
-limiares). Os processos carregam o pacote instalado: testes de paralelismo
-exigem o pacote instalado (R CMD check ou workflow connectivity-tests), nao
-pkgload::load_all().
+limiares). Os processos carregam o pacote instalado: os testes de paralelismo
+(no maximo 2 processos) rodam no R CMD check, mas falham com
+pkgload::load_all() se a versao instalada for anterior a esta implementacao.
 
 As convencoes devem ficar explicitas: NC usa agrupamento <= limiar; LNK, grafo
 exploratorio, IIC e CPL usam < limiar, incluem contatos de distancia zero e

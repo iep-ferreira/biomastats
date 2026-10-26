@@ -164,7 +164,7 @@ test_that("parallel coincide com o calculo sequencial", {
 })
 
 test_that("processos em paralelo reproduzem o sequencial e restauram o plano", {
-  skip_on_cran()
+  # Two worker processes at most, within CRAN's limit; runs in R CMD check.
   skip_if_not_installed("future.apply")
   land <- random_engine_land(3)
   before <- class(future::plan())[2]

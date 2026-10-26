@@ -54,9 +54,10 @@
 * `metrics` ganha `pc_pruned` e `pc_edges`; `metadata`, `pc_prune` e
   `parallel_workers` (`schema_version` 1.2). Os objetos `pimp` ganham os
   atributos `pruned` e `edges`. `future` entra em Suggests.
-* Novo workflow `connectivity-tests.yml`: instala o pacote e roda só os testes
-  de conectividade e vetorização, inclusive os de processos paralelos (que o
-  `R CMD check` pula como no CRAN), em Linux e Windows.
+* Testes de `tests/testthat/test-connectivity-engine.R` cobrem a poda
+  (exata, opcional e automática) e o paralelismo (igual ao sequencial, plano
+  do usuário restaurado, `land_connectivity()` em paralelo), com no máximo 2
+  processos, e rodam no `R CMD check`.
 
 # biomastats 2.1.0
 
