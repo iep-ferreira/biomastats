@@ -1,7 +1,7 @@
 test_that("biomastats is installed and loadable", {
   expect_true(nzchar(system.file(package = "biomastats")))
   expect_true(requireNamespace("biomastats", quietly = TRUE))
-  expect_equal(as.character(utils::packageVersion("biomastats")), "2.1.0")
+  expect_equal(as.character(utils::packageVersion("biomastats")), "2.1.0.9000")
 })
 
 # Public interface: every exported function, by module. A function added with
