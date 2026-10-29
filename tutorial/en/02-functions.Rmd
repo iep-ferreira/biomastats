@@ -2,14 +2,17 @@
 
 The package has `r length(getNamespaceExports("biomastats"))` functions, and
 nearly all of them start from the same place: the maps object created by
-`load_rasters()` (or by `load_lulc()` outside Brazil). Because each result feeds
+`load_rasters()` (by tiles, national collection or HTTP reading), by
+`load_local_rasters()` (local folders of any collection) or by `load_lulc()`
+(ESA WorldCover). Because each result feeds
 the next step, the analyses chain together naturally:
 
 ```
 study area ─► load_rasters() ─► maps ─┬─► get_area() ─┬─► class_diversity()
                                        │               └─► land_time_series() ─► series_*()
                                        ├─► land_change() · land_to_graph() · fragment_metrics()
-                                       └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                       ├─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                       └─► connectivity_context()  (extended context)
 ```
 
 In the tables below, the **Takes** column shows each function's usual input.
@@ -21,7 +24,10 @@ For full documentation, run `?function_name` in R.
 |:--|:--|:--|
 | `make_polygon()` | Draws a circle, square or hexagon from latitude, longitude and total width (km) | coordinates |
 | `compare_shapefiles()` | Finds the MapBiomas tiles that cover the area | shapefile |
-| `load_rasters()` | Loads, crops and masks the annual maps, by selective download or from a local collection | shapefile |
+| `load_rasters()` | Loads, crops and masks the annual maps, by selective download, local national collection or selective HTTP reading | `.gpkg`, `.shp` or `sf` |
+| `load_local_rasters()` | Loads annual GeoTIFFs from a local folder, of any collection, harmonized and clipped | study area and folder |
+| `raster_catalog()` | MapBiomas collections (Brazil, 10 m and other countries) for selective reading over HTTP in `load_rasters(method = "http")` | — |
+| `class_dictionary()` | Builds and checks the class dictionary (codes, names and colours) | maps or CSV |
 | `download_mapbiomas()` | Downloads the national collection, one file per year | destination folder |
 | `load_rasters_from_folder()` | Opens the national maps stored in a folder | collection folder |
 | `check_maps()` | Checks, downloads and merges the required tiles for each year | tiles and years |
@@ -74,9 +80,6 @@ For full documentation, run `?function_name` in R.
 |:--|:--|:--|
 | `layer_catalog()` | Lists the external sources, their versions and reference years | — |
 | `load_lulc()` | ESA WorldCover 10 m land cover, anywhere in the world, in the `load_rasters()` format | shapefile or `sf` |
-| `load_local_rasters()` | Loads annual GeoTIFFs from a local folder, of any collection, harmonized and clipped | study area and folder |
-| `raster_catalog()` | MapBiomas collections (Brazil, 10 m and other countries) for selective reading over HTTP in `load_rasters(method = "http")` | — |
-| `class_dictionary()` | Builds and checks the class dictionary (codes, names and colours) | maps or CSV |
 | `load_features()` | Roads, railways, rivers, water bodies, buildings and places (OpenStreetMap or Overture) | maps, `sf` or shapefile |
 | `load_physical()` | Elevation, slope, aspect and soil properties on the map grid | maps |
 | `feature_raster()` | Distance, count, length, coverage and density surfaces of features | `load_features()` and maps |

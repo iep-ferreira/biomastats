@@ -34,8 +34,28 @@ da formação florestal de 1985 continuava de pé em 2024, e os
 `r num(f3$gain_ha, 0)` ha que surgiram em outros pontos não compensaram os
 `r num(f3$loss_ha, 0)` ha perdidos.
 
-Com `years = c(1985, 2004, 2024)`, o diagrama ganha uma terceira coluna e mostra
-as trajetórias nos dois intervalos.
+O saldo de cada classe resume, em um só gráfico, quem ganhou e quem perdeu área
+no período:
+
+```{r saldo, fig.height=5.5}
+mudancas$change_plot
+```
+
+Com `years = c(1985, 2004, 2024)`, o diagrama ganha uma terceira coluna e cada
+pixel passa a ter uma trajetória: estável, mudou uma vez, mudou duas vezes ou
+voltou à classe de origem:
+
+```{r trajetorias}
+mudancas3 <- land_change(mapas, years = c(1985, 2004, 2024))
+```
+
+```{r echo=FALSE}
+tm <- mudancas3$trajectory_metrics
+rotulos <- c(stable = "Estável", changed_once = "Mudou uma vez",
+             changed_twice = "Mudou duas vezes", returned = "Voltou à classe de origem")
+tabela(data.frame(Trajetória = rotulos[tm$type], `Área (ha)` = tm$area_ha,
+                  `Parcela (%)` = 100 * tm$share, check.names = FALSE), 1)
+```
 
 ## Adjacências entre classes {-}
 
@@ -57,5 +77,57 @@ hub <- nm[which.max(nm$degree), ]
 
 Em 2024, a classe mais conectada é `r tolower(hub$classe)`, que faz fronteira
 com `r hub$degree` classes ao longo de `r num(hub$boundary_m / 1000, 1)` km de
-bordas. As tabelas `rede$node_metrics` e `rede$edge_metrics` detalham grau,
-força, centralidade e extensão de cada fronteira.
+bordas.
+
+## Fronteiras e interfaces {-}
+
+A matriz de adjacências mostra quantos contatos há entre cada par de classes; a
+diagonal (contatos de uma classe consigo mesma) fica de fora, a menos que
+`include_self = TRUE`:
+
+```{r mapa-calor, fig.height=6}
+rede$heatmap
+```
+
+As interfaces são as fronteiras entre pares de classes, em quilômetros. É nelas
+que a paisagem muda de uso e onde se concentram os efeitos de borda:
+
+```{r interfaces, fig.height=7}
+rede$edge_plot
+```
+
+```{r include=FALSE}
+gm <- rede$graph_metrics
+em <- rede$edge_metrics[order(-rede$edge_metrics$boundary_m), ]
+maior <- em[1, ]
+floresta <- em[em$from == 3 | em$to == 3, ]
+```
+
+A maior interface, entre `r tolower(maior$from_classe)` e
+`r tolower(maior$to_classe)`, soma `r num(maior$boundary_m / 1000, 1)` km
+(`r num(100 * maior$share, 0)`% dos contatos entre classes). A floresta faz
+fronteira com `r nrow(floresta)` classes, e a principal delas é
+`r tolower(ifelse(floresta$from[1] == 3, floresta$to_classe[1], floresta$from_classe[1]))`.
+
+`rede$node_metrics` traz, para cada classe, grau (quantas classes vizinhas),
+força (quantos contatos), intermediação e entropia da vizinhança, que é alta
+quando a classe faz fronteira com muitas outras em proporções parecidas:
+
+```{r echo=FALSE}
+nm <- rede$node_metrics[order(-rede$node_metrics$strength), ]
+tabela(data.frame(Classe = nm$classe, Grau = nm$degree, Força = nm$strength,
+                  Intermediação = nm$betweenness, `Entropia da vizinhança` = nm$neighbor_entropy,
+                  check.names = FALSE), 2)
+```
+
+`rede$graph_metrics` resume a rede inteira: densidade (`r num(gm$density, 2)`),
+transitividade (`r num(gm$transitivity, 2)`) e fração dos contatos que ocorrem
+entre classes diferentes (`r num(100 * gm$interclass_fraction, 0)`%), um
+indicador de quão retalhada está a paisagem.
+
+O grafo também tem uma versão interativa, em que cada classe e cada ligação
+mostram seus valores ao passar o cursor:
+
+```{r rede-interativa}
+rede$graph_plot
+```

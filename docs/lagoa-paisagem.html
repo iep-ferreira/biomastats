@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
 <li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
 <li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
-<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
 <li class="book-part">Fluxo completo: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
 <li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
 <li><a class="active" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
 <li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li><a class="" href="lagoa-resistencia.html"><span class="header-section-number">11</span> Resistência e ligações</a></li>
+<li><a class="" href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></li>
+<li><a class="" href="lagoa-contexto.html"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
 <li class="book-part">Além do MapBiomas</li>
-<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li><a class="" href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></li>
 <li class="book-part">Apêndice</li>
 <li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
 </ul>
@@ -120,11 +128,19 @@ informar a zona UTM.</p>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics()</a></code> reclassifica os mapas para as classes de interesse e,
 ano a ano, calcula área, bordas, número de fragmentos e índice de agregação.
 Vamos acompanhar a formação florestal:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">metricas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/biomastats_metrics.html">biomastats_metrics</a></span><span class="op">(</span><span class="va">mapas</span>, classes <span class="op">=</span> <span class="fl">3</span>, metrics <span class="op">=</span> <span class="st">"keep.all"</span><span class="op">)</span></span>
 <span><span class="va">metricas</span><span class="op">$</span><span class="va">ai_plot</span></span>
 <span><span class="va">metricas</span><span class="op">$</span><span class="va">fragments_number</span></span></code></pre></div>
 <p><img src="biomastats-livro_files/figure-html/metricas-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/metricas-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
+<p>Os demais gráficos acompanham a área da classe, a área média dos fragmentos, o
+comprimento e a densidade de borda:</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metricas</span><span class="op">$</span><span class="va">area_plot</span></span>
+<span><span class="va">metricas</span><span class="op">$</span><span class="va">frag_avg_area</span></span>
+<span><span class="va">metricas</span><span class="op">$</span><span class="va">egde_lenght_plot</span></span>
+<span><span class="va">metricas</span><span class="op">$</span><span class="va">edge_density_plot</span></span></code></pre></div>
+<p><img src="biomastats-livro_files/figure-html/metricas-bordas-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/metricas-bordas-2.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/metricas-bordas-3.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/metricas-bordas-4.png" alt="" width="50%" style="display: block; margin: auto;"></p>
 <p>Além de menor, a floresta ficou mais fragmentada: o número de fragmentos passou
 de 18 para 28, e o
 índice de agregação caiu de 88% para
@@ -132,7 +148,7 @@ de 18 para 28, e o
 <code>metricas$metrics_table</code>; para um único mapa, use <code><a href="https://rdrr.io/pkg/biomastats/man/lulc_metrics.html">lulc_metrics()</a></code>.</p>
 <p>Com <code><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map()</a></code>, a classe escolhida aparece em destaque contra o restante
 da paisagem:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map</a></span><span class="op">(</span><span class="va">metricas</span>, year <span class="op">=</span> <span class="fl">1985</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/reclass_map.html">reclass_map</a></span><span class="op">(</span><span class="va">metricas</span>, year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biomastats-livro_files/figure-html/reclassificado-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/reclassificado-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
@@ -144,7 +160,7 @@ da paisagem:</p>
 perímetro, área núcleo, forma, dimensão fractal, centroide, alongamento e
 distância ao vizinho mais próximo; para cada classe e ano, resume a distribuição
 de tamanhos:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fragmentos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fragment_metrics</a></span><span class="op">(</span><span class="va">mapas</span>, classes <span class="op">=</span> <span class="fl">3</span>, years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1985</span>, <span class="fl">2004</span>, <span class="fl">2024</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fragmentos</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">map</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-livro_files/figure-html/fragmentos-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -207,7 +223,56 @@ de tamanhos:</p>
 paisagem, passou a cobrir 3,2%. A desigualdade de tamanhos
 (Gini) continua alta, o que significa que poucos fragmentos concentram a maior
 parte da floresta. Os dados de cada fragmento estão em <code>fragmentos$patches</code>.</p>
-
+</div>
+<div id="tamanho-e-forma-dos-fragmentos" class="section level2 unnumbered">
+<h2>Tamanho e forma dos fragmentos<a class="anchor" aria-label="anchor" href="#tamanho-e-forma-dos-fragmentos"><i class="fas fa-link"></i></a>
+</h2>
+<p>Os indicadores do resumo podem ser acompanhados ao longo do tempo num só painel:</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fragmentos</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">trend</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/fragmentos-tendencia-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>A distribuição de tamanhos e a curva posição-tamanho mostram como a área se
+concentra: poucos fragmentos grandes e muitos pequenos. O índice de forma (1 para
+a forma mais compacta) separa os fragmentos compactos dos alongados ou
+recortados, que têm mais borda por hectare:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fragmentos</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">size_distribution</span></span>
+<span><span class="va">fragmentos</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">rank_size</span></span></code></pre></div>
+<p><img src="biomastats-livro_files/figure-html/fragmentos-tamanhos-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-livro_files/figure-html/fragmentos-tamanhos-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fragmentos</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">shape</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/fragmentos-forma-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p><code>fragmentos$lsm</code> acrescenta métricas de classe do pacote <code>landscapemetrics</code>,
+calculadas na mesma grade: agregação (<code>ai</code>), aglomeração (<code>clumpy</code>) e coesão
+(<code>cohesion</code>):</p>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th align="right">Ano</th>
+<th align="right">ai</th>
+<th align="right">clumpy</th>
+<th align="right">cohesion</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="right">1985</td>
+<td align="right">88,06</td>
+<td align="right">0,86</td>
+<td align="right">96,18</td>
+</tr>
+<tr class="even">
+<td align="right">2004</td>
+<td align="right">82,98</td>
+<td align="right">0,81</td>
+<td align="right">92,92</td>
+</tr>
+<tr class="odd">
+<td align="right">2024</td>
+<td align="right">80,33</td>
+<td align="right">0,78</td>
+<td align="right">92,65</td>
+</tr>
+</tbody>
+</table></div>
 </div>
 </div>
   <div class="chapter-nav">
@@ -219,6 +284,7 @@ parte da floresta. Os dados de cada fragmento estão em <code>fragmentos$patches
 <li><a class="nav-link" href="#lagoa-paisagem"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
 <li><a class="nav-link" href="#m%C3%A9tricas-por-ano">Métricas por ano</a></li>
 <li><a class="nav-link" href="#fragmentos">Fragmentos</a></li>
+<li><a class="nav-link" href="#tamanho-e-forma-dos-fragmentos">Tamanho e forma dos fragmentos</a></li>
 </ul>
 
       <div class="book-extra">
@@ -236,7 +302,7 @@ parte da floresta. Os dados de cada fragmento estão em <code>fragmentos$patches
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 29/10/2026.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

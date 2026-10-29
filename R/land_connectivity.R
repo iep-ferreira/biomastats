@@ -495,7 +495,9 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   a <- match(paste(e$max_dist_m, e$from, sep = ":"), key)
   b <- match(paste(e$max_dist_m, e$to, sep = ":"), key)
   e$x <- p$x[a]; e$y <- p$y[a]; e$xend <- p$x[b]; e$yend <- p$y[b]
-  e$scenario <- factor(paste0(e$max_dist_m, " m"), levels = levels(p$scenario))
+  # paste0() of an empty column would give one element: graphs without links.
+  e$scenario <- factor(if (nrow(e)) paste0(e$max_dist_m, " m") else character(),
+                       levels = levels(p$scenario))
   graph <- ggplot2::ggplot() + ggplot2::geom_sf(data = p,
     ggplot2::aes(fill = class_id), colour = "#555555", linewidth = 0.2) +
     ggplot2::geom_segment(data = e, ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
@@ -592,9 +594,14 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
 .connectivity_range_plot <- function(metrics, language) {
   fields <- c("NC", "LNK", "IIC", if (any(is.finite(metrics$PC))) "PC", "AWF",
               "graph_components", "isolates")
+  # Panel titles: index names stay as they are; counts get words.
+  titles <- stats::setNames(fields, fields)
+  titles[["graph_components"]] <- .tr(language, "Componentes do grafo", "Graph components")
+  titles[["isolates"]] <- .tr(language, "Fragmentos isolados", "Isolated patches")
   rows <- lapply(fields, function(field) data.frame(max_dist_m = metrics$max_dist_m,
-    metric = field, value = metrics[[field]]))
+    metric = titles[[field]], value = metrics[[field]]))
   out <- do.call(rbind, rows)
+  out$metric <- factor(out$metric, levels = unname(titles))
   plot <- ggplot2::ggplot(out, ggplot2::aes(x = max_dist_m, y = value)) +
     ggplot2::geom_point(colour = "#245b78", size = 2) +
     ggplot2::facet_wrap(~metric, scales = "free_y") +

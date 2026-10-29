@@ -1,20 +1,32 @@
-# Acquiring MapBiomas maps {#acquisition}
+# Acquiring maps {#acquisition}
 
-Every analysis starts with a study area and the maps object produced by
-`load_rasters()`. There are two ways to get there, and both lead to the same
-result.
+Every analysis starts with a study area and a maps object. There are four routes
+to it: selective download of MapBiomas tiles, the national collection stored on
+your computer, selective reading over HTTP, and a local folder with maps of any
+collection. All of them lead to the same object, used by every other function in
+the package.
 
 ## Study area {-}
 
-The area is a polygon shapefile in any coordinate reference system. The package
-already includes the boundary of the UFSCar Lagoa do Sino campus, used in this
-chapter:
+The area is a polygon in any coordinate reference system, stored as a
+GeoPackage (`.gpkg`), shapefile (`.shp`, with its `.prj`) or GeoJSON, or already
+loaded as an `sf` object. The path can be given with or without extension, or be
+the folder holding a single area file; with `.gpkg` and `.shp` of the same name,
+the `.gpkg` is used. The package already includes the boundary of the UFSCar
+Lagoa do Sino campus, used in this chapter:
 
 ```{r}
 ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
 ```
 
-When no shapefile is at hand, `make_polygon()` draws the area from a centre
+::: {.atencao}
+A shapefile is a set of files. Without its `.prj`, it loses its coordinate
+reference system and loading stops with a message. When copying or sending an
+area, include every file of the same name, or prefer a GeoPackage, which is a
+single file.
+:::
+
+When no area is at hand, `make_polygon()` draws the area from a centre
 point, a shape (`"circle"`, `"square"` or `"hexagon"`) and the total width in km
 (`size`), which is the circle's diameter, the square's side or the distance
 between opposite vertices of the hexagon. A hexagon of about 12.5 km² centred on
@@ -76,77 +88,108 @@ maps <- load_rasters(ufscar, start = 1985, end = 2024, method = "library",
                      import_folder_path = "collection_10")
 ```
 
-| | Selective download | National collection |
-|:--|:--|:--|
-| Transfer | only the area's tiles | ~28 GB for 1985–2024, just once |
-| Internet during analysis | yes, on the first run | no |
-| Best for | a few areas, up to 2 or 3 tiles | many areas, large areas, offline use |
-
 ::: {.nota}
 Both routes produce the same object: for the Lagoa do Sino example area, the 40
 maps cropped from the national collection are identical, cell by cell, to those
 obtained by selective download.
 :::
 
-## Route 3: local folder, any collection {-}
-
-Maps from other collections (MapBiomas of other countries or at 10 m, state maps,
-your own classifications) come in through a folder with one GeoTIFF per year,
-named `prefix_year.tif`. `load_local_rasters()` checks each file (one layer, CRS
-and integer codes), harmonizes every year to the grid of the first with nearest
-neighbour, crops and masks by the area and returns the same object as the other
-routes. When the collection uses the MapBiomas legend, `collection = 10` brings
-names and colours; for another legend, `class_dictionary()` builds a template
-with the codes present and reads the completed dictionary:
-
-```{r eval=FALSE}
-maps10m <- load_local_rasters(ufscar, folder = "~/Documents/mapbiomas_10m_col4",
-                              collection = 10)
-
-template <- class_dictionary(maps10m)       # codes present, to fill in
-write.csv(template, "legend.csv", row.names = FALSE)
-dictionary <- class_dictionary(maps10m, file = "legend.csv")
-maps10m <- load_local_rasters(ufscar, folder = "~/Documents/mapbiomas_10m_col4",
-                              dictionary = dictionary)
-```
-
-The folder is recorded in the object: `connectivity_context()` uses the same folder
-to load the extended area.
-
-## Route 4: selective reading over HTTP {-}
+## Route 3: selective reading over HTTP {-}
 
 MapBiomas annual maps are in a public repository, as GeoTIFFs split into blocks.
 With `method = "http"`, `load_rasters()` reads only the blocks that cover the
-area, without login and without downloading the whole national file, and returns
-the same object as the other routes. `raster_catalog()` lists the available
-collections, for Brazil (30 m and 10 m) and other countries; `url` accepts any
-other annual GeoTIFF, with `{year}` in place of the year. With
-`export_folder_path`, the windows are saved and can be read again later by
-`load_local_rasters()`, also on another computer:
+area, without login and without downloading the whole national file. The
+catalogue lists the available collections, for Brazil (30 m and 10 m) and other
+countries and regions:
+
+```{r}
+catalogue <- raster_catalog()
+columns <- c(Product = "id", `Resolution (m)` = "resolution_m",
+             `First year` = "first_year", `Last year` = "last_year")
+tabela(stats::setNames(catalogue[, columns], names(columns)), 0)
+```
+
+The product is chosen by its `id`. With `export_folder_path`, the windows read
+are saved as `product_year.tif`, together with the area (`area.gpkg`):
 
 ```{r eval=FALSE}
-raster_catalog(initiative = "brasil")
 maps_http <- load_rasters(ufscar, start = 2023, end = 2024, method = "http",
                           product = "mapbiomas_brasil_c10",
                           export_folder_path = "maps-lagoa")
+```
+
+Any other annual GeoTIFF split into blocks can be read too, with `url` and
+`{year}` in place of the year. Brazilian collections use the MapBiomas legend;
+those of other countries have their own legends, which come in through the
+dictionary (next section).
+
+## Route 4: local folder, any collection {-}
+
+Maps from other sources (windows saved by route 3, MapBiomas at 10 m, state
+maps, your own classifications) come in through a folder with one GeoTIFF per
+year, named `prefix_year.tif`. `load_local_rasters()`:
+
+1. checks each file: one layer, coordinate reference system, integer codes and
+   coverage of the area;
+2. harmonizes every year to the grid of the first with nearest neighbour, which
+   does not mix class codes;
+3. crops and masks by the area and handles no-data pixels (`nodata`, 0 by
+   default).
+
+The area can be in the folder itself. Maps that cover only part of the area,
+such as windows saved for another region, are refused:
+
+```{r eval=FALSE}
 maps_again <- load_local_rasters(folder = "maps-lagoa", collection = 10)
 ```
 
-The study area can be a GeoPackage, a shapefile (with its `.prj`) or the folder
-holding it; without the `.prj`, the shapefile loses its coordinate system and
-loading stops with a message.
+When the collection uses the MapBiomas legend, `collection = 10` brings names and
+colours. For another legend, `class_dictionary()` builds a template with the codes
+present and then reads the completed dictionary (code, name and colour, in
+Portuguese or English):
+
+```{r eval=FALSE}
+template <- class_dictionary(maps_again)
+write.csv(template, "legend.csv", row.names = FALSE)
+dictionary <- class_dictionary(maps_again, file = "legend.csv")
+maps_again <- load_local_rasters(folder = "maps-lagoa", dictionary = dictionary)
+```
+
+## Which route to use {-}
+
+| | Selective download | National collection | HTTP reading | Local folder |
+|:--|:--|:--|:--|:--|
+| Collections | MapBiomas Brazil | MapBiomas Brazil | catalogue or URL | any |
+| Transfer | the area's tiles | ~28 GB, once | only the area's window | none |
+| Internet | on the first run | only to download | yes | no |
+| Best for | a few areas | many areas, offline use | 10 m, other countries, few years | own and saved maps |
+
+## Extended context {-}
+
+Connectivity indices suffer from edge effects: the area boundary cuts fragments
+and hides stepping stones outside it. `context_m` widens the reading with a band
+around the area, in metres. The object keeps the original area as `focal`, used
+by the connectivity analyses (chapter \@ref(lagoa-context)):
+
+```{r eval=FALSE}
+maps_context <- load_rasters(ufscar, start = 2024, end = 2024, method = "http",
+                             product = "mapbiomas_brasil_c10", context_m = 2000)
+```
 
 ## The maps object {-}
 
-`load_rasters()` returns a list with the area boundary (`shape`), the time span
-(`time_range`), one map per year (`raster`) and the collection (`collection`).
-You can save and share this object, so the acquisition never has to be
-repeated:
+All four routes return a list with the area boundary (`shape`), the period
+(`time_range`), one map per year (`raster`) and the collection (`collection`). It
+also keeps the origin of the maps (`source`), which allows a larger area to be
+reloaded through the same route; the class dictionary (`class_dictionary`), for
+local collections; the original area (`focal`), with a context; and reading
+details (`metadata`). The object can be saved and shared, so the acquisition does
+not need to be repeated:
 
 ```{r eval=FALSE}
 save(maps, file = "lagoa-do-sino.Rdata")
 load("lagoa-do-sino.Rdata")
 ```
 
-The package already includes the maps object for the Lagoa do Sino example
-area, from 1985 to 2024, which is used throughout Part II.
+The package already includes the maps object for the Lagoa do Sino example area,
+from 1985 to 2024, which is used throughout Part II.

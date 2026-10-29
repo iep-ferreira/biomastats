@@ -1,15 +1,17 @@
 # Funções do pacote {#funcoes}
 
 O pacote reúne `r length(getNamespaceExports("biomastats"))` funções, e quase
-todas partem do mesmo ponto: o objeto de mapas criado por `load_rasters()` (ou
-por `load_lulc()`, fora do Brasil). Como cada resultado alimenta a etapa
+todas partem do mesmo ponto: o objeto de mapas criado por `load_rasters()` (por
+recortes, coleção nacional ou leitura por HTTP), por `load_local_rasters()`
+(pastas locais de qualquer coleção) ou por `load_lulc()` (ESA WorldCover). Como cada resultado alimenta a etapa
 seguinte, as análises se encadeiam naturalmente:
 
 ```
 área de estudo ─► load_rasters() ─► mapas ─┬─► get_area() ─┬─► class_diversity()
                                             │               └─► land_time_series() ─► series_*()
                                             ├─► land_change() · land_to_graph() · fragment_metrics()
-                                            └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                            ├─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                            └─► connectivity_context()  (contexto ampliado)
 ```
 
 Nas tabelas abaixo, a coluna **Recebe** indica a entrada usual de cada função.
@@ -21,7 +23,10 @@ Para a documentação completa, use `?nome_da_função` no R.
 |:--|:--|:--|
 | `make_polygon()` | Cria um círculo, quadrado ou hexágono a partir de latitude, longitude e largura total (km) | coordenadas |
 | `compare_shapefiles()` | Identifica os recortes (tiles) do MapBiomas que cobrem a área | shapefile |
-| `load_rasters()` | Carrega, recorta e mascara os mapas anuais, por download seletivo ou de uma coleção local | shapefile |
+| `load_rasters()` | Carrega, recorta e mascara os mapas anuais, por download seletivo, coleção nacional local ou leitura seletiva por HTTP | `.gpkg`, `.shp` ou `sf` |
+| `load_local_rasters()` | Carrega GeoTIFFs anuais de uma pasta local, de qualquer coleção, harmonizados e recortados | área de estudo e pasta |
+| `raster_catalog()` | Coleções do MapBiomas (Brasil, 10 m e outros países) para leitura seletiva por HTTP em `load_rasters(method = "http")` | — |
+| `class_dictionary()` | Monta e confere o dicionário de classes (códigos, nomes e cores) | mapas ou CSV |
 | `download_mapbiomas()` | Baixa a coleção nacional, um arquivo por ano | pasta de destino |
 | `load_rasters_from_folder()` | Abre os mapas nacionais guardados em uma pasta | pasta da coleção |
 | `check_maps()` | Confere, baixa e junta por ano os recortes necessários | recortes e anos |
@@ -74,9 +79,6 @@ Para a documentação completa, use `?nome_da_função` no R.
 |:--|:--|:--|
 | `layer_catalog()` | Lista as fontes externas, suas versões e anos de referência | — |
 | `load_lulc()` | Cobertura ESA WorldCover 10 m, em qualquer lugar do mundo, no formato de `load_rasters()` | shapefile ou `sf` |
-| `load_local_rasters()` | Carrega GeoTIFFs anuais de uma pasta local, de qualquer coleção, harmonizados e recortados | área de estudo e pasta |
-| `raster_catalog()` | Coleções do MapBiomas (Brasil, 10 m e outros países) para leitura seletiva por HTTP em `load_rasters(method = "http")` | — |
-| `class_dictionary()` | Monta e confere o dicionário de classes (códigos, nomes e cores) | mapas ou CSV |
 | `load_features()` | Estradas, ferrovias, rios, corpos d'água, edificações e localidades (OpenStreetMap ou Overture) | mapas, `sf` ou shapefile |
 | `load_physical()` | Altitude, declividade, orientação e propriedades do solo na grade dos mapas | mapas |
 | `feature_raster()` | Superfícies de distância, contagem, comprimento, cobertura e densidade de feições | `load_features()` e mapas |

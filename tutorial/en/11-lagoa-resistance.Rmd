@@ -1,0 +1,50 @@
+# Resistance and links {#lagoa-resistance}
+
+The indices of the previous chapter use straight-line distance and treat every link alike. This chapter replaces distance by the cost of crossing the landscape and measures the importance of each link.
+
+## Resistance and least-cost distance {-}
+
+Straight-line distance treats the whole matrix as equal. A pasture, a sugarcane
+field and a highway, however, do not pose the same difficulty to an organism
+moving between fragments. `resistance_surface()` turns one year's land-use map
+into a cost surface: each class gets a cost per metre travelled (1 equals
+Euclidean distance), and `Inf` makes the class a barrier. The values below are
+only illustrative; in practice they come from the literature or from experts on
+the species of interest:
+
+```{r resistance, fig.height=5}
+costs <- c("3" = 1, "4" = 1, "11" = 2, "12" = 3, "9" = 5, "21" = 8, "15" = 10,
+           "20" = 20, "39" = 20, "41" = 20, "25" = 50, "24" = 100, "33" = Inf)
+resistance <- resistance_surface(maps, year = 2024, resistance = costs, default = 20,
+                                 language = "en")
+resistance$plot
+```
+
+Highways, dams and other barriers can be added as `sf` lines or polygons in
+`barriers`, with their own cost or as impassable. `cost_distance()` then measures
+the least accumulated cost from edge to edge between fragments, and the matrix
+goes into `land_connectivity()` in place of Euclidean distance. Thresholds are
+then given in cost units:
+
+```{r cost}
+cost <- cost_distance(polygons, resistance)
+connectivity_cost <- land_connectivity(polygons, max_dist = 1500, distance = cost,
+  metric_patch = c("IIC", "PC"), build_plot = FALSE)
+```
+
+Distance matrices from other sources are also accepted, such as the `From`, `To`
+and `Distance` tables of `Makurhini::distancefile()`.
+
+## Links that hold the network together {-}
+
+With `link_importance = TRUE`, each link gets the drop of the index when it alone
+is removed. Links with an alternative path of equal cost are worth zero; the
+highest values mark the irreplaceable links of the network:
+
+```{r links, fig.height=6}
+connectivity_links <- land_connectivity(polygons, max_dist = 300,
+  metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300, link_importance = TRUE,
+  language = "en")
+connectivity_links$link_plot
+```
+

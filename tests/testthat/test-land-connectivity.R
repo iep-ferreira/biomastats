@@ -242,3 +242,10 @@ test_that("native vectorization, plots, dictionary and RDS remain interoperable"
   expect_equal(igraph::as_data_frame(restored$scenarios[[1]]$graph),
                igraph::as_data_frame(out$scenarios[[1]]$graph))
 })
+
+test_that("plots are built when no pair of fragments is linked", {
+  out <- land_connectivity(connectivity_patches(c(0, 200, 400)), max_dist = 30, language = "en")
+  expect_equal(nrow(out$edge_metrics), 0)
+  expect_s3_class(out$plot, "ggplot")
+  expect_true("Isolated patches" %in% levels(out$range_plot$data$metric))
+})

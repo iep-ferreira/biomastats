@@ -114,7 +114,7 @@ resistance_surface <- function(data, year = NULL, resistance, barriers = NULL,
     barrier_cost = barrier_cost, barriers = if (is.null(used)) 0L else nrow(used),
     rule = paste("cost per unit distance; NA = impassable; barriers rasterized with",
       "touches = TRUE taking the larger cost"))
-  plot <- if (build_plot) .resistance_plot(friction, language)
+  plot <- if (build_plot) .resistance_plot(friction, !is.na(codes), language)
   structure(list(raster = out_raster, classes = classes, barriers = used,
     metadata = metadata, plot = plot), class = c("biomastats_resistance", "list"))
 }
@@ -167,13 +167,18 @@ resistance_surface <- function(data, year = NULL, resistance, barriers = NULL,
   .connectivity_crs(sf::st_sf(geometry = box), NULL)
 }
 
-.resistance_plot <- function(friction, language) {
+# Cells outside the map are left blank; only barriers (mapped cells without a
+# finite cost) are drawn in black.
+.resistance_plot <- function(friction, mapped, language) {
   df <- as.data.frame(friction, xy = TRUE, na.rm = FALSE)
   names(df)[3] <- "cost"
-  ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, fill = cost)) +
+  df <- df[mapped, , drop = FALSE]
+  barrier <- df[is.na(df$cost), , drop = FALSE]
+  ggplot2::ggplot(df[!is.na(df$cost), , drop = FALSE], ggplot2::aes(x = x, y = y, fill = cost)) +
     ggplot2::geom_raster() +
+    ggplot2::geom_raster(data = barrier, fill = "#000000") +
     ggplot2::scale_fill_viridis_c(option = "magma", direction = -1, trans = "log10",
-      na.value = "#000000", name = .tr(language, "Custo", "Cost")) +
+      name = .tr(language, "Custo", "Cost")) +
     ggplot2::coord_equal() +
     ggplot2::labs(x = NULL, y = NULL, caption = .tr(language,
       "Preto: barreira intranspon\u00edvel", "Black: impassable barrier")) +

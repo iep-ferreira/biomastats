@@ -34,8 +34,28 @@ the 1985 forest formation was still standing in 2024, and the
 `r num(f3$gain_ha, 0)` ha that appeared elsewhere did not make up for the
 `r num(f3$loss_ha, 0)` ha that were lost.
 
-With `years = c(1985, 2004, 2024)`, the diagram gains a third column and shows
-the trajectories across both intervals.
+The net change of each class sums up, in a single plot, which classes gained and
+which lost area over the period:
+
+```{r net-change, fig.height=5.5}
+change$change_plot
+```
+
+With `years = c(1985, 2004, 2024)`, the diagram gains a third column and each
+pixel gets a trajectory: stable, changed once, changed twice or returned to its
+original class:
+
+```{r trajectories}
+change3 <- land_change(maps, years = c(1985, 2004, 2024), language = "en")
+```
+
+```{r echo=FALSE}
+tm <- change3$trajectory_metrics
+labels <- c(stable = "Stable", changed_once = "Changed once",
+            changed_twice = "Changed twice", returned = "Returned to the original class")
+tabela(data.frame(Trajectory = labels[tm$type], `Area (ha)` = tm$area_ha,
+                  `Share (%)` = 100 * tm$share, check.names = FALSE), 1)
+```
 
 ## Adjacency between classes {-}
 
@@ -55,6 +75,57 @@ hub <- nm[which.max(nm$degree), ]
 ```
 
 In 2024, the most connected class is `r tolower(hub$class)`, which borders
-`r hub$degree` classes along `r num(hub$boundary_m / 1000, 1)` km of edges. The
-tables `network$node_metrics` and `network$edge_metrics` detail degree,
-strength, centrality and the length of each boundary.
+`r hub$degree` classes along `r num(hub$boundary_m / 1000, 1)` km of edges.
+
+## Boundaries and interfaces {-}
+
+The adjacency matrix shows how many contacts there are between each pair of
+classes; the diagonal (contacts of a class with itself) is left out unless
+`include_self = TRUE`:
+
+```{r heat-map, fig.height=6}
+network$heatmap
+```
+
+Interfaces are the boundaries between pairs of classes, in kilometres. They are
+where land use changes across the landscape and where edge effects concentrate:
+
+```{r interfaces, fig.height=7}
+network$edge_plot
+```
+
+```{r include=FALSE}
+gm <- network$graph_metrics
+em <- network$edge_metrics[order(-network$edge_metrics$boundary_m), ]
+largest <- em[1, ]
+forest <- em[em$from == 3 | em$to == 3, ]
+```
+
+The largest interface, between `r tolower(largest$from_class)` and
+`r tolower(largest$to_class)`, adds up to `r num(largest$boundary_m / 1000, 1)` km
+(`r num(100 * largest$share, 0)`% of the contacts between classes). The forest
+borders `r nrow(forest)` classes, the main one being
+`r tolower(ifelse(forest$from[1] == 3, forest$to_class[1], forest$from_class[1]))`.
+
+`network$node_metrics` gives, for each class, degree (how many neighbouring
+classes), strength (how many contacts), betweenness and neighbourhood entropy,
+which is high when the class borders many others in similar proportions:
+
+```{r echo=FALSE}
+nm <- network$node_metrics[order(-network$node_metrics$strength), ]
+tabela(data.frame(Class = nm$class, Degree = nm$degree, Strength = nm$strength,
+                  Betweenness = nm$betweenness, `Neighbourhood entropy` = nm$neighbor_entropy,
+                  check.names = FALSE), 2)
+```
+
+`network$graph_metrics` sums up the whole network: density (`r num(gm$density, 2)`),
+transitivity (`r num(gm$transitivity, 2)`) and the share of contacts between
+different classes (`r num(100 * gm$interclass_fraction, 0)`%), an indicator of how
+patchy the landscape is.
+
+The graph also has an interactive version, in which each class and each link show
+their values on hover:
+
+```{r interactive-network}
+network$graph_plot
+```

@@ -40,3 +40,19 @@ diversidade ao longo do tempo:
 ```{r contribuicao, fig.height=5.5}
 diversidade$plots$contribution
 ```
+
+Os números de Hill expressam a diversidade em classes efetivas: a ordem 0 é a
+riqueza, a ordem 1 pondera as classes pela área (exponencial de Shannon) e a
+ordem 2 dá ainda mais peso às dominantes (inverso de Simpson). Quanto mais as
+curvas se afastam da riqueza, mais poucas classes concentram a paisagem:
+
+```{r hill, fig.height=5}
+diversidade$plots$hill
+```
+
+A composição ao longo do tempo, com a dominância de Berger-Parker sobreposta,
+mostra a troca da classe dominante:
+
+```{r dominancia, fig.height=6}
+diversidade$plots$dominance
+```

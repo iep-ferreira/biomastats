@@ -11,9 +11,19 @@ year by year, computes area, edges, number of fragments and the aggregation
 index. Let us follow the forest formation:
 
 ```{r metrics, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
-metrics <- biomastats_metrics(maps, classes = 3, metrics = "keep.all")
+metrics <- biomastats_metrics(maps, classes = 3, metrics = "keep.all", language = "en")
 metrics$ai_plot
 metrics$fragments_number
+```
+
+The other plots follow the class area, mean fragment area, edge length and edge
+density:
+
+```{r metrics-edges, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+metrics$area_plot
+metrics$frag_avg_area
+metrics$egde_lenght_plot
+metrics$edge_density_plot
 ```
 
 ```{r include=FALSE}
@@ -65,3 +75,37 @@ The average fragment shrank from `r num(s85$area_mean, 1)` ha to
 `r num(s85$lpi, 1)`% of the landscape, now covers `r num(s24$lpi, 1)`%. Size
 inequality (Gini) remains high, meaning that a few fragments hold most of the
 forest. The data for each fragment are in `fragments$patches`.
+
+## Size and shape of the fragments {-}
+
+The summary indicators can be followed over time in a single panel:
+
+```{r fragments-trend, fig.height=5}
+fragments$plots$trend
+```
+
+The size distribution and the rank-size curve show how area is concentrated: few
+large fragments and many small ones. The shape index (1 for the most compact
+shape) separates compact fragments from elongated or branched ones, which have
+more edge per hectare:
+
+```{r fragments-sizes, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+fragments$plots$size_distribution
+fragments$plots$rank_size
+```
+
+```{r fragments-shape, fig.height=5}
+fragments$plots$shape
+```
+
+`fragments$lsm` adds class metrics from the `landscapemetrics` package, computed
+on the same grid: aggregation (`ai`), clumpiness (`clumpy`) and cohesion
+(`cohesion`):
+
+```{r echo=FALSE}
+l <- fragments$lsm
+w <- stats::reshape(l[, c("year", "metric", "value")], idvar = "year", timevar = "metric",
+                    direction = "wide")
+names(w) <- c("Year", sub("^value[.]", "", names(w)[-1]))
+tabela(w, 2)
+```

@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="active" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -118,7 +126,7 @@
 went. <code><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change()</a></code> answers that question by comparing the maps pixel by
 pixel, at two or three dates, and measuring what stayed, what was converted and
 into what:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">change</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change</a></span><span class="op">(</span><span class="va">maps</span>, years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1985</span>, <span class="fl">2024</span><span class="op">)</span>, language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">change</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/change-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -190,8 +198,45 @@ illustrates the picture well: only 44% of
 the 1985 forest formation was still standing in 2024, and the
 20 ha that appeared elsewhere did not make up for the
 113 ha that were lost.</p>
-<p>With <code>years = c(1985, 2004, 2024)</code>, the diagram gains a third column and shows
-the trajectories across both intervals.</p>
+<p>The net change of each class sums up, in a single plot, which classes gained and
+which lost area over the period:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">change</span><span class="op">$</span><span class="va">change_plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/net-change-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>With <code>years = c(1985, 2004, 2024)</code>, the diagram gains a third column and each
+pixel gets a trajectory: stable, changed once, changed twice or returned to its
+original class:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">change3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change</a></span><span class="op">(</span><span class="va">maps</span>, years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1985</span>, <span class="fl">2004</span>, <span class="fl">2024</span><span class="op">)</span>, language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span></code></pre></div>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th align="left">Trajectory</th>
+<th align="right">Area (ha)</th>
+<th align="right">Share (%)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Stable</td>
+<td align="right">246.9</td>
+<td align="right">19.9</td>
+</tr>
+<tr class="even">
+<td align="left">Changed once</td>
+<td align="right">707.6</td>
+<td align="right">57.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Returned to the original class</td>
+<td align="right">25.3</td>
+<td align="right">2.0</td>
+</tr>
+<tr class="even">
+<td align="left">Changed twice</td>
+<td align="right">262.4</td>
+<td align="right">21.1</td>
+</tr>
+</tbody>
+</table></div>
 </div>
 <div id="adjacency-between-classes" class="section level2 unnumbered">
 <h2>Adjacency between classes<a class="anchor" aria-label="anchor" href="#adjacency-between-classes"><i class="fas fa-link"></i></a>
@@ -200,15 +245,140 @@ the trajectories across both intervals.</p>
 of different classes and builds the landscape network, in which each node is a
 class and the thickness of each link is the number of contacts between them.
 With <code>weight = "boundary"</code>, the thickness becomes the boundary length in metres.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_to_graph.html">land_to_graph</a></span><span class="op">(</span><span class="va">maps</span>, year <span class="op">=</span> <span class="fl">2024</span>, language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">network</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/network-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
 <p>In 2024, the most connected class is wetland, which borders
-8 classes along 29.6 km of edges. The
-tables <code>network$node_metrics</code> and <code>network$edge_metrics</code> detail degree,
-strength, centrality and the length of each boundary.</p>
-
+8 classes along 29.6 km of edges.</p>
+</div>
+<div id="boundaries-and-interfaces" class="section level2 unnumbered">
+<h2>Boundaries and interfaces<a class="anchor" aria-label="anchor" href="#boundaries-and-interfaces"><i class="fas fa-link"></i></a>
+</h2>
+<p>The adjacency matrix shows how many contacts there are between each pair of
+classes; the diagonal (contacts of a class with itself) is left out unless
+<code>include_self = TRUE</code>:</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">heatmap</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/heat-map-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>Interfaces are the boundaries between pairs of classes, in kilometres. They are
+where land use changes across the landscape and where edge effects concentrate:</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">edge_plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/interfaces-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>The largest interface, between mosaic of uses and
+soybean, adds up to 21.8 km
+(23% of the contacts between classes). The forest
+borders 7 classes, the main one being
+mosaic of uses.</p>
+<p><code>network$node_metrics</code> gives, for each class, degree (how many neighbouring
+classes), strength (how many contacts), betweenness and neighbourhood entropy,
+which is high when the class borders many others in similar proportions:</p>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="30%">
+<col width="9%">
+<col width="12%">
+<col width="16%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Class</th>
+<th align="right">Degree</th>
+<th align="right">Strength</th>
+<th align="right">Betweenness</th>
+<th align="right">Neighbourhood entropy</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mosaic of Uses</td>
+<td align="right">8</td>
+<td align="right">1984</td>
+<td align="right">23</td>
+<td align="right">1.57</td>
+</tr>
+<tr class="even">
+<td align="left">Soybean</td>
+<td align="right">8</td>
+<td align="right">1368</td>
+<td align="right">24</td>
+<td align="right">1.35</td>
+</tr>
+<tr class="odd">
+<td align="left">Forest Formation</td>
+<td align="right">7</td>
+<td align="right">1102</td>
+<td align="right">9</td>
+<td align="right">1.53</td>
+</tr>
+<tr class="even">
+<td align="left">Wetland</td>
+<td align="right">8</td>
+<td align="right">1029</td>
+<td align="right">9</td>
+<td align="right">1.61</td>
+</tr>
+<tr class="odd">
+<td align="left">Pasture</td>
+<td align="right">5</td>
+<td align="right">434</td>
+<td align="right">0</td>
+<td align="right">1.02</td>
+</tr>
+<tr class="even">
+<td align="left">River, Lake and Ocean</td>
+<td align="right">5</td>
+<td align="right">276</td>
+<td align="right">0</td>
+<td align="right">1.33</td>
+</tr>
+<tr class="odd">
+<td align="left">Other Temporary Crops</td>
+<td align="right">5</td>
+<td align="right">221</td>
+<td align="right">0</td>
+<td align="right">1.21</td>
+</tr>
+<tr class="even">
+<td align="left">Urban Area</td>
+<td align="right">3</td>
+<td align="right">54</td>
+<td align="right">0</td>
+<td align="right">0.87</td>
+</tr>
+<tr class="odd">
+<td align="left">Forest Plantation</td>
+<td align="right">1</td>
+<td align="right">50</td>
+<td align="right">0</td>
+<td align="right">0.00</td>
+</tr>
+<tr class="even">
+<td align="left">Savanna Formation</td>
+<td align="right">2</td>
+<td align="right">40</td>
+<td align="right">0</td>
+<td align="right">0.46</td>
+</tr>
+<tr class="odd">
+<td align="left">Other Perennial Crops</td>
+<td align="right">2</td>
+<td align="right">18</td>
+<td align="right">0</td>
+<td align="right">0.35</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>network$graph_metrics</code> sums up the whole network: density (0.49),
+transitivity (0.66) and the share of contacts between
+different classes (11%), an indicator of how
+patchy the landscape is.</p>
+<p>The graph also has an interactive version, in which each class and each link show
+their values on hover:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">graph_plot</span></span></code></pre></div>
+<div class="girafe html-widget html-fill-item" id="htmlwidget-26b73d4d6a3a4e27284b" style="width:100%;height:550px;"></div>
+<script type="application/json" data-for="htmlwidget-26b73d4d6a3a4e27284b">{"x":{"html":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='ggiraph-svg' role='graphics-document' id='svg_71f8d52829750cdd' viewBox='0 0 576 432'>\n <defs id='svg_71f8d52829750cdd_defs'>\n  <clipPath id='svg_71f8d52829750cdd_c1'>\n   <rect x='0' y='0' width='576' height='432'/>\n  <\/clipPath>\n  <clipPath id='svg_71f8d52829750cdd_c2'>\n   <rect x='9.21' y='0' width='557.59' height='432'/>\n  <\/clipPath>\n  <clipPath id='svg_71f8d52829750cdd_c3'>\n   <rect x='9.21' y='16.73' width='415.27' height='415.27'/>\n  <\/clipPath>\n <\/defs>\n <g id='svg_71f8d52829750cdd_rootg' class='ggiraph-svg-rootg'>\n  <g clip-path='url(#svg_71f8d52829750cdd_c1)'>\n   <rect x='0' y='0' width='576' height='432' fill='#FFFFFF' fill-opacity='1' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.75' stroke-linejoin='round' stroke-linecap='round' class='ggiraph-svg-bg'/>\n  <\/g>\n  <g clip-path='url(#svg_71f8d52829750cdd_c2)'>\n   <rect x='9.21' y='0' width='557.59' height='432' fill='#000000' fill-opacity='0' stroke='none'/>\n  <\/g>\n  <g clip-path='url(#svg_71f8d52829750cdd_c3)'>\n   <line id='svg_71f8d52829750cdd_e1' x1='334.82' y1='224.36' x2='265.85' y2='117.05' stroke='#687787' stroke-opacity='0.65' stroke-width='1.34' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Forest Plantation&amp;lt;br/&amp;gt;Contacts: 50&amp;lt;br/&amp;gt;Boundary (m): 1438.1' data-id='3:9'/>\n   <line id='svg_71f8d52829750cdd_e2' x1='334.82' y1='224.36' x2='200.05' y2='107.59' stroke='#687787' stroke-opacity='0.65' stroke-width='3.66' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Wetland&amp;lt;br/&amp;gt;Contacts: 279&amp;lt;br/&amp;gt;Boundary (m): 8014.5' data-id='3:11'/>\n   <line id='svg_71f8d52829750cdd_e3' x1='316.09' y1='160.58' x2='200.05' y2='107.59' stroke='#687787' stroke-opacity='0.65' stroke-width='1.17' stroke-linejoin='round' stroke-linecap='butt' title='Savanna Formation / Wetland&amp;lt;br/&amp;gt;Contacts: 33&amp;lt;br/&amp;gt;Boundary (m): 956.3' data-id='4:11'/>\n   <line id='svg_71f8d52829750cdd_e4' x1='334.82' y1='224.36' x2='139.59' y2='135.2' stroke='#687787' stroke-opacity='0.65' stroke-width='1.7' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Pasture&amp;lt;br/&amp;gt;Contacts: 86&amp;lt;br/&amp;gt;Boundary (m): 2469.3' data-id='3:15'/>\n   <line id='svg_71f8d52829750cdd_e5' x1='316.09' y1='160.58' x2='139.59' y2='135.2' stroke='#687787' stroke-opacity='0.65' stroke-width='0.9' stroke-linejoin='round' stroke-linecap='butt' title='Savanna Formation / Pasture&amp;lt;br/&amp;gt;Contacts: 7&amp;lt;br/&amp;gt;Boundary (m): 202.24' data-id='4:15'/>\n   <line id='svg_71f8d52829750cdd_e6' x1='200.05' y1='107.59' x2='139.59' y2='135.2' stroke='#687787' stroke-opacity='0.65' stroke-width='1.17' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / Pasture&amp;lt;br/&amp;gt;Contacts: 33&amp;lt;br/&amp;gt;Boundary (m): 943.74' data-id='11:15'/>\n   <line id='svg_71f8d52829750cdd_e7' x1='334.82' y1='224.36' x2='103.65' y2='191.13' stroke='#687787' stroke-opacity='0.65' stroke-width='5.64' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Mosaic of Uses&amp;lt;br/&amp;gt;Contacts: 475&amp;lt;br/&amp;gt;Boundary (m): 13637' data-id='3:21'/>\n   <line id='svg_71f8d52829750cdd_e8' x1='200.05' y1='107.59' x2='103.65' y2='191.13' stroke='#687787' stroke-opacity='0.65' stroke-width='3.84' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / Mosaic of Uses&amp;lt;br/&amp;gt;Contacts: 297&amp;lt;br/&amp;gt;Boundary (m): 8546.5' data-id='11:21'/>\n   <line id='svg_71f8d52829750cdd_e9' x1='139.59' y1='135.2' x2='103.65' y2='191.13' stroke='#687787' stroke-opacity='0.65' stroke-width='3.72' stroke-linejoin='round' stroke-linecap='butt' title='Pasture / Mosaic of Uses&amp;lt;br/&amp;gt;Contacts: 285&amp;lt;br/&amp;gt;Boundary (m): 8184.4' data-id='15:21'/>\n   <line id='svg_71f8d52829750cdd_e10' x1='200.05' y1='107.59' x2='103.65' y2='257.6' stroke='#687787' stroke-opacity='0.65' stroke-width='0.86' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / Urban Area&amp;lt;br/&amp;gt;Contacts: 3&amp;lt;br/&amp;gt;Boundary (m): 89.899' data-id='11:24'/>\n   <line id='svg_71f8d52829750cdd_e11' x1='103.65' y1='191.13' x2='103.65' y2='257.6' stroke='#687787' stroke-opacity='0.65' stroke-width='1.08' stroke-linejoin='round' stroke-linecap='butt' title='Mosaic of Uses / Urban Area&amp;lt;br/&amp;gt;Contacts: 24&amp;lt;br/&amp;gt;Boundary (m): 686.63' data-id='21:24'/>\n   <line id='svg_71f8d52829750cdd_e12' x1='334.82' y1='224.36' x2='139.59' y2='313.52' stroke='#687787' stroke-opacity='0.65' stroke-width='1.39' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / River, Lake and Ocean&amp;lt;br/&amp;gt;Contacts: 55&amp;lt;br/&amp;gt;Boundary (m): 1572.9' data-id='3:33'/>\n   <line id='svg_71f8d52829750cdd_e13' x1='200.05' y1='107.59' x2='139.59' y2='313.52' stroke='#687787' stroke-opacity='0.65' stroke-width='1.87' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / River, Lake and Ocean&amp;lt;br/&amp;gt;Contacts: 102&amp;lt;br/&amp;gt;Boundary (m): 2948.8' data-id='11:33'/>\n   <line id='svg_71f8d52829750cdd_e14' x1='103.65' y1='191.13' x2='139.59' y2='313.52' stroke='#687787' stroke-opacity='0.65' stroke-width='1.76' stroke-linejoin='round' stroke-linecap='butt' title='Mosaic of Uses / River, Lake and Ocean&amp;lt;br/&amp;gt;Contacts: 92&amp;lt;br/&amp;gt;Boundary (m): 2629' data-id='21:33'/>\n   <line id='svg_71f8d52829750cdd_e15' x1='334.82' y1='224.36' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='2.21' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Soybean&amp;lt;br/&amp;gt;Contacts: 136&amp;lt;br/&amp;gt;Boundary (m): 3917.5' data-id='3:39'/>\n   <line id='svg_71f8d52829750cdd_e16' x1='200.05' y1='107.59' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='3.46' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / Soybean&amp;lt;br/&amp;gt;Contacts: 260&amp;lt;br/&amp;gt;Boundary (m): 7450.3' data-id='11:39'/>\n   <line id='svg_71f8d52829750cdd_e17' x1='139.59' y1='135.2' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt' title='Pasture / Soybean&amp;lt;br/&amp;gt;Contacts: 23&amp;lt;br/&amp;gt;Boundary (m): 649.1' data-id='15:39'/>\n   <line id='svg_71f8d52829750cdd_e18' x1='103.65' y1='191.13' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='8.54' stroke-linejoin='round' stroke-linecap='butt' title='Mosaic of Uses / Soybean&amp;lt;br/&amp;gt;Contacts: 761&amp;lt;br/&amp;gt;Boundary (m): 21769' data-id='21:39'/>\n   <line id='svg_71f8d52829750cdd_e19' x1='103.65' y1='257.6' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='1.11' stroke-linejoin='round' stroke-linecap='butt' title='Urban Area / Soybean&amp;lt;br/&amp;gt;Contacts: 27&amp;lt;br/&amp;gt;Boundary (m): 771.52' data-id='24:39'/>\n   <line id='svg_71f8d52829750cdd_e20' x1='139.59' y1='313.52' x2='200.05' y2='341.14' stroke='#687787' stroke-opacity='0.65' stroke-width='1.05' stroke-linejoin='round' stroke-linecap='butt' title='River, Lake and Ocean / Soybean&amp;lt;br/&amp;gt;Contacts: 21&amp;lt;br/&amp;gt;Boundary (m): 614.25' data-id='33:39'/>\n   <line id='svg_71f8d52829750cdd_e21' x1='334.82' y1='224.36' x2='265.85' y2='331.68' stroke='#687787' stroke-opacity='0.65' stroke-width='1.05' stroke-linejoin='round' stroke-linecap='butt' title='Forest Formation / Other Temporary Crops&amp;lt;br/&amp;gt;Contacts: 21&amp;lt;br/&amp;gt;Boundary (m): 596.71' data-id='3:41'/>\n   <line id='svg_71f8d52829750cdd_e22' x1='200.05' y1='107.59' x2='265.85' y2='331.68' stroke='#687787' stroke-opacity='0.65' stroke-width='1.06' stroke-linejoin='round' stroke-linecap='butt' title='Wetland / Other Temporary Crops&amp;lt;br/&amp;gt;Contacts: 22&amp;lt;br/&amp;gt;Boundary (m): 624.16' data-id='11:41'/>\n   <line id='svg_71f8d52829750cdd_e23' x1='103.65' y1='191.13' x2='265.85' y2='331.68' stroke='#687787' stroke-opacity='0.65' stroke-width='1.32' stroke-linejoin='round' stroke-linecap='butt' title='Mosaic of Uses / Other Temporary Crops&amp;lt;br/&amp;gt;Contacts: 48&amp;lt;br/&amp;gt;Boundary (m): 1370.7' data-id='21:41'/>\n   <line id='svg_71f8d52829750cdd_e24' x1='139.59' y1='313.52' x2='265.85' y2='331.68' stroke='#687787' stroke-opacity='0.65' stroke-width='0.89' stroke-linejoin='round' stroke-linecap='butt' title='River, Lake and Ocean / Other Temporary Crops&amp;lt;br/&amp;gt;Contacts: 6&amp;lt;br/&amp;gt;Boundary (m): 174.78' data-id='33:41'/>\n   <line id='svg_71f8d52829750cdd_e25' x1='200.05' y1='341.14' x2='265.85' y2='331.68' stroke='#687787' stroke-opacity='0.65' stroke-width='2.09' stroke-linejoin='round' stroke-linecap='butt' title='Soybean / Other Temporary Crops&amp;lt;br/&amp;gt;Contacts: 124&amp;lt;br/&amp;gt;Boundary (m): 3568' data-id='39:41'/>\n   <line id='svg_71f8d52829750cdd_e26' x1='103.65' y1='191.13' x2='316.09' y2='288.15' stroke='#687787' stroke-opacity='0.65' stroke-width='0.85' stroke-linejoin='round' stroke-linecap='butt' title='Mosaic of Uses / Other Perennial Crops&amp;lt;br/&amp;gt;Contacts: 2&amp;lt;br/&amp;gt;Boundary (m): 57.427' data-id='21:48'/>\n   <line id='svg_71f8d52829750cdd_e27' x1='200.05' y1='341.14' x2='316.09' y2='288.15' stroke='#687787' stroke-opacity='0.65' stroke-width='1' stroke-linejoin='round' stroke-linecap='butt' title='Soybean / Other Perennial Crops&amp;lt;br/&amp;gt;Contacts: 16&amp;lt;br/&amp;gt;Boundary (m): 456.91' data-id='39:48'/>\n   <circle id='svg_71f8d52829750cdd_e28' cx='334.82' cy='224.36' r='9.64pt' fill='#1F8D49' fill-opacity='1' stroke='#1F8D49' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Forest Formation (3)&amp;lt;br/&amp;gt;Pixels: 1300&amp;lt;br/&amp;gt;Degree: 7&amp;lt;br/&amp;gt;Strength: 1102' data-id='3'/>\n   <circle id='svg_71f8d52829750cdd_e29' cx='316.09' cy='160.58' r='5.05pt' fill='#7DC975' fill-opacity='1' stroke='#7DC975' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Savanna Formation (4)&amp;lt;br/&amp;gt;Pixels: 19&amp;lt;br/&amp;gt;Degree: 2&amp;lt;br/&amp;gt;Strength: 40' data-id='4'/>\n   <circle id='svg_71f8d52829750cdd_e30' cx='265.85' cy='117.05' r='5.21pt' fill='#7A5900' fill-opacity='1' stroke='#7A5900' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Forest Plantation (9)&amp;lt;br/&amp;gt;Pixels: 30&amp;lt;br/&amp;gt;Degree: 1&amp;lt;br/&amp;gt;Strength: 50' data-id='9'/>\n   <circle id='svg_71f8d52829750cdd_e31' cx='200.05' cy='107.59' r='9.46pt' fill='#519799' fill-opacity='1' stroke='#519799' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Wetland (11)&amp;lt;br/&amp;gt;Pixels: 1221&amp;lt;br/&amp;gt;Degree: 8&amp;lt;br/&amp;gt;Strength: 1029' data-id='11'/>\n   <circle id='svg_71f8d52829750cdd_e32' cx='139.59' cy='135.2' r='7.6pt' fill='#EDDE8E' fill-opacity='1' stroke='#EDDE8E' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Pasture (15)&amp;lt;br/&amp;gt;Pixels: 642&amp;lt;br/&amp;gt;Degree: 5&amp;lt;br/&amp;gt;Strength: 434' data-id='15'/>\n   <circle id='svg_71f8d52829750cdd_e33' cx='103.65' cy='191.13' r='11.49pt' fill='#FFEFC3' fill-opacity='1' stroke='#FFEFC3' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Mosaic of Uses (21)&amp;lt;br/&amp;gt;Pixels: 1778&amp;lt;br/&amp;gt;Degree: 8&amp;lt;br/&amp;gt;Strength: 1984' data-id='21'/>\n   <circle id='svg_71f8d52829750cdd_e34' cx='103.65' cy='257.6' r='5.27pt' fill='#D4271E' fill-opacity='1' stroke='#D4271E' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Urban Area (24)&amp;lt;br/&amp;gt;Pixels: 73&amp;lt;br/&amp;gt;Degree: 3&amp;lt;br/&amp;gt;Strength: 54' data-id='24'/>\n   <circle id='svg_71f8d52829750cdd_e35' cx='139.59' cy='313.52' r='6.9pt' fill='#2532E4' fill-opacity='1' stroke='#2532E4' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='River, Lake and Ocean (33)&amp;lt;br/&amp;gt;Pixels: 295&amp;lt;br/&amp;gt;Degree: 5&amp;lt;br/&amp;gt;Strength: 276' data-id='33'/>\n   <circle id='svg_71f8d52829750cdd_e36' cx='200.05' cy='341.14' r='10.26pt' fill='#F5B3C8' fill-opacity='1' stroke='#F5B3C8' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Soybean (39)&amp;lt;br/&amp;gt;Pixels: 9619&amp;lt;br/&amp;gt;Degree: 8&amp;lt;br/&amp;gt;Strength: 1368' data-id='39'/>\n   <circle id='svg_71f8d52829750cdd_e37' cx='265.85' cy='331.68' r='6.61pt' fill='#F54CA9' fill-opacity='1' stroke='#F54CA9' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Other Temporary Crops (41)&amp;lt;br/&amp;gt;Pixels: 144&amp;lt;br/&amp;gt;Degree: 5&amp;lt;br/&amp;gt;Strength: 221' data-id='41'/>\n   <circle id='svg_71f8d52829750cdd_e38' cx='316.09' cy='288.15' r='4.29pt' fill='#E6CCFF' fill-opacity='1' stroke='#E6CCFF' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round' title='Other Perennial Crops (48)&amp;lt;br/&amp;gt;Pixels: 9&amp;lt;br/&amp;gt;Degree: 2&amp;lt;br/&amp;gt;Strength: 18' data-id='48'/>\n   <text x='358.4' y='227.3' font-size='6.4pt' font-family='Liberation Sans'>3<\/text>\n   <text x='335.55' y='149.48' font-size='6.4pt' font-family='Liberation Sans'>4<\/text>\n   <text x='274.26' y='96.37' font-size='6.4pt' font-family='Liberation Sans'>9<\/text>\n   <text x='191.93' y='84.83' font-size='6.4pt' font-family='Liberation Sans'>11<\/text>\n   <text x='117.84' y='118.52' font-size='6.4pt' font-family='Liberation Sans'>15<\/text>\n   <text x='74' y='186.75' font-size='6.4pt' font-family='Liberation Sans'>21<\/text>\n   <text x='74' y='267.85' font-size='6.4pt' font-family='Liberation Sans'>24<\/text>\n   <text x='117.84' y='336.07' font-size='6.4pt' font-family='Liberation Sans'>33<\/text>\n   <text x='191.62' y='369.76' font-size='6.4pt' font-family='Liberation Sans'>39<\/text>\n   <text x='271.89' y='358.22' font-size='6.4pt' font-family='Liberation Sans'>41<\/text>\n   <text x='333.18' y='305.11' font-size='6.4pt' font-family='Liberation Sans'>48<\/text>\n  <\/g>\n  <g clip-path='url(#svg_71f8d52829750cdd_c1)'>\n   <text x='430.15' y='32.95' font-size='9pt' font-family='Liberation Sans'>Class (code)<\/text>\n   <polygon points='433.07,54.54 444.51,54.54 444.51,43.09 433.07,43.09' fill='#1F8D49' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,71.82 444.51,71.82 444.51,60.37 433.07,60.37' fill='#7DC975' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,89.10 444.51,89.10 444.51,77.65 433.07,77.65' fill='#7A5900' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,106.38 444.51,106.38 444.51,94.93 433.07,94.93' fill='#519799' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,123.66 444.51,123.66 444.51,112.21 433.07,112.21' fill='#EDDE8E' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,140.94 444.51,140.94 444.51,129.49 433.07,129.49' fill='#FFEFC3' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,158.22 444.51,158.22 444.51,146.77 433.07,146.77' fill='#D4271E' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,175.50 444.51,175.50 444.51,164.05 433.07,164.05' fill='#2532E4' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,192.78 444.51,192.78 444.51,181.33 433.07,181.33' fill='#F5B3C8' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,210.06 444.51,210.06 444.51,198.61 433.07,198.61' fill='#F54CA9' fill-opacity='1' stroke='none'/>\n   <polygon points='433.07,227.34 444.51,227.34 444.51,215.89 433.07,215.89' fill='#E6CCFF' fill-opacity='1' stroke='none'/>\n   <text x='453.41' y='52.11' font-size='7.2pt' font-family='Liberation Sans'>3 Forest Formation<\/text>\n   <text x='453.41' y='69.39' font-size='7.2pt' font-family='Liberation Sans'>4 Savanna Formation<\/text>\n   <text x='453.41' y='86.67' font-size='7.2pt' font-family='Liberation Sans'>9 Forest Plantation<\/text>\n   <text x='453.41' y='103.95' font-size='7.2pt' font-family='Liberation Sans'>11 Wetland<\/text>\n   <text x='453.41' y='121.23' font-size='7.2pt' font-family='Liberation Sans'>15 Pasture<\/text>\n   <text x='453.41' y='138.51' font-size='7.2pt' font-family='Liberation Sans'>21 Mosaic of Uses<\/text>\n   <text x='453.41' y='155.79' font-size='7.2pt' font-family='Liberation Sans'>24 Urban Area<\/text>\n   <text x='453.41' y='173.07' font-size='7.2pt' font-family='Liberation Sans'>33 River, Lake and Ocean<\/text>\n   <text x='453.41' y='190.35' font-size='7.2pt' font-family='Liberation Sans'>39 Soybean<\/text>\n   <text x='453.41' y='207.63' font-size='7.2pt' font-family='Liberation Sans'>41 Other Temporary Crops<\/text>\n   <text x='453.41' y='224.91' font-size='7.2pt' font-family='Liberation Sans'>48 Other Perennial Crops<\/text>\n   <text x='430.15' y='246.96' font-size='9pt' font-family='Liberation Sans'>Strength<\/text>\n   <circle cx='448.31' cy='267.58' r='7.86pt' fill='#000000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round'/>\n   <circle cx='448.31' cy='297.09' r='9.38pt' fill='#000000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round'/>\n   <circle cx='448.31' cy='331.35' r='10.54pt' fill='#000000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='0.77' stroke-linejoin='round' stroke-linecap='round'/>\n   <text x='472.45' y='270.88' font-size='7.2pt' font-family='Liberation Sans'>500<\/text>\n   <text x='472.45' y='300.39' font-size='7.2pt' font-family='Liberation Sans'>1000<\/text>\n   <text x='472.45' y='334.65' font-size='7.2pt' font-family='Liberation Sans'>1500<\/text>\n   <text x='430.15' y='366.22' font-size='9pt' font-family='Liberation Sans'>Weight<\/text>\n   <line x1='431.88' y1='382.08' x2='445.7' y2='382.08' stroke='#687787' stroke-opacity='0.65' stroke-width='2.86' stroke-linejoin='round' stroke-linecap='butt'/>\n   <line x1='431.88' y1='399.36' x2='445.7' y2='399.36' stroke='#687787' stroke-opacity='0.65' stroke-width='4.88' stroke-linejoin='round' stroke-linecap='butt'/>\n   <line x1='431.88' y1='416.64' x2='445.7' y2='416.64' stroke='#687787' stroke-opacity='0.65' stroke-width='6.91' stroke-linejoin='round' stroke-linecap='butt'/>\n   <text x='453.41' y='385.38' font-size='7.2pt' font-family='Liberation Sans'>200<\/text>\n   <text x='453.41' y='402.66' font-size='7.2pt' font-family='Liberation Sans'>400<\/text>\n   <text x='453.41' y='419.94' font-size='7.2pt' font-family='Liberation Sans'>600<\/text>\n   <text x='9.21' y='14.24' font-size='9pt' font-family='Liberation Sans'>Weight: pixel contacts<\/text>\n  <\/g>\n <\/g>\n<\/svg>","js":null,"uid":"svg_71f8d52829750cdd","ratio":1.333333333333333,"settings":{"tooltip":{"css":".tooltip_SVGID_ { padding:5px;background:black;color:white;border-radius:2px;text-align:left; ; position:absolute;pointer-events:none;z-index:9999;}","placement":"doc","opacity":0.9,"offx":10,"offy":10,"use_cursor_pos":true,"use_fill":false,"use_stroke":false,"delay_over":200,"delay_out":500},"hover":{"css":".hover_data_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_data_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_data_SVGID_ { fill:orange;stroke:black; }\nline.hover_data_SVGID_, polyline.hover_data_SVGID_ { fill:none;stroke:orange; }\nrect.hover_data_SVGID_, polygon.hover_data_SVGID_, path.hover_data_SVGID_ { fill:orange;stroke:none; }\nimage.hover_data_SVGID_ { stroke:orange; }","reactive":true,"nearest_distance":null,"linked":false},"hover_inv":{"css":".hover_inv_SVGID_ { opacity:0.25; }"},"hover_key":{"css":".hover_key_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_key_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_key_SVGID_ { fill:orange;stroke:black; }\nline.hover_key_SVGID_, polyline.hover_key_SVGID_ { fill:none;stroke:orange; }\nrect.hover_key_SVGID_, polygon.hover_key_SVGID_, path.hover_key_SVGID_ { fill:orange;stroke:none; }\nimage.hover_key_SVGID_ { stroke:orange; }","reactive":true},"hover_theme":{"css":".hover_theme_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_theme_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_theme_SVGID_ { fill:orange;stroke:black; }\nline.hover_theme_SVGID_, polyline.hover_theme_SVGID_ { fill:none;stroke:orange; }\nrect.hover_theme_SVGID_, polygon.hover_theme_SVGID_, path.hover_theme_SVGID_ { fill:orange;stroke:none; }\nimage.hover_theme_SVGID_ { stroke:orange; }","reactive":true},"select":{"css":".select_data_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_data_SVGID_ { stroke:none;fill:red; }\ncircle.select_data_SVGID_ { fill:red;stroke:black; }\nline.select_data_SVGID_, polyline.select_data_SVGID_ { fill:none;stroke:red; }\nrect.select_data_SVGID_, polygon.select_data_SVGID_, path.select_data_SVGID_ { fill:red;stroke:none; }\nimage.select_data_SVGID_ { stroke:red; }","type":"multiple","only_shiny":true,"selected":[],"linked":false},"select_inv":{"css":""},"select_key":{"css":".select_key_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_key_SVGID_ { stroke:none;fill:red; }\ncircle.select_key_SVGID_ { fill:red;stroke:black; }\nline.select_key_SVGID_, polyline.select_key_SVGID_ { fill:none;stroke:red; }\nrect.select_key_SVGID_, polygon.select_key_SVGID_, path.select_key_SVGID_ { fill:red;stroke:none; }\nimage.select_key_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"select_theme":{"css":".select_theme_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_theme_SVGID_ { stroke:none;fill:red; }\ncircle.select_theme_SVGID_ { fill:red;stroke:black; }\nline.select_theme_SVGID_, polyline.select_theme_SVGID_ { fill:none;stroke:red; }\nrect.select_theme_SVGID_, polygon.select_theme_SVGID_, path.select_theme_SVGID_ { fill:red;stroke:none; }\nimage.select_theme_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"zoom":{"min":0.5,"max":5,"duration":300,"default_on":false},"toolbar":{"position":"topright","pngname":"diagram","tooltips":null,"fixed":false,"hidden":[],"delay_over":200,"delay_out":500},"sizing":{"rescale":true,"width":1}}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
   <div class="chapter-nav">
@@ -220,6 +390,7 @@ strength, centrality and the length of each boundary.</p>
 <li><a class="nav-link" href="#lagoa-change"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="nav-link" href="#transitions-between-dates">Transitions between dates</a></li>
 <li><a class="nav-link" href="#adjacency-between-classes">Adjacency between classes</a></li>
+<li><a class="nav-link" href="#boundaries-and-interfaces">Boundaries and interfaces</a></li>
 </ul>
 
       <div class="book-extra">
@@ -237,7 +408,7 @@ strength, centrality and the length of each boundary.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

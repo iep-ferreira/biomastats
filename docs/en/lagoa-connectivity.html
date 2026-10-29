@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="active" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -117,9 +125,9 @@
 <p>To analyse connectivity, fragments need to become polygons.
 <code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code> performs that conversion from the reclassified maps and
 keeps area, year and class identity. Here, the 2024 forest:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">polygons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons</a></span><span class="op">(</span><span class="va">metrics</span>, years <span class="op">=</span> <span class="fl">2024</span>, save_shp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p>There are 31 fragments, totalling 107 ha.
+<p>There are 28 fragments, totalling 107 ha.
 With <code>save_shp = TRUE</code>, each year is also written as a shapefile.</p>
 </div>
 <div id="connectivity-at-several-thresholds" class="section level2 unnumbered">
@@ -128,7 +136,7 @@ With <code>save_shp = TRUE</code>, each year is also written as a shapefile.</p>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> links fragments that lie closer than a maximum distance,
 that is, the distance an organism can travel outside the forest, and computes
 connectivity indices for each threshold:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">connectivity</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity</a></span><span class="op">(</span><span class="va">polygons</span>, max_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">300</span>, <span class="fl">600</span><span class="op">)</span>,</span>
 <span>                                  language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">connectivity</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
@@ -144,27 +152,27 @@ connectivity indices for each threshold:</p>
 <tr class="odd">
 <td align="right">100</td>
 <td align="right">15</td>
-<td align="right">7</td>
-<td align="right">0.20</td>
+<td align="right">9</td>
+<td align="right">1.40</td>
 </tr>
 <tr class="even">
 <td align="right">300</td>
 <td align="right">6</td>
 <td align="right">2</td>
-<td align="right">1.84</td>
+<td align="right">1.93</td>
 </tr>
 <tr class="odd">
 <td align="right">600</td>
 <td align="right">4</td>
 <td align="right">0</td>
-<td align="right">2.08</td>
+<td align="right">2.11</td>
 </tr>
 </tbody>
 </table></div>
 <p>For a species that only crosses 100 m of open land, the forest splits into
-15 disconnected groups, with 7 isolated
+15 disconnected groups, with 9 isolated
 fragments. At 300 m, 6 groups remain, and the integral
-index of connectivity (IIC) becomes 9 times
+index of connectivity (IIC) becomes 1 times
 larger. From 300 to 600 m, the gain is small: for species able to cross about
 300 m, the remaining forest already works as a network.</p>
 </div>
@@ -173,27 +181,99 @@ larger. From 300 to 600 m, the gain is small: for species able to cross about
 </h2>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast()</a></code> measures how much connectivity would drop if each fragment
 were removed, in the chosen scenario:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenario_300</span> <span class="op">&lt;-</span> <span class="va">connectivity</span><span class="op">$</span><span class="va">scenarios</span><span class="op">[[</span><span class="st">"300"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">land</span></span>
 <span><span class="va">importance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast</a></span><span class="op">(</span><span class="va">scenario_300</span>, metric <span class="op">=</span> <span class="st">"IIC"</span><span class="op">)</span></span></code></pre></div>
 <p>Losing either of the two most important fragments would cut the IIC by
-71.4% and 70.5%, respectively, while 25 of
-the 31 fragments reduce it by less than 5% each. The forest’s
+67.5% and 17.0%, respectively, while 21 of
+the 28 fragments reduce it by less than 5% each. The forest’s
 connectivity therefore depends on conserving a handful of fragments.</p>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> already computes this prioritization for each threshold,
 and the map shows how much the index would drop without each fragment:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">connectivity</span><span class="op">$</span><span class="va">importance_plot</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/importance-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
-
+<p>The IIC follows the definition of Pascual-Hortal and Saura (2006): isolated
+fragments also count, through their own area. The <code>lconnect</code> value, which omits
+them, is kept in <code>connectivity$metrics$IIC_lconnect</code>.</p>
+</div>
+<div id="stepping-stones-and-importance-fractions" class="section level2 unnumbered">
+<h2>Stepping stones and importance fractions<a class="anchor" aria-label="anchor" href="#stepping-stones-and-importance-fractions"><i class="fas fa-link"></i></a>
+</h2>
+<p>Each fragment’s importance splits into three parts (Saura and Rubio, 2010): the
+fragment’s own area (intra), its direct links to the others (flux), and its role
+as a <strong>stepping stone</strong>, when it lies on the best path between two others
+(connector). The probability of connectivity (PC; Saura and Pascual-Hortal,
+2007) accounts for indirect paths and is the most suitable metric to identify
+stepping stones. Here, with a 5% dispersal probability at 300 m:</p>
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast</a></span><span class="op">(</span><span class="va">scenario_300</span>, metric <span class="op">=</span> <span class="st">"PC"</span>, p_ref <span class="op">=</span> <span class="fl">0.05</span>, d_ref <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">pc</span><span class="op">$</span><span class="va">fractions</span><span class="op">)</span></span></code></pre></div>
+<pre><code>         intra        flux   connector
+1 1.8372799110 1.296289587 0.021202358
+2 0.0043719360 0.099572204 0.000000000
+3 0.0002732374 0.008390369 0.000000000
+4 0.0174865998 0.423572717 0.002517258
+5 0.5532703550 2.090682973 0.428980516
+6 0.0002732213 0.085855429 0.000000000</code></pre>
+<p>In 0 fragments, more than half of the importance comes from the
+connector role: small patches that matter more for their position than for their
+area. In <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code>, the fractions are stored in <code>patch_metrics</code>
+(columns <code>dPC_intra</code>, <code>dPC_flux</code> and <code>dPC_connector</code>) and in <code>fraction_metrics</code>,
+with the <code>fractions_plot</code> and <code>connector_plot</code> charts:</p>
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">connectivity_pc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity</a></span><span class="op">(</span><span class="va">polygons</span>, max_dist <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>  metric_patch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IIC"</span>, <span class="st">"PC"</span><span class="op">)</span>, p_ref <span class="op">=</span> <span class="fl">0.05</span>, d_ref <span class="op">=</span> <span class="fl">300</span>, language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
+<span><span class="va">connectivity_pc</span><span class="op">$</span><span class="va">fractions_plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/fractions-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>PC is the most demanding index. In landscapes with hundreds of fragments,
+<code>parallel = 4</code> (or another number of processes) splits the work across cores and
+gives the same result; with a few dozen fragments, starting the processes costs
+more than it saves. Exact pruning of PC links (<code>prune = "auto"</code>) is applied on its
+own from 50 fragments upwards.</p>
+</div>
+<div id="equivalent-connected-area-and-landscape-fractions" class="section level2 unnumbered">
+<h2>Equivalent connected area and landscape fractions<a class="anchor" aria-label="anchor" href="#equivalent-connected-area-and-landscape-fractions"><i class="fas fa-link"></i></a>
+</h2>
+<p>The equivalent connected area (ECA; Saura et al., 2011) expresses IIC and PC in
+hectares: the area of a single fragment that would give the same connectivity.
+In <code>metrics</code>, <code>ECA_IIC</code> and <code>ECA_PC</code> are in m², and <code>ECAnorm_IIC</code> and
+<code>ECAnorm_PC</code> give it as a percentage of habitat. The <code>PC_intra</code>, <code>PC_direct</code> and
+<code>PC_step</code> columns split the index, as in Makurhini, into the area of the
+fragments themselves, direct links and the gain through stepping stones. <code>Prot</code>,
+<code>ProtConn</code>, <code>ProtUnconn</code> and <code>RelConn</code> follow ProtConn (Saura et al., 2017), with
+the forest taken as the protected area:</p>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="11%">
+<col width="24%">
+<col width="12%">
+<col width="14%">
+<col width="25%">
+<col width="11%">
+</colgroup>
+<thead><tr class="header">
+<th align="right">ECA (ha)</th>
+<th align="right">ECA (% of habitat)</th>
+<th align="right">Intra (%)</th>
+<th align="right">Direct (%)</th>
+<th align="right">Stepping stones (%)</th>
+<th align="right">ProtConn</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="right">49.7</td>
+<td align="right">46.5</td>
+<td align="right">84.5</td>
+<td align="right">12</td>
+<td align="right">3.5</td>
+<td align="right">4</td>
+</tr></tbody>
+</table></div>
 </div>
 </div>
-
-
-
   <div class="chapter-nav">
 <div class="prev"><a href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></div>
-<div class="next"><a href="external-layers.html"><span class="header-section-number">11</span> External layers</a></div>
+<div class="next"><a href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
@@ -201,6 +281,8 @@ and the map shows how much the index would drop without each fragment:</p>
 <li><a class="nav-link" href="#fragments-as-polygons">Fragments as polygons</a></li>
 <li><a class="nav-link" href="#connectivity-at-several-thresholds">Connectivity at several thresholds</a></li>
 <li><a class="nav-link" href="#priority-fragments">Priority fragments</a></li>
+<li><a class="nav-link" href="#stepping-stones-and-importance-fractions">Stepping stones and importance fractions</a></li>
+<li><a class="nav-link" href="#equivalent-connected-area-and-landscape-fractions">Equivalent connected area and landscape fractions</a></li>
 </ul>
 
       <div class="book-extra">
@@ -218,7 +300,7 @@ and the map shows how much the index would drop without each fragment:</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

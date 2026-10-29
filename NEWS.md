@@ -124,6 +124,29 @@
   distâncias reaproveitadas e análise direta, a recarga automática e a
   distância de menor custo.
 
+## Tutorial e rótulos
+
+* Tutorial (português e inglês) reorganizado em quatro vias de aquisição
+  (recortes, coleção nacional, leitura por HTTP com o catálogo e pasta local),
+  com área de estudo em `.gpkg` ou `.shp`, dicionário de classes, contexto
+  ampliado na aquisição e, no capítulo de conectividade, a análise de
+  sensibilidade ao contexto na Lagoa do Sino até 10 km.
+* `biomastats_metrics()` ganha `language` ("pt", padrão, ou "en"): os seis
+  gráficos tinham rótulos fixos em inglês. Os nomes das colunas de
+  `metrics_table` continuam em inglês.
+* Tutorial: conectividade dividida em quatro capítulos (vetorização e índices;
+  resistência e ligações; conectividade ao longo do tempo; efeito de borda e
+  contexto ampliado, com figuras pré-calculadas por
+  `development/gerar_figuras_contexto.R`). Capítulos de diversidade, mudanças e
+  paisagem passam a mostrar números de Hill e dominância, saldo por classe e
+  trajetórias, matriz de adjacências, interfaces entre classes, métricas da
+  rede e das classes, grafo interativo, os gráficos de área e borda de
+  `biomastats_metrics()`, distribuição de tamanhos, curva posição-tamanho,
+  forma e tendências dos fragmentos e as métricas do `landscapemetrics`.
+* `land_connectivity()` não falha mais ao construir os gráficos quando nenhum
+  par de fragmentos está ligado. Em `range_plot`, os painéis de componentes e
+  fragmentos isolados têm títulos em português e inglês.
+
 ## Aquisição seletiva por HTTP e catálogo de mapas rasterizados
 
 * `load_rasters(method = "http")`: lê, pelo sistema de arquivos virtual do

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 11 Resistance and links | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino">
+<meta name="description" content="The indices of the previous chapter use straight-line distance and treat every link alike. This chapter replaces distance by the cost of crossing the landscape and measures the importance of each...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Chapter 11 Resistance and links | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/../imagens/capa.jpg">
+<meta property="og:description" content="The indices of the previous chapter use straight-line distance and treat every link alike. This chapter replaces distance by the cost of crossing the landscape and measures the importance of each...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 11 Resistance and links | Bioma Stats">
+<meta name="twitter:description" content="The indices of the previous chapter use straight-line distance and treat every link alike. This chapter replaces distance by the cost of crossing the landscape and measures the importance of each...">
+<meta name="twitter:image" content="/../imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Land use and land cover in R: user guide">Bioma Stats</a>:
+        <small class="text-muted">Land use and land cover in R: user guide</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li class="book-part">Getting started</li>
+<li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
+<li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
+<li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
+<li class="book-part">Complete workflow: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
+<li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
+<li><a class="" href="lagoa-time-series.html"><span class="header-section-number">7</span> Time series</a></li>
+<li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
+<li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
+<li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="active" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
+<li class="book-part">Beyond MapBiomas</li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
+<li class="book-part">Appendix</li>
+<li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="lagoa-resistance" class="section level1" number="11">
+<h1>
+<span class="header-section-number">11</span> Resistance and links<a class="anchor" aria-label="anchor" href="#lagoa-resistance"><i class="fas fa-link"></i></a>
+</h1>
+<p>The indices of the previous chapter use straight-line distance and treat every link alike. This chapter replaces distance by the cost of crossing the landscape and measures the importance of each link.</p>
+<div id="resistance-and-least-cost-distance" class="section level2 unnumbered">
+<h2>Resistance and least-cost distance<a class="anchor" aria-label="anchor" href="#resistance-and-least-cost-distance"><i class="fas fa-link"></i></a>
+</h2>
+<p>Straight-line distance treats the whole matrix as equal. A pasture, a sugarcane
+field and a highway, however, do not pose the same difficulty to an organism
+moving between fragments. <code><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface()</a></code> turns one year’s land-use map
+into a cost surface: each class gets a cost per metre travelled (1 equals
+Euclidean distance), and <code>Inf</code> makes the class a barrier. The values below are
+only illustrative; in practice they come from the literature or from experts on
+the species of interest:</p>
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">costs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"3"</span> <span class="op">=</span> <span class="fl">1</span>, <span class="st">"4"</span> <span class="op">=</span> <span class="fl">1</span>, <span class="st">"11"</span> <span class="op">=</span> <span class="fl">2</span>, <span class="st">"12"</span> <span class="op">=</span> <span class="fl">3</span>, <span class="st">"9"</span> <span class="op">=</span> <span class="fl">5</span>, <span class="st">"21"</span> <span class="op">=</span> <span class="fl">8</span>, <span class="st">"15"</span> <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>           <span class="st">"20"</span> <span class="op">=</span> <span class="fl">20</span>, <span class="st">"39"</span> <span class="op">=</span> <span class="fl">20</span>, <span class="st">"41"</span> <span class="op">=</span> <span class="fl">20</span>, <span class="st">"25"</span> <span class="op">=</span> <span class="fl">50</span>, <span class="st">"24"</span> <span class="op">=</span> <span class="fl">100</span>, <span class="st">"33"</span> <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span>
+<span><span class="va">resistance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface</a></span><span class="op">(</span><span class="va">maps</span>, year <span class="op">=</span> <span class="fl">2024</span>, resistance <span class="op">=</span> <span class="va">costs</span>, default <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>                                 language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
+<span><span class="va">resistance</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/resistance-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>Highways, dams and other barriers can be added as <code>sf</code> lines or polygons in
+<code>barriers</code>, with their own cost or as impassable. <code><a href="https://rdrr.io/pkg/biomastats/man/cost_distance.html">cost_distance()</a></code> then measures
+the least accumulated cost from edge to edge between fragments, and the matrix
+goes into <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> in place of Euclidean distance. Thresholds are
+then given in cost units:</p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/cost_distance.html">cost_distance</a></span><span class="op">(</span><span class="va">polygons</span>, <span class="va">resistance</span><span class="op">)</span></span>
+<span><span class="va">connectivity_cost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity</a></span><span class="op">(</span><span class="va">polygons</span>, max_dist <span class="op">=</span> <span class="fl">1500</span>, distance <span class="op">=</span> <span class="va">cost</span>,</span>
+<span>  metric_patch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IIC"</span>, <span class="st">"PC"</span><span class="op">)</span>, build_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>Distance matrices from other sources are also accepted, such as the <code>From</code>, <code>To</code>
+and <code>Distance</code> tables of <code><a href="https://rdrr.io/pkg/Makurhini/man/distancefile.html">Makurhini::distancefile()</a></code>.</p>
+</div>
+<div id="links-that-hold-the-network-together" class="section level2 unnumbered">
+<h2>Links that hold the network together<a class="anchor" aria-label="anchor" href="#links-that-hold-the-network-together"><i class="fas fa-link"></i></a>
+</h2>
+<p>With <code>link_importance = TRUE</code>, each link gets the drop of the index when it alone
+is removed. Links with an alternative path of equal cost are worth zero; the
+highest values mark the irreplaceable links of the network:</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">connectivity_links</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity</a></span><span class="op">(</span><span class="va">polygons</span>, max_dist <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>  metric_patch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IIC"</span>, <span class="st">"PC"</span><span class="op">)</span>, p_ref <span class="op">=</span> <span class="fl">0.05</span>, d_ref <span class="op">=</span> <span class="fl">300</span>, link_importance <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
+<span><span class="va">connectivity_links</span><span class="op">$</span><span class="va">link_plot</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-book_files/figure-html/links-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></div>
+<div class="next"><a href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#lagoa-resistance"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="nav-link" href="#resistance-and-least-cost-distance">Resistance and least-cost distance</a></li>
+<li><a class="nav-link" href="#links-that-hold-the-network-together">Links that hold the network together</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/en/11-lagoa-resistance.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/en/11-lagoa-resistance.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

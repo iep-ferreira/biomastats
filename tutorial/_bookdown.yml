@@ -20,5 +20,8 @@ rmd_files:
   - 08-lagoa-mudancas.Rmd
   - 09-lagoa-paisagem.Rmd
   - 10-lagoa-conectividade.Rmd
-  - 11-camadas.Rmd
-  - 12-sobre.Rmd
+  - 11-lagoa-resistencia.Rmd
+  - 12-lagoa-conectividade-tempo.Rmd
+  - 13-lagoa-contexto.Rmd
+  - 14-camadas.Rmd
+  - 15-sobre.Rmd

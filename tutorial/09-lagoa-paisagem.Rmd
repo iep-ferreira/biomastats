@@ -16,6 +16,16 @@ metricas$ai_plot
 metricas$fragments_number
 ```
 
+Os demais gráficos acompanham a área da classe, a área média dos fragmentos, o
+comprimento e a densidade de borda:
+
+```{r metricas-bordas, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+metricas$area_plot
+metricas$frag_avg_area
+metricas$egde_lenght_plot
+metricas$edge_density_plot
+```
+
 ```{r include=FALSE}
 mt <- metricas$metrics_table
 m85 <- mt[mt$Year == 1985, ]; m24 <- mt[mt$Year == 2024, ]
@@ -64,3 +74,37 @@ O fragmento médio encolheu de `r num(s85$area_mean, 1)` ha para
 paisagem, passou a cobrir `r num(s24$lpi, 1)`%. A desigualdade de tamanhos
 (Gini) continua alta, o que significa que poucos fragmentos concentram a maior
 parte da floresta. Os dados de cada fragmento estão em `fragmentos$patches`.
+
+## Tamanho e forma dos fragmentos {-}
+
+Os indicadores do resumo podem ser acompanhados ao longo do tempo num só painel:
+
+```{r fragmentos-tendencia, fig.height=5}
+fragmentos$plots$trend
+```
+
+A distribuição de tamanhos e a curva posição-tamanho mostram como a área se
+concentra: poucos fragmentos grandes e muitos pequenos. O índice de forma (1 para
+a forma mais compacta) separa os fragmentos compactos dos alongados ou
+recortados, que têm mais borda por hectare:
+
+```{r fragmentos-tamanhos, fig.show="hold", out.width="50%", fig.width=6, fig.height=4.5}
+fragmentos$plots$size_distribution
+fragmentos$plots$rank_size
+```
+
+```{r fragmentos-forma, fig.height=5}
+fragmentos$plots$shape
+```
+
+`fragmentos$lsm` acrescenta métricas de classe do pacote `landscapemetrics`,
+calculadas na mesma grade: agregação (`ai`), aglomeração (`clumpy`) e coesão
+(`cohesion`):
+
+```{r echo=FALSE}
+l <- fragmentos$lsm
+w <- stats::reshape(l[, c("year", "metric", "value")], idvar = "year", timevar = "metric",
+                    direction = "wide")
+names(w) <- c("Ano", sub("^value[.]", "", names(w)[-1]))
+tabela(w, 2)
+```

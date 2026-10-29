@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
 <li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
 <li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
-<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
 <li class="book-part">Fluxo completo: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
 <li><a class="active" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
 <li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
 <li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li><a class="" href="lagoa-resistencia.html"><span class="header-section-number">11</span> Resistência e ligações</a></li>
+<li><a class="" href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></li>
+<li><a class="" href="lagoa-contexto.html"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
 <li class="book-part">Além do MapBiomas</li>
-<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li><a class="" href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></li>
 <li class="book-part">Apêndice</li>
 <li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
 </ul>
@@ -115,7 +123,7 @@
 paisagem. <code><a href="https://rdrr.io/pkg/biomastats/man/class_diversity.html">class_diversity()</a></code> trata as classes como espécies e suas áreas como
 abundâncias e, para cada ano, calcula riqueza, entropia de Shannon,
 equitabilidade de Pielou, índices de Simpson, números de Hill e dominância:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diversidade</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/class_diversity.html">class_diversity</a></span><span class="op">(</span><span class="va">areas</span><span class="op">)</span></span>
 <span><span class="va">diversidade</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">indices</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-livro_files/figure-html/diversidade-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -169,9 +177,21 @@ era pastagem em 1985 e passou a ser
 soja em 2024.</p>
 <p>A decomposição da entropia mostra quanto cada classe contribui para a
 diversidade ao longo do tempo:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diversidade</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">contribution</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-livro_files/figure-html/contribuicao-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>Os números de Hill expressam a diversidade em classes efetivas: a ordem 0 é a
+riqueza, a ordem 1 pondera as classes pela área (exponencial de Shannon) e a
+ordem 2 dá ainda mais peso às dominantes (inverso de Simpson). Quanto mais as
+curvas se afastam da riqueza, mais poucas classes concentram a paisagem:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">diversidade</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">hill</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/hill-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
+<p>A composição ao longo do tempo, com a dominância de Berger-Parker sobreposta,
+mostra a troca da classe dominante:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">diversidade</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">dominance</span></span></code></pre></div>
+<div class="inline-figure"><img src="biomastats-livro_files/figure-html/dominancia-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
 
 </div>
   <div class="chapter-nav">
@@ -196,7 +216,7 @@ diversidade ao longo do tempo:</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 29/10/2026.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

@@ -4,16 +4,16 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Chapter 11 External layers | Bioma Stats</title>
+<title>Chapter 14 External layers | Bioma Stats</title>
 <meta name="author" content="Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino">
 <meta name="description" content="The external-layer functions take the same maps object and return results aligned to the same area, grid and coordinate reference system. Because they depend on public servers, the figures in this...">
 <meta name="generator" content="bookdown 0.48 with bs4_book()">
-<meta property="og:title" content="Chapter 11 External layers | Bioma Stats">
+<meta property="og:title" content="Chapter 14 External layers | Bioma Stats">
 <meta property="og:type" content="book">
 <meta property="og:image" content="/../imagens/capa.jpg">
 <meta property="og:description" content="The external-layer functions take the same maps object and return results aligned to the same area, grid and coordinate reference system. Because they depend on public servers, the figures in this...">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Chapter 11 External layers | Bioma Stats">
+<meta name="twitter:title" content="Chapter 14 External layers | Bioma Stats">
 <meta name="twitter:description" content="The external-layer functions take the same maps object and return results aligned to the same area, grid and coordinate reference system. Because they depend on public servers, the figures in this...">
 <meta name="twitter:image" content="/../imagens/capa.jpg">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="active" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="active" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -107,9 +115,9 @@
         </div>
       </nav>
 </div>
-  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="external-layers" class="section level1" number="11">
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="external-layers" class="section level1" number="14">
 <h1>
-<span class="header-section-number">11</span> External layers<a class="anchor" aria-label="anchor" href="#external-layers"><i class="fas fa-link"></i></a>
+<span class="header-section-number">14</span> External layers<a class="anchor" aria-label="anchor" href="#external-layers"><i class="fas fa-link"></i></a>
 </h1>
 <p>The external-layer functions take the same maps object and return results
 aligned to the same area, grid and coordinate reference system. Because they
@@ -122,34 +130,34 @@ stored with the book.</p>
 well as soil properties from SoilGrids (clay, sand, silt, carbon, pH and
 others), already resampled to the map grid. On slow connections, it is worth
 raising the time limit, which defaults to 5 seconds:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">terrain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_physical.html">load_physical</a></span><span class="op">(</span><span class="va">maps</span>, layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"elevation"</span>, <span class="st">"slope"</span><span class="op">)</span>, timeout <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>                         language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">terrain</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">elevation</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<span style="display:block;" id="fig:unnamed-chunk-39"></span>
+<span style="display:block;" id="fig:unnamed-chunk-68"></span>
 <img src="../imagens/en-lagoa-elevation.png" alt="Elevation (Copernicus DEM, 30 m) on the Lagoa do Sino map grid." width="100%"><p class="caption">
-Figure 11.1: Elevation (Copernicus DEM, 30 m) on the Lagoa do Sino map grid.
+Figure 14.1: Elevation (Copernicus DEM, 30 m) on the Lagoa do Sino map grid.
 </p>
 </div>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/load_features.html">load_features()</a></code> retrieves features from Overture Maps or from regional
 OpenStreetMap extracts, and <code><a href="https://rdrr.io/pkg/biomastats/man/feature_raster.html">feature_raster()</a></code> turns them into surfaces on the
 analysis grid: distance, count, length, coverage or density.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">roads</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_features.html">load_features</a></span><span class="op">(</span><span class="va">maps</span>, <span class="st">"roads"</span>, source <span class="op">=</span> <span class="st">"overture"</span><span class="op">)</span></span>
 <span><span class="va">distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/feature_raster.html">feature_raster</a></span><span class="op">(</span><span class="va">roads</span>, <span class="va">maps</span>, feature <span class="op">=</span> <span class="st">"roads"</span>, metrics <span class="op">=</span> <span class="st">"distance"</span>,</span>
 <span>                           language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">distance</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">distance</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<span style="display:block;" id="fig:unnamed-chunk-41"></span>
+<span style="display:block;" id="fig:unnamed-chunk-70"></span>
 <img src="../imagens/en-lagoa-road-distance.png" alt="Distance to the nearest road (Overture Maps) at Lagoa do Sino." width="100%"><p class="caption">
-Figure 11.2: Distance to the nearest road (Overture Maps) at Lagoa do Sino.
+Figure 14.2: Distance to the nearest road (Overture Maps) at Lagoa do Sino.
 </p>
 </div>
 <p>For field points, <code><a href="https://rdrr.io/pkg/biomastats/man/distance_to_nearest.html">distance_to_nearest()</a></code> measures the geodesic distance to the
 nearest feature or land use class. When the target is a class from the maps
 themselves, no internet connection is needed:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">points</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">48.529</span>, <span class="op">-</span><span class="fl">48.515</span><span class="op">)</span>, lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">23.605</span>, <span class="op">-</span><span class="fl">23.590</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">to_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/distance_to_nearest.html">distance_to_nearest</a></span><span class="op">(</span><span class="va">points</span>, <span class="va">maps</span>, classes <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <p>The centre of the campus is 327 m from the
@@ -164,14 +172,14 @@ features from <code><a href="https://rdrr.io/pkg/biomastats/man/load_features.ht
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code> reads ESA WorldCover (10 m, 2020 and 2021) anywhere in the world
 and returns an object identical in structure to that of <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code>. A
 minimal example, near Vaduz, Liechtenstein:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/make_polygon.html">make_polygon</a></span><span class="op">(</span>lat <span class="op">=</span> <span class="fl">47.16</span>, lon <span class="op">=</span> <span class="fl">9.555</span>, size <span class="op">=</span> <span class="fl">2</span>, shape <span class="op">=</span> <span class="st">"circle"</span><span class="op">)</span></span>
 <span><span class="va">cover</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc</a></span><span class="op">(</span><span class="va">area</span><span class="op">$</span><span class="va">polygon</span>, years <span class="op">=</span> <span class="fl">2021</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_vis.html">land_vis</a></span><span class="op">(</span><span class="va">cover</span>, year <span class="op">=</span> <span class="fl">2021</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<span style="display:block;" id="fig:unnamed-chunk-44"></span>
+<span style="display:block;" id="fig:unnamed-chunk-73"></span>
 <img src="../imagens/liechtenstein-worldcover.png" alt="Land cover (ESA WorldCover 2021) near Vaduz, Liechtenstein." width="80%"><p class="caption">
-Figure 11.3: Land cover (ESA WorldCover 2021) near Vaduz, Liechtenstein.
+Figure 14.3: Land cover (ESA WorldCover 2021) near Vaduz, Liechtenstein.
 </p>
 </div>
 <p>Since the format is the same, <code><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area()</a></code>, <code><a href="https://rdrr.io/pkg/biomastats/man/class_diversity.html">class_diversity()</a></code>, <code><a href="https://rdrr.io/pkg/biomastats/man/land_change.html">land_change()</a></code>
@@ -184,20 +192,20 @@ and <code><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fra
 
 
   <div class="chapter-nav">
-<div class="prev"><a href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></div>
+<div class="prev"><a href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></div>
 <div class="next"><a href="about.html"><span class="header-section-number">A</span> About the project</a></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
-<li><a class="nav-link" href="#external-layers"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="nav-link" href="#external-layers"><span class="header-section-number">14</span> External layers</a></li>
 <li><a class="nav-link" href="#terrain-and-roads-at-lagoa-do-sino">Terrain and roads at Lagoa do Sino</a></li>
 <li><a class="nav-link" href="#outside-brazil-liechtenstein">Outside Brazil: Liechtenstein</a></li>
 </ul>
 
       <div class="book-extra">
         <ul class="list-unstyled">
-<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/en/11-external-layers.Rmd">View source <i class="fab fa-github"></i></a></li>
-          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/en/11-external-layers.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/en/14-external-layers.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/en/14-external-layers.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
         </ul>
 </div>
     </nav>
@@ -209,7 +217,7 @@ and <code><a href="https://rdrr.io/pkg/biomastats/man/fragment_metrics.html">fra
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
