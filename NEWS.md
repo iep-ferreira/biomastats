@@ -1,4 +1,16 @@
-# biomastats (desenvolvimento)
+# biomastats 2.1.0
+
+Primeira versão publicada desde a 2.0.0 (29/10/2026). Reúne duas fases:
+
+* módulos de análise da paisagem, camadas externas e o livro bilíngue
+  (PRs #12 e #13; seções a partir de "Módulos de análise, camadas externas e
+  livro");
+* conectividade reescrita, com IIC e PC pela definição, decomposição de Saura
+  & Rubio, paralelismo, poda, contexto espacial ampliado, coleções locais e
+  aquisição seletiva por HTTP (PRs #14 a #16; seções abaixo).
+
+Os resultados de IIC e a vetorização dos fragmentos mudam em relação à 2.0.0
+(veja "Mudanças de comportamento").
 
 ## Mudanças de comportamento
 
@@ -230,14 +242,14 @@
   do usuário restaurado, `land_connectivity()` em paralelo), com no máximo 2
   processos, e rodam no `R CMD check`.
 
-# biomastats 2.1.0
+## Módulos de análise, camadas externas e livro (PRs #12 e #13)
 
-Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o
-objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
+Primeira fase da versão: 18 funções exportadas novas, todas compatíveis com o
+objeto de mapas de `load_rasters()`. Duas mudanças são incompatíveis com a
 2.0.0: a remoção das funções de consulta ao Overpass e o novo significado de
-`size` em `make_polygon()` (veja "Remoções" e "Correções").
+`size` em `make_polygon()` (veja "Remoções" e "Correções", abaixo).
 
-## Novos módulos de análise
+### Novos módulos de análise
 
 * **Séries temporais.** `land_time_series()` organiza as áreas anuais de
   `get_area()`. Sobre elas:
@@ -268,7 +280,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
   limiares de distância. `patch_imp_fast()` reproduz `lconnect::patch_imp()`
   com cálculo vetorizado.
 
-## Camadas externas (Brasil e mundo)
+### Camadas externas (Brasil e mundo)
 
 * `layer_catalog()` lista as fontes, a versão e o ano de catálogo de cada
   camada.
@@ -288,7 +300,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
   `biomastats.timeout`) ou recusa a requisição é ignorada com status
   `"skipped"`, e a análise continua.
 
-## Alterações
+### Alterações
 
 * O exemplo `inst/examples/mapa_exemplo.Rdata` passou à Coleção 10 do
   MapBiomas (1985–2024). `raster_index()` usa a coleção 10 por padrão.
@@ -303,7 +315,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
 * `dict_build()` não imprime mais a mensagem "Collection 10 subtitles are
   loaded as default" a cada chamada.
 
-## Remoções
+### Remoções
 
 * Removido o fluxo de consultas ao OpenStreetMap pela API Overpass:
   `load_osm_data()`, `rasterize_osm()`, `distance_to_feature()`,
@@ -312,7 +324,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
   extratos regionais em cache. As superfícies de distância e densidade ficam
   com `feature_raster()`, e as distâncias de pontos com `distance_to_nearest()`.
 
-## Correções
+### Correções
 
 * `land_change()` aceita anos na mesma grade mesmo quando o `raster` gravou
   parte deles em disco durante `load_rasters()`. Isso ocorre em áreas de duas
@@ -351,7 +363,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
   `make_polygon(lat = -23.605, lon = -48.529, size = 2.5, shape = "hexagon")`
   nas versões anteriores e continua com 12,465 km².
 
-## Dependências
+### Dependências
 
 * Novas em Imports: `igraph (>= 1.6.0)`, `terra`, `units`, `curl`, `s2` e
   `methods`.
@@ -360,7 +372,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
 * Removidas de Imports, por não serem usadas: `graphics` e `readxl`.
 * Removida de Imports: `osmdata`, junto com o fluxo de consultas ao Overpass.
 
-## Documentação e testes
+### Documentação e testes
 
 * Documentação gerada pelo roxygen2 com markdown. `man/` e `NAMESPACE` foram
   regenerados a partir dos comentários do código-fonte, e o CI confere essa
@@ -379,7 +391,7 @@ objeto de mapas de `load_rasters()`. Há duas mudanças incompatíveis com a
   das funções, as bases de dados e conexões, as duas vias de aquisição do
   MapBiomas, o fluxo completo e discutido da Lagoa do Sino e as camadas
   externas, inclusive um exemplo fora do Brasil. O tutorial anterior foi
-  arquivado em `arquivo/tutorial-2.0/`.
+  preservado na tag `v2.0.0`.
 * Licença unificada como GNU AGPL versão 3 ou posterior (`AGPL (>= 3)`) no
   DESCRIPTION, no README e no arquivo `LICENSE`. O `LICENSE` continha o texto
   da GPL-3 e passou a ter o texto oficial da AGPL-3.

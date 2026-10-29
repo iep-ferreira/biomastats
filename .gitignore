@@ -8,7 +8,6 @@ vignette/
 *.css
 !tutorial/*.css
 !docs/**/*.css
-!arquivo/**/*.css
 *.log
 *.Rhistory
 # Saídas dos testes manuais (gerar localmente)
