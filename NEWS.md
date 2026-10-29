@@ -1,3 +1,7 @@
+# biomastats (desenvolvimento)
+
+* Início do ciclo após a 2.1.0 (versão 2.1.0.9000).
+
 # biomastats 2.1.0
 
 Primeira versão publicada desde a 2.0.0 (29/10/2026). Reúne duas fases:
