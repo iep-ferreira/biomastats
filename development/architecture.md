@@ -137,8 +137,22 @@ fragmentos que estao em algum melhor caminho entre outros dois, e so entre
 esses pares. `method = "removal"` mantem a remocao explicita como referencia.
 AWF usa operacoes matriciais e diagonal zero, e sua importancia e toda fluxo.
 patch_imp_fast e API publica para objetos lconnect ja existentes e retorna
-pimp sem escrita, com `fractions` e os atributos index, k, method e iic_rule.
-Paralelizacao do conector e optativa e herda o plano do usuario.
+pimp sem escrita, com `fractions` e os atributos index, k, method, iic_rule,
+pruned e edges.
+
+A poda do PC e opcional (`prune`): "auto" poda redes densas (>= 50 fragmentos e
+>= 25% dos pares com ligacao finita), TRUE e FALSE forcam; o resultado e o mesmo,
+so o tempo muda. A remocao explicita monta o grafo (podado ou nao) uma vez e
+apaga um vertice por remocao, o que a regra das duas testemunhas mantem exato.
+
+Paralelizacao (`parallel`): o teste de candidatos e o conector de cada fragmento
+formam um laco unico, dividido em blocos (cerca de 4 por processo) e distribuido
+com future.apply; a poda divide os fragmentos intermediarios em blocos. FALSE e
+o padrao; TRUE herda o plano do usuario; um numero abre um plano multisession
+temporario e restaura o anterior (em land_connectivity, uma vez para todos os
+limiares). Os processos carregam o pacote instalado: os testes de paralelismo
+(no maximo 2 processos) rodam no R CMD check, mas falham com
+pkgload::load_all() se a versao instalada for anterior a esta implementacao.
 
 As convencoes devem ficar explicitas: NC usa agrupamento <= limiar; LNK, grafo
 exploratorio, IIC e CPL usam < limiar, incluem contatos de distancia zero e
@@ -151,7 +165,7 @@ O mesmo status se aplica a uma paisagem de um fragmento, que nao tem ranking
 relativo. CPL sem pares conectados e NA. A matriz de distancias e densa, e a
 poda do PC custa n^3 operacoes; paisagens muito grandes requerem outro desenho.
 
-O resultado biomastats_connectivity (metadata$schema_version 1.1) oferece
+O resultado biomastats_connectivity (metadata$schema_version 1.3) oferece
 scenarios com objetos lconnect, pimp e igraph, sf enriquecido por limiar (dX e
 fracoes dX_intra, dX_flux, dX_connector), fraction_metrics em formato longo,
 matrizes, tabelas e seis ggplots: grafo espacial, componentes, importancia,
@@ -169,6 +183,77 @@ originais e upload_land (regra lconnect), decomposicao contra remocao e contra
 Floyd-Warshall independente, poda do PC, papel de trampolim, calibracao de k,
 diagonal AWF, isolados, contatos/empates de limiar, unidades, heranca de
 limite, recuperacao RDS das fracoes e graficos e fluxo completo com o recorte.
+
+### Distancias externas, custo, ECA, ligacoes e Makurhini
+
+A matriz de distancias e a unica entrada geometrica do motor; por isso
+`land_connectivity(distance = )` aceita distancias externas (matriz nomeada por
+fragment_id, dist ou tabela From/To/Distance do Makurhini), validadas e
+alinhadas em `.connectivity_distance()`. NA e Inf sao barreiras; assimetria
+acima de 1e-6 e erro. Unidade e origem vao para metadata (schema 1.3).
+
+`resistance_surface()` e `cost_distance()` ficam em arquivos proprios.
+A superficie e um RasterLayer em memoria (serializavel e aceito por Makurhini e
+gdistance), projetado em metros. A distancia nativa usa um grafo igraph dirigido
+de celulas (8 vizinhos, custo = passo x media dos custos, como gdistance), com
+uma origem e um sumidouro virtuais por fragmento ligados por meio passo as
+celulas vizinhas fora dele: a medida vai de borda a borda e os fragmentos nao
+viram atalhos gratuitos (o trampolim continua no grafo de conectividade).
+Diagonais entre duas barreiras sao bloqueadas. Origens sao divididas em blocos
+com `.map_chunks()`. O custo cresce com celulas x fragmentos.
+
+ECA = A_L sqrt(indice). As fracoes da paisagem (intra, direct, step) seguem a
+saida overall do Makurhini e saem de L e M ja calculados na decomposicao;
+ProtConn, Prot, ProtUnconn e RelConn derivam de ECA_PC. A importancia de uma
+ligacao usa o mesmo teste de caminho justo do conector, com a aresta no lugar
+do vertice: so arestas que sao o melhor caminho entre suas pontas sao
+candidatas, e so os pares que passam por elas sao recalculados.
+
+`connectivity_change()` apenas reune objetos de land_connectivity por ano
+(executando-os quando recebe poligonos), sem novo calculo de indices, e
+produz tabelas longas e ggplots; a animacao e um objeto gganim que o usuario
+renderiza. `as_makurhini()` so monta argumentos (nos com area em m2, LA, matriz,
+probability/distance_thresholds equivalentes a k, pij_min = 0) e, com run =
+TRUE, chama o Makurhini por `.makurhini_fun()`, via nome em variavel, porque o
+pacote vem do GitHub e nao esta em Suggests. Testes comparam ECA, fracoes,
+dIIC/dPC e ProtConn com o Makurhini quando ele esta instalado (fora do CRAN).
+
+### Contexto espacial ampliado: focal e connectivity_context
+
+O efeito de borda e tratado separando a area focal (a de estudo) do contexto
+(a area focal mais um buffer). `load_rasters(context_m = )` amplia recortes,
+corte e mascara e guarda a area original em `focal`; o buffer e calculado na
+UTM local (`.context_buffer()`), e `source` registra a origem dos mapas para
+recargas. `focal` segue o mesmo caminho de `boundary` ate os poligonos.
+
+`land_connectivity(focal = )` nao cria motor novo: troca as areas dos
+fragmentos pelo atributo focal (area dentro da area focal, zero fora) e A_L pela
+area focal. O motor de decomposicao ja aceita atributos zero, entao fragmentos
+do contexto viram trampolins com importancia so de conector (definicao das
+areas transfronteiricas de Saura et al. 2017). As distancias continuam do
+fragmento inteiro.
+
+`connectivity_context()` (arquivo proprio) e um orquestrador sobre funcoes
+publicas: obtem os mapas do maior contexto (source, mapas que ja o cobrem ou
+`load_rasters()` com a origem registrada), reclassifica como `lulc_metrics()`
+e vetoriza com `reclass_to_polygons(save_shp = FALSE)` uma vez por ano, roda
+`land_connectivity()` no maior raio e reaproveita sua matriz (ou a de
+`cost_distance()`) recortada para os menores, com os fragmentos inteiros que
+tocam cada faixa. O raio 0 vetoriza o habitat mascarado pela area focal e
+reproduz a analise sem contexto. Com A_L fixo e o contexto como trampolim, os
+indices nao decrescem com o raio, o que torna a curva um diagnostico de
+convergencia. Nada e gravado em disco. Os testes usam mapas sinteticos,
+inclusive uma biblioteca local de GeoTIFF para o modo `library` de
+`load_rasters()` e uma raiz local de tiles para `load_lulc()`, sem download.
+
+A recarga nao depende de colecao: `source$loader` registra `load_rasters` ou
+`load_lulc`, e `source` pode ser uma funcao `function(area, years)` para
+qualquer outra fonte de mapas no mesmo formato. Colecoes sem dicionario em
+`dict_build()` seguem com codigos numericos (`.context_dictionary()` devolve
+NULL em vez de erro). Alvos (`targets`) sao convertidos em geometrias e, em
+cada raio, reunem os fragmentos cujo interior as intersecta; a remocao conjunta
+usa `.set_importance()` no grafo sem poda (a poda so e exata para remocoes
+unitarias) e e comparada a soma das importancias individuais.
 
 ### Mudancas temporais: land_change
 
@@ -489,3 +574,46 @@ interna compartilhada em `R/layer_sources.R`.
   compartilhada), em metros geodésicos.
 - Testes automatizados leves e offline (`test-external-layers.R`); teste manual
   com dados reais em `testes-manuais/teste-manual-camadas.Rmd`.
+
+### Colecoes locais: load_local_rasters e class_dictionary
+
+`load_local_rasters()` e o terceiro carregador, ao lado de `load_rasters()`
+(MapBiomas) e `load_lulc()` (ESA WorldCover), e devolve o mesmo objeto de mapas.
+Le GeoTIFFs `<prefixo>_<ano>.tif` de uma pasta, recorta apenas a janela da area
+(leitura parcial pelo GDAL), harmoniza cada ano pela grade de referencia com
+vizinho mais proximo (os codigos nao sao interpolados), mascara pelo centro das
+celulas e devolve RasterLayer em memoria. As acoes de harmonizacao ficam em
+`metadata$harmonization`; `source` registra pasta, prefixo, colecao, dicionario,
+nodata, grade e contexto para recargas.
+
+O dicionario de uma colecao local viaja no objeto (`class_dictionary`, formato de
+`dict_build()`). `.biomastats_dictionary(collection, codes, dictionary)` prefere
+esse dicionario, depois `dict_build()` e, para colecoes desconhecidas, nomes
+genericos; `.biomastats_collection()` aceita nomes de colecoes locais. Assim as
+funcoes de analise nao precisam saber a origem dos mapas. `class_dictionary()`
+monta modelos e confere CSVs (colunas por alias, cores em hexadecimal), sem
+gravar arquivos.
+
+Os testes usam uma colecao sintetica de poucos KB em `inst/extdata/local_maps`,
+com grades diferentes por ano, regenerada por `development/make_local_fixtures.R`.
+O teste com dados reais (`test-local-mapbiomas-10m.R`) segue a convencao
+`test-local-*`, fora do pacote construido e do CI.
+
+### Aquisicao seletiva por HTTP e catalogo
+
+`load_rasters(method = "http")` nao tem rotina propria de recorte: monta um
+caminho GDAL por ano (`/vsicurl/` + modelo com `{year}`, de `raster_catalog()` ou
+de `url`) e chama o mesmo nucleo de `load_local_rasters()`
+(`.load_raster_paths()`), de modo que conferencia, harmonizacao, mascara e
+dicionario sao identicos nas duas vias. A leitura parcial depende de GeoTIFFs em
+blocos e de servidores com range requests; `.with_gdal_network()` fixa tempo
+limite e desliga a listagem de diretorios remotos. `export_folder_path` grava as
+janelas no formato de pasta local, o que torna a portabilidade uma releitura
+pela via local. O catalogo (`.raster_registry()`) e uma tabela estatica,
+verificada contra o bucket do MapBiomas; mudancas de endereco exigem atualiza-la.
+
+A area de estudo passa sempre por `.read_study_area()` e `.study_area_file()`:
+deteccao de GeoPackage, shapefile ou GeoJSON por extensao, nome sem extensao ou
+pasta, preferencia pelo `.gpkg` e erro explicito para shapefile sem `.prj`. A
+cobertura minima (99% da area de estudo, nao do contexto) evita mascaras
+silenciosamente incompletas.

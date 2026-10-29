@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "area_sintetica",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32722" } },
+"features": [
+{ "type": "Feature", "properties": { "nome": "area focal" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 500000.0, 7400000.0 ], [ 500200.0, 7400000.0 ], [ 500200.0, 7400200.0 ], [ 500000.0, 7400200.0 ], [ 500000.0, 7400000.0 ] ] ] } }
+]
+}

@@ -41,3 +41,19 @@ over time:
 ```{r contribution, fig.height=5.5}
 diversity$plots$contribution
 ```
+
+Hill numbers express diversity as effective classes: order 0 is richness, order
+1 weights classes by area (exponential of Shannon) and order 2 gives even more
+weight to the dominant ones (inverse Simpson). The further the curves move from
+richness, the more a few classes dominate the landscape:
+
+```{r hill-numbers, fig.height=5}
+diversity$plots$hill
+```
+
+Composition over time, with Berger-Parker dominance on top, shows the change of
+dominant class:
+
+```{r dominance, fig.height=6}
+diversity$plots$dominance
+```

@@ -1,0 +1,163 @@
+---
+title: "biomastats — aquisição seletiva por HTTP e portabilidade de mapas locais"
+params:
+  anos: !r 2024:2025
+  pasta_10m: "~/Documents/mapbiomas_10m_col4"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 9, fig.height = 5.5,
+                      fig.align = "center", dpi = 110)
+root <- normalizePath(getwd(), winslash = "/")
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+execucao <- tempfile("biomastats-http-"); dir.create(execucao)
+biblioteca <- file.path(execucao, "library"); dir.create(biblioteca)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+stopifnot(system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", shQuote(root),
+  paste0("--library=", shQuote(biblioteca)), "--no-test-load"), stdout = FALSE, stderr = FALSE) == 0)
+library(biomastats, lib.loc = biblioteca)
+pasta_10m <- path.expand(params$pasta_10m)
+tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, format.args = list(decimal.mark = ","))
+```
+
+Este relatório confere a leitura seletiva de mapas por HTTP
+(`load_rasters(method = "http")`) e a releitura dos mapas gravados por
+`load_local_rasters()`, em Itapetininga e Campina do Monte Alegre (SP).
+
+# Catálogo
+
+```{r catalogo}
+tabela(raster_catalog()[, c("id", "resolution_m", "first_year", "last_year")], 0)
+```
+
+# Áreas de estudo
+
+Limites municipais do IBGE, gravados como shapefile.
+
+```{r areas}
+municipio <- function(codigo, nome) {
+  url <- paste0("https://servicodados.ibge.gov.br/api/v3/malhas/municipios/", codigo,
+                "?formato=application/vnd.geo+json&qualidade=intermediaria")
+  pasta <- file.path(execucao, nome); dir.create(pasta)
+  sf::st_write(sf::st_read(url, quiet = TRUE), file.path(pasta, "limite.shp"), quiet = TRUE)
+  pasta
+}
+itapetininga <- municipio(3522307, "itapetininga")
+campina <- municipio(3509452, "campina")
+```
+
+# Itapetininga: leitura seletiva (Coleção 10, 30 m)
+
+```{r itapetininga}
+janelas_itape <- file.path(execucao, "janelas_itapetininga")
+tempo_itape <- system.time(
+  mapas_itape <- load_rasters(itapetininga, start = min(params$anos), end = 2024, method = "http",
+                              product = "mapbiomas_brasil_c10", export_folder_path = janelas_itape)
+)[["elapsed"]]
+tabela(mapas_itape$metadata$harmonization[, c("year", "action", "valid_cells")], 0)
+land_vis(mapas_itape, year = 2024)
+```
+
+# Lagoa do Sino: coleção local de 10 m
+
+A coleção gravada em Documentos é recortada pelo shapefile do pacote.
+
+```{r lagoa-local}
+ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
+tempo_lagoa <- system.time(
+  mapas_lagoa <- load_local_rasters(ufscar, folder = pasta_10m, collection = 10)
+)[["elapsed"]]
+tabela(mapas_lagoa$metadata$harmonization[, c("year", "action", "valid_cells")], 0)
+land_vis(mapas_lagoa, year = max(mapas_lagoa$time_range))
+```
+
+# Campina do Monte Alegre: portabilidade
+
+Os mapas de 10 m já gravados (Lagoa do Sino + 5 km) não cobrem o município:
+
+```{r recusa}
+recusa <- tryCatch(load_local_rasters(campina, folder = pasta_10m, collection = 10),
+                   error = conditionMessage)
+recusa
+```
+
+Leitura das janelas do município e releitura da pasta gravada:
+
+```{r campina}
+janelas_campina <- file.path(execucao, "janelas_campina")
+tempo_http <- system.time(
+  mapas_http <- load_rasters(campina, start = min(params$anos), end = max(params$anos),
+                             method = "http", product = "mapbiomas_brasil_10m_c4",
+                             export_folder_path = janelas_campina)
+)[["elapsed"]]
+list.files(janelas_campina)
+tempo_local <- system.time(
+  mapas_local <- load_local_rasters(folder = janelas_campina, collection = 10)
+)[["elapsed"]]
+land_vis(mapas_local, year = max(params$anos))
+```
+
+A Lagoa do Sino, lida da pasta antiga e por HTTP, deve dar o mesmo mapa:
+
+```{r lagoa}
+antiga <- load_local_rasters(folder = pasta_10m, years = params$anos, collection = 10)
+nova <- load_rasters(pasta_10m, start = min(params$anos), end = max(params$anos),
+                     method = "http", product = "mapbiomas_brasil_10m_c4")
+```
+
+# Shapefile sem `.prj`
+
+```{r sem-prj}
+sem_prj <- file.path(execucao, "sem_prj"); dir.create(sem_prj)
+file.copy(list.files(campina, full.names = TRUE), sem_prj)
+unlink(file.path(sem_prj, "limite.prj"))
+erro_prj <- tryCatch(load_local_rasters(sem_prj, folder = janelas_campina), error = conditionMessage)
+erro_prj
+```
+
+# Verificações
+
+```{r verificacoes}
+area <- function(mapas, pasta) {
+  a <- get_area(mapas)$aggregate_data
+  c(classificada = sum(a$area_raw[a$year == max(a$year)]),
+    limite = as.numeric(sf::st_area(sf::st_read(file.path(pasta, "limite.shp"), quiet = TRUE))) / 1e6)
+}
+mesmos <- function(a, b) all(mapply(function(x, y) identical(raster::getValues(x), raster::getValues(y)),
+                                    a$raster, b$raster))
+area_itape <- area(mapas_itape, itapetininga)
+area_campina <- area(mapas_local, campina)
+a_lagoa <- get_area(mapas_lagoa)$aggregate_data
+area_lagoa <- c(classificada = sum(a_lagoa$area_raw[a_lagoa$year == max(a_lagoa$year)]),
+                limite = as.numeric(sum(sf::st_area(sf::st_read(ufscar, quiet = TRUE)))) / 1e6)
+v <- c(itapetininga_grade_unica = all(mapas_itape$metadata$harmonization$action == "none"),
+       itapetininga_area = abs(area_itape[["classificada"]] / area_itape[["limite"]] - 1) < .01,
+       itapetininga_releitura = mesmos(mapas_itape, load_local_rasters(folder = janelas_itape,
+                                                                       collection = 10)),
+       campina_recusa_parcial = grepl("cobre apenas", recusa),
+       campina_http_igual_local = mesmos(mapas_http, mapas_local),
+       campina_area = abs(area_campina[["classificada"]] / area_campina[["limite"]] - 1) < .01,
+       lagoa_local_anos = length(mapas_lagoa$raster) == 9,
+       lagoa_local_grade_unica = all(mapas_lagoa$metadata$harmonization$action == "none"),
+       lagoa_local_area = abs(area_lagoa[["classificada"]] / area_lagoa[["limite"]] - 1) < .02,
+       lagoa_antiga_igual_nova = mesmos(antiga, nova),
+       erro_sem_prj = grepl("[.]prj", erro_prj))
+tabela(data.frame(verificacao = names(v), ok = v, row.names = NULL))
+tabela(rbind(itapetininga = area_itape, lagoa_do_sino = area_lagoa, campina = area_campina))
+tabela(data.frame(etapa = c("Itapetininga, HTTP", "Lagoa do Sino, coleção local (9 anos)",
+                            "Campina, HTTP", "Campina, releitura local"),
+                  segundos = c(tempo_itape, tempo_lagoa, tempo_http, tempo_local)), 1)
+stopifnot(all(v))
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```

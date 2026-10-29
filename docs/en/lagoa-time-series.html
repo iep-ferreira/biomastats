@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -114,7 +122,7 @@
 <p>The annual maps form a 40-year series for each class. <code><a href="https://rdrr.io/pkg/biomastats/man/land_time_series.html">land_time_series()</a></code>
 extracts the series of interest, here soybean (39), pasture (15) and forest
 formation (3):</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_time_series.html">land_time_series</a></span><span class="op">(</span><span class="va">areas</span><span class="op">$</span><span class="va">time_series</span>, classes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">39</span>, <span class="fl">15</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                           language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">series</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
@@ -126,7 +134,7 @@ formation (3):</p>
 each other from one year to the next. That is why <code><a href="https://rdrr.io/pkg/biomastats/man/series_correlation.html">series_correlation()</a></code> can
 measure association on the levels, on the annual differences or on the
 residuals of a trend, and corrects the p-value for autocorrelation:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">correlation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/series_correlation.html">series_correlation</a></span><span class="op">(</span><span class="va">series</span>, <span class="fl">39</span>, <span class="fl">15</span>, transformation <span class="op">=</span> <span class="st">"difference"</span>,</span>
 <span>                                  language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">correlation</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">association</span></span></code></pre></div>
@@ -143,7 +151,7 @@ changes do not move together.</p>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/series_fit_regime.html">series_fit_regime()</a></code> fits a continuous curve with transitions between regimes.
 The probabilistic bent-cable model estimates when each transition happens and
 how long it lasts, with bootstrap confidence intervals:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/series_fit_regime.html">series_fit_regime</a></span><span class="op">(</span><span class="va">series</span>, <span class="fl">39</span>, model <span class="op">=</span> <span class="st">"prob_bent_logistic"</span>,</span>
 <span>                         bootstrap <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span>, language <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
@@ -201,7 +209,7 @@ compares the available models by AICc and picks the most suitable one.</p>
 <div id="diagnostics-and-projection" class="section level2 unnumbered">
 <h2>Diagnostics and projection<a class="anchor" aria-label="anchor" href="#diagnostics-and-projection"><i class="fas fa-link"></i></a>
 </h2>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diagnostics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/series_diagnostics.html">series_diagnostics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="va">diagnostics</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">acf</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/diagnostics-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -212,7 +220,7 @@ When residuals depend on each other, intervals tend to come out too narrow. In
 that case, <code>bootstrap_type = "block"</code> resamples blocks of consecutive years and
 produces more realistic intervals.</p>
 <p>Finally, <code><a href="https://rdrr.io/pkg/biomastats/man/series_forecast.html">series_forecast()</a></code> extends the last regime:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">projection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/series_forecast.html">series_forecast</a></span><span class="op">(</span><span class="va">fit</span>, horizon <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">projection</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/projection-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -248,7 +256,7 @@ not as a prediction of future land use change.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

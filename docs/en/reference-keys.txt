@@ -1,7 +1,12 @@
 fig:tile-grid
-fig:unnamed-chunk-39
-fig:unnamed-chunk-41
-fig:unnamed-chunk-44
+fig:unnamed-chunk-57
+fig:unnamed-chunk-58
+fig:unnamed-chunk-61
+fig:unnamed-chunk-62
+fig:unnamed-chunk-65
+fig:unnamed-chunk-68
+fig:unnamed-chunk-70
+fig:unnamed-chunk-73
 installation
 functions
 data-sources
@@ -12,5 +17,8 @@ lagoa-time-series
 lagoa-change
 lagoa-landscape
 lagoa-connectivity
+lagoa-resistance
+lagoa-connectivity-time
+lagoa-context
 external-layers
 about

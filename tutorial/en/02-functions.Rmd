@@ -2,14 +2,17 @@
 
 The package has `r length(getNamespaceExports("biomastats"))` functions, and
 nearly all of them start from the same place: the maps object created by
-`load_rasters()` (or by `load_lulc()` outside Brazil). Because each result feeds
+`load_rasters()` (by tiles, national collection or HTTP reading), by
+`load_local_rasters()` (local folders of any collection) or by `load_lulc()`
+(ESA WorldCover). Because each result feeds
 the next step, the analyses chain together naturally:
 
 ```
 study area ─► load_rasters() ─► maps ─┬─► get_area() ─┬─► class_diversity()
                                        │               └─► land_time_series() ─► series_*()
                                        ├─► land_change() · land_to_graph() · fragment_metrics()
-                                       └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                       ├─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                       └─► connectivity_context()  (extended context)
 ```
 
 In the tables below, the **Takes** column shows each function's usual input.
@@ -21,7 +24,10 @@ For full documentation, run `?function_name` in R.
 |:--|:--|:--|
 | `make_polygon()` | Draws a circle, square or hexagon from latitude, longitude and total width (km) | coordinates |
 | `compare_shapefiles()` | Finds the MapBiomas tiles that cover the area | shapefile |
-| `load_rasters()` | Loads, crops and masks the annual maps, by selective download or from a local collection | shapefile |
+| `load_rasters()` | Loads, crops and masks the annual maps, by selective download, local national collection or selective HTTP reading | `.gpkg`, `.shp` or `sf` |
+| `load_local_rasters()` | Loads annual GeoTIFFs from a local folder, of any collection, harmonized and clipped | study area and folder |
+| `raster_catalog()` | MapBiomas collections (Brazil, 10 m and other countries) for selective reading over HTTP in `load_rasters(method = "http")` | — |
+| `class_dictionary()` | Builds and checks the class dictionary (codes, names and colours) | maps or CSV |
 | `download_mapbiomas()` | Downloads the national collection, one file per year | destination folder |
 | `load_rasters_from_folder()` | Opens the national maps stored in a folder | collection folder |
 | `check_maps()` | Checks, downloads and merges the required tiles for each year | tiles and years |
@@ -62,6 +68,11 @@ For full documentation, run `?function_name` in R.
 | `reclass_to_polygons()` | Converts the reclassified maps into `sf` polygons | `biomastats_metrics()` |
 | `land_connectivity()` | Fragment connectivity at several distance thresholds | `reclass_to_polygons()` |
 | `patch_imp_fast()` | Importance of each fragment (IIC, PC or AWF) and its intra, flux and connector fractions | a `land_connectivity()` scenario |
+| `resistance_surface()` | Cost surface from land use, with barriers | maps |
+| `cost_distance()` | Least-cost distance between fragments, from edge to edge | `reclass_to_polygons()` and `resistance_surface()` |
+| `connectivity_change()` | ECA, dECA, fractions and link importance over the years, with plots and animation | `reclass_to_polygons()` or `land_connectivity()` |
+| `connectivity_context()` | Sensitivity of indices and importance to the size of the context around the study area | maps and classes |
+| `as_makurhini()` | Arguments (and results) of Makurhini's `MK_dPCIIC()`, `MK_dECA()` and `MK_ProtConn()` | `land_connectivity()` or `connectivity_change()` |
 
 ## External layers {- #functions-external-layers}
 

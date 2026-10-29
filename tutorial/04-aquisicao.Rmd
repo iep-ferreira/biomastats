@@ -1,19 +1,32 @@
-# Aquisição dos mapas do MapBiomas {#aquisicao}
+# Aquisição dos mapas {#aquisicao}
 
-Toda análise começa com uma área de estudo e com o objeto de mapas produzido
-por `load_rasters()`. Há duas maneiras de chegar a ele, e ambas levam ao mesmo
-resultado.
+Toda análise começa com uma área de estudo e com um objeto de mapas. Há quatro
+vias para chegar a ele: o download seletivo dos recortes do MapBiomas, a coleção
+nacional gravada no computador, a leitura seletiva por HTTP e uma pasta local
+com mapas de qualquer coleção. Todas levam ao mesmo objeto, usado pelas demais
+funções do pacote.
 
 ## Área de estudo {-}
 
-A área é um shapefile de polígono, em qualquer sistema de coordenadas. O pacote
-já traz o limite do campus Lagoa do Sino da UFSCar, usado neste capítulo:
+A área é um polígono em qualquer sistema de coordenadas, gravado como
+GeoPackage (`.gpkg`), shapefile (`.shp`, com o `.prj`) ou GeoJSON, ou já
+carregado como objeto `sf`. O caminho pode vir com ou sem extensão, ou ser a
+pasta que contém um único arquivo de área; com `.gpkg` e `.shp` de mesmo nome,
+vale o `.gpkg`. O pacote já traz o limite do campus Lagoa do Sino da UFSCar,
+usado neste capítulo:
 
 ```{r}
 ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
 ```
 
-Quando não há um shapefile à mão, `make_polygon()` desenha a área a partir de
+::: {.atencao}
+Um shapefile é um conjunto de arquivos. Sem o `.prj`, ele perde o sistema de
+coordenadas, e o carregamento para com um aviso. Ao copiar ou enviar uma área,
+inclua todos os arquivos de mesmo nome ou prefira o GeoPackage, que é um
+arquivo só.
+:::
+
+Quando não há uma área à mão, `make_polygon()` desenha a área a partir de
 um ponto central, de uma forma (`"circle"`, `"square"` ou `"hexagon"`) e da
 largura total em km (`size`), que corresponde ao diâmetro do círculo, ao lado do
 quadrado ou à distância entre vértices opostos do hexágono. Um hexágono de
@@ -76,23 +89,103 @@ mapas <- load_rasters(ufscar, start = 1985, end = 2024, method = "library",
                       import_folder_path = "collection_10")
 ```
 
-| | Download seletivo | Coleção nacional |
-|:--|:--|:--|
-| Transferência | só os recortes da área | ~28 GB para 1985–2024, uma única vez |
-| Internet durante a análise | sim, na primeira execução | não |
-| Mais indicada para | poucas áreas, de até 2 ou 3 recortes | muitas áreas, áreas grandes, uso offline |
-
 ::: {.nota}
 As duas vias produzem o mesmo objeto: para a área de exemplo da Lagoa do Sino,
 os 40 mapas recortados da coleção nacional são idênticos, célula a célula, aos
 obtidos pelo download seletivo.
 :::
 
+## Via 3: leitura seletiva por HTTP {-}
+
+Os mapas anuais do MapBiomas ficam num repositório público, em GeoTIFFs
+divididos em blocos. Com `method = "http"`, `load_rasters()` lê só os blocos que
+cobrem a área, sem login e sem baixar o arquivo nacional inteiro. O catálogo
+reúne as coleções disponíveis, do Brasil (30 m e 10 m) e de outros países e
+regiões:
+
+```{r}
+catalogo <- raster_catalog()
+colunas <- c(Produto = "id", `Resolução (m)` = "resolution_m",
+             `Primeiro ano` = "first_year", `Último ano` = "last_year")
+tabela(stats::setNames(catalogo[, colunas], names(colunas)), 0)
+```
+
+O produto é escolhido pelo `id`. Com `export_folder_path`, as janelas lidas ficam
+gravadas como `produto_ano.tif`, junto com a área (`area.gpkg`):
+
+```{r eval=FALSE}
+mapas_http <- load_rasters(ufscar, start = 2023, end = 2024, method = "http",
+                           product = "mapbiomas_brasil_c10",
+                           export_folder_path = "mapas-lagoa")
+```
+
+Qualquer outro GeoTIFF anual em blocos também pode ser lido, com `url` e
+`{year}` no lugar do ano. As coleções do Brasil usam a legenda do MapBiomas; as
+de outros países têm legendas próprias, que entram pelo dicionário (próxima
+seção).
+
+## Via 4: pasta local, de qualquer coleção {-}
+
+Mapas de outras origens (janelas gravadas pela via 3, MapBiomas de 10 m, mapas
+estaduais, classificações próprias) entram por uma pasta com um GeoTIFF por ano,
+nomeados como `prefixo_ano.tif`. `load_local_rasters()`:
+
+1. confere cada arquivo: uma camada, sistema de coordenadas, códigos inteiros e
+   cobertura da área;
+2. harmoniza todos os anos pela grade do primeiro, com o vizinho mais próximo,
+   que não mistura códigos de classe;
+3. recorta e mascara pela área e trata os pixels sem dado (`nodata`, 0 por
+   padrão).
+
+A área pode estar na própria pasta. Mapas que cubram só parte da área, como
+janelas gravadas para outra região, são recusados:
+
+```{r eval=FALSE}
+mapas_relidos <- load_local_rasters(folder = "mapas-lagoa", collection = 10)
+```
+
+Quando a coleção usa a legenda do MapBiomas, `collection = 10` traz nomes e
+cores. Para outra legenda, `class_dictionary()` monta um modelo com os códigos
+presentes e depois lê o dicionário preenchido (código, nome e cor, em português
+ou inglês):
+
+```{r eval=FALSE}
+modelo <- class_dictionary(mapas_relidos)
+write.csv(modelo, "legenda.csv", row.names = FALSE)
+dicionario <- class_dictionary(mapas_relidos, file = "legenda.csv")
+mapas_relidos <- load_local_rasters(folder = "mapas-lagoa", dictionary = dicionario)
+```
+
+## Qual via usar {-}
+
+| | Download seletivo | Coleção nacional | Leitura por HTTP | Pasta local |
+|:--|:--|:--|:--|:--|
+| Coleções | MapBiomas Brasil | MapBiomas Brasil | catálogo ou URL | qualquer uma |
+| Transferência | recortes da área | ~28 GB, uma vez | só a janela da área | nenhuma |
+| Internet | na primeira execução | só no download | sim | não |
+| Mais indicada para | poucas áreas | muitas áreas, uso offline | 10 m, outros países, poucos anos | mapas próprios e já gravados |
+
+## Contexto ampliado {-}
+
+Índices de conectividade sofrem efeito de borda: o limite da área corta
+fragmentos e esconde trampolins do lado de fora. `context_m` amplia a leitura com
+uma faixa ao redor da área, em metros. O objeto guarda a área original em
+`focal`, usada pelas análises de conectividade (capítulo
+\@ref(lagoa-contexto)):
+
+```{r eval=FALSE}
+mapas_contexto <- load_rasters(ufscar, start = 2024, end = 2024, method = "http",
+                               product = "mapbiomas_brasil_c10", context_m = 2000)
+```
+
 ## O objeto de mapas {-}
 
-`load_rasters()` devolve uma lista com o limite da área (`shape`), o período
-(`time_range`), um mapa por ano (`raster`) e a coleção (`collection`). Esse
-objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:
+As quatro vias devolvem uma lista com o limite da área (`shape`), o período
+(`time_range`), um mapa por ano (`raster`) e a coleção (`collection`). Ela também
+guarda a origem dos mapas (`source`), o que permite recarregar uma área maior
+pela mesma via; o dicionário de classes (`class_dictionary`), nas coleções locais;
+a área original (`focal`), com contexto; e os detalhes da leitura (`metadata`).
+Esse objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:
 
 ```{r eval=FALSE}
 save(mapas, file = "lagoa-do-sino.Rdata")

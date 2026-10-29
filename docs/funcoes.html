@@ -6,15 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Capítulo 2 Funções do pacote | Bioma Stats</title>
 <meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
-<meta name="description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta name="description" content="O pacote reúne 49 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (por recortes, coleção nacional ou leitura por HTTP), por load_local_rasters() (pastas...">
 <meta name="generator" content="bookdown 0.48 with bs4_book()">
 <meta property="og:title" content="Capítulo 2 Funções do pacote | Bioma Stats">
 <meta property="og:type" content="book">
 <meta property="og:image" content="/imagens/capa.jpg">
-<meta property="og:description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta property="og:description" content="O pacote reúne 49 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (por recortes, coleção nacional ou leitura por HTTP), por load_local_rasters() (pastas...">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Capítulo 2 Funções do pacote | Bioma Stats">
-<meta name="twitter:description" content="O pacote reúne 41 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (ou por load_lulc(), fora do Brasil). Como cada resultado alimenta a etapa seguinte, as...">
+<meta name="twitter:description" content="O pacote reúne 49 funções, e quase todas partem do mesmo ponto: o objeto de mapas criado por load_rasters() (por recortes, coleção nacional ou leitura por HTTP), por load_local_rasters() (pastas...">
 <meta name="twitter:image" content="/imagens/capa.jpg">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
 <li><a class="active" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
 <li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
-<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
 <li class="book-part">Fluxo completo: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
 <li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
 <li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
 <li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li><a class="" href="lagoa-resistencia.html"><span class="header-section-number">11</span> Resistência e ligações</a></li>
+<li><a class="" href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></li>
+<li><a class="" href="lagoa-contexto.html"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
 <li class="book-part">Além do MapBiomas</li>
-<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li><a class="" href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></li>
 <li class="book-part">Apêndice</li>
 <li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
 </ul>
@@ -111,14 +119,16 @@
 <h1>
 <span class="header-section-number">Capítulo 2</span> Funções do pacote<a class="anchor" aria-label="anchor" href="#funcoes"><i class="fas fa-link"></i></a>
 </h1>
-<p>O pacote reúne 41 funções, e quase
-todas partem do mesmo ponto: o objeto de mapas criado por <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> (ou
-por <code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code>, fora do Brasil). Como cada resultado alimenta a etapa
+<p>O pacote reúne 49 funções, e quase
+todas partem do mesmo ponto: o objeto de mapas criado por <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> (por
+recortes, coleção nacional ou leitura por HTTP), por <code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code>
+(pastas locais de qualquer coleção) ou por <code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code> (ESA WorldCover). Como cada resultado alimenta a etapa
 seguinte, as análises se encadeiam naturalmente:</p>
 <pre><code>área de estudo ─► load_rasters() ─► mapas ─┬─► get_area() ─┬─► class_diversity()
                                             │               └─► land_time_series() ─► series_*()
                                             ├─► land_change() · land_to_graph() · fragment_metrics()
-                                            └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()</code></pre>
+                                            ├─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                            └─► connectivity_context()  (contexto ampliado)</code></pre>
 <p>Nas tabelas abaixo, a coluna <strong>Recebe</strong> indica a entrada usual de cada função.
 Para a documentação completa, use <code>?nome_da_função</code> no R.</p>
 <div id="área-de-estudo-e-aquisição" class="section level2 unnumbered">
@@ -148,30 +158,48 @@ Para a documentação completa, use <code>?nome_da_função</code> no R.</p>
 </tr>
 <tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code></td>
-<td align="left">Carrega, recorta e mascara os mapas anuais, por download seletivo ou de uma coleção local</td>
-<td align="left">shapefile</td>
+<td align="left">Carrega, recorta e mascara os mapas anuais, por download seletivo, coleção nacional local ou leitura seletiva por HTTP</td>
+<td align="left">
+<code>.gpkg</code>, <code>.shp</code> ou <code>sf</code>
+</td>
 </tr>
 <tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code></td>
+<td align="left">Carrega GeoTIFFs anuais de uma pasta local, de qualquer coleção, harmonizados e recortados</td>
+<td align="left">área de estudo e pasta</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/raster_catalog.html">raster_catalog()</a></code></td>
+<td align="left">Coleções do MapBiomas (Brasil, 10 m e outros países) para leitura seletiva por HTTP em <code>load_rasters(method = "http")</code>
+</td>
+<td align="left">—</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/class_dictionary.html">class_dictionary()</a></code></td>
+<td align="left">Monta e confere o dicionário de classes (códigos, nomes e cores)</td>
+<td align="left">mapas ou CSV</td>
+</tr>
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_mapbiomas.html">download_mapbiomas()</a></code></td>
 <td align="left">Baixa a coleção nacional, um arquivo por ano</td>
 <td align="left">pasta de destino</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters_from_folder.html">load_rasters_from_folder()</a></code></td>
 <td align="left">Abre os mapas nacionais guardados em uma pasta</td>
 <td align="left">pasta da coleção</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/check_maps.html">check_maps()</a></code></td>
 <td align="left">Confere, baixa e junta por ano os recortes necessários</td>
 <td align="left">recortes e anos</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_maps.html">download_maps()</a></code></td>
 <td align="left">Baixa um recorte para um ou mais anos</td>
 <td align="left">recorte e anos</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/fetch_tile_manifest.html">fetch_tile_manifest()</a></code></td>
 <td align="left">Consulta a lista de arquivos de um recorte na API do Bioma Stats</td>
 <td align="left">recorte</td>
@@ -328,8 +356,39 @@ Para a documentação completa, use <code>?nome_da_função</code> no R.</p>
 </tr>
 <tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast()</a></code></td>
-<td align="left">Importância de cada fragmento para a conectividade</td>
+<td align="left">Importância de cada fragmento (IIC, PC ou AWF) e suas frações intra, fluxo e conector</td>
 <td align="left">cenário de <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface()</a></code></td>
+<td align="left">Superfície de custo a partir do uso do solo, com barreiras</td>
+<td align="left">mapas</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/cost_distance.html">cost_distance()</a></code></td>
+<td align="left">Distância de menor custo entre os fragmentos, de borda a borda</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code> e <code><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_change.html">connectivity_change()</a></code></td>
+<td align="left">ECA, dECA, frações e importância das ligações ao longo dos anos, com gráficos e animação</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code> ou <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_context.html">connectivity_context()</a></code></td>
+<td align="left">Sensibilidade dos índices e da importância ao tamanho do contexto ao redor da área de estudo</td>
+<td align="left">mapas e classes</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/as_makurhini.html">as_makurhini()</a></code></td>
+<td align="left">Argumentos (e resultados) de <code>MK_dPCIIC()</code>, <code>MK_dECA()</code> e <code>MK_ProtConn()</code> do Makurhini</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> ou <code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_change.html">connectivity_change()</a></code>
 </td>
 </tr>
 </tbody>
@@ -427,7 +486,7 @@ desenham as formas de <code><a href="https://rdrr.io/pkg/biomastats/man/make_pol
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 29/10/2026.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="active" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -115,7 +123,7 @@
 12.5 km² hexagon centred on the UFSCar Lagoa do Sino campus in Buri, São Paulo,
 using the MapBiomas Collection 10 annual maps from 1985 to 2024. The maps object
 ships with the package (it is stored under the name <code>mapas</code>):</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/load.html">load</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"examples"</span>, <span class="st">"mapa_exemplo.Rdata"</span>, package <span class="op">=</span> <span class="st">"biomastats"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">maps</span> <span class="op">&lt;-</span> <span class="va">mapas</span></span></code></pre></div>
 <div id="area-by-class" class="section level2 unnumbered">
@@ -124,7 +132,7 @@ ships with the package (it is stored under the name <code>mapas</code>):</p>
 <p><code><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area()</a></code> measures the area of each class in each year, accounting for the
 true area of every pixel, and returns both the table (<code>aggregate_data</code>) and a
 plot of the series:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">areas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/get_area.html">get_area</a></span><span class="op">(</span><span class="va">maps</span>, plot_type <span class="op">=</span> <span class="st">"areaplot"</span><span class="op">)</span></span>
 <span><span class="va">areas</span><span class="op">$</span><span class="va">time_series</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/areas-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
@@ -140,7 +148,7 @@ loss of 47%.</p>
 </h2>
 <p>With <code><a href="https://rdrr.io/pkg/biomastats/man/land_vis.html">land_vis()</a></code>, this transformation shows up on the map of each year, with
 the official MapBiomas legend and colours:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_vis.html">land_vis</a></span><span class="op">(</span><span class="va">maps</span>, year <span class="op">=</span> <span class="fl">1985</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_vis.html">land_vis</a></span><span class="op">(</span><span class="va">maps</span>, year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biomastats-book_files/figure-html/maps-1.png" alt="" width="50%" style="display: block; margin: auto;"><img src="biomastats-book_files/figure-html/maps-2.png" alt="" width="50%" style="display: block; margin: auto;"></p>
@@ -150,14 +158,14 @@ the official MapBiomas legend and colours:</p>
 </h2>
 <p>To summarise the composition of a single year, <code><a href="https://rdrr.io/pkg/biomastats/man/land_dist.html">land_dist()</a></code> draws a bar chart
 (<code>type = "barplot"</code>) or a pie chart (<code>type = "pie"</code>):</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/land_dist.html">land_dist</a></span><span class="op">(</span><span class="va">areas</span>, year <span class="op">=</span> <span class="fl">2024</span>, type <span class="op">=</span> <span class="st">"barplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="inline-figure"><img src="biomastats-book_files/figure-html/distribution-1.png" alt="" width="100%" style="display: block; margin: auto;"></div>
 
 </div>
 </div>
   <div class="chapter-nav">
-<div class="prev"><a href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></div>
+<div class="prev"><a href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></div>
 <div class="next"><a href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
@@ -183,7 +191,7 @@ the official MapBiomas legend and colours:</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

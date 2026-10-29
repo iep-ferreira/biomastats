@@ -20,5 +20,8 @@ rmd_files:
   - 08-lagoa-change.Rmd
   - 09-lagoa-landscape.Rmd
   - 10-lagoa-connectivity.Rmd
-  - 11-external-layers.Rmd
-  - 12-about.Rmd
+  - 11-lagoa-resistance.Rmd
+  - 12-lagoa-connectivity-time.Rmd
+  - 13-lagoa-context.Rmd
+  - 14-external-layers.Rmd
+  - 15-about.Rmd

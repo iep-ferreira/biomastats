@@ -28,7 +28,8 @@
 #'   collection e class_dictionary sao herdados do resultado das metricas.
 #'   Os atributos class_dictionary e metadata preservam identidades, paleta,
 #'   selecao temporal, CRS e resolucao de origem, inclusive apos saveRDS/readRDS.
-#'   O atributo boundary herda o limite da area de estudo quando disponivel nas metricas.
+#'   O atributo boundary herda o limite da area de estudo quando disponivel nas metricas,
+#'   e focal, a area de estudo original quando os mapas incluem um contexto.
 #'   Para uma classe, code, classe, class e color identificam os poligonos de
 #'   presenca. Para varias classes fundidas, esses campos sao NA: os codigos
 #'   selecionados ficam em classes e no dicionario, sem inventar identidade
@@ -150,6 +151,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
                "class", "color", "collection", "classes", "geometry")]
     attr(p, "class_dictionary") <- dictionary
     attr(p, "boundary") <- obj$boundary
+    attr(p, "focal") <- obj$focal
     year_metadata <- metadata
     year_metadata$years <- as.numeric(yr)
     year_metadata$source <- source[yr]
@@ -176,6 +178,7 @@ reclass_to_polygons <- function(obj, years = NULL, dissolve = TRUE,
   if (length(result) > 1L) {
     attr(out, "class_dictionary") <- dictionary
     attr(out, "boundary") <- obj$boundary
+    attr(out, "focal") <- obj$focal
     attr(out, "metadata") <- metadata
   }
   attr(out, "shp_paths") <- shp_paths

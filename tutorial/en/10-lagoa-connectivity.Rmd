@@ -98,3 +98,28 @@ connectivity_pc <- land_connectivity(polygons, max_dist = 300,
   metric_patch = c("IIC", "PC"), p_ref = 0.05, d_ref = 300, language = "en")
 connectivity_pc$fractions_plot
 ```
+
+PC is the most demanding index. In landscapes with hundreds of fragments,
+`parallel = 4` (or another number of processes) splits the work across cores and
+gives the same result; with a few dozen fragments, starting the processes costs
+more than it saves. Exact pruning of PC links (`prune = "auto"`) is applied on its
+own from 50 fragments upwards.
+
+## Equivalent connected area and landscape fractions {-}
+
+The equivalent connected area (ECA; Saura et al., 2011) expresses IIC and PC in
+hectares: the area of a single fragment that would give the same connectivity.
+In `metrics`, `ECA_IIC` and `ECA_PC` are in m², and `ECAnorm_IIC` and
+`ECAnorm_PC` give it as a percentage of habitat. The `PC_intra`, `PC_direct` and
+`PC_step` columns split the index, as in Makurhini, into the area of the
+fragments themselves, direct links and the gain through stepping stones. `Prot`,
+`ProtConn`, `ProtUnconn` and `RelConn` follow ProtConn (Saura et al., 2017), with
+the forest taken as the protected area:
+
+```{r echo=FALSE}
+m <- connectivity_pc$metrics
+tabela(data.frame(`ECA (ha)` = m$ECA_PC / 1e4, `ECA (% of habitat)` = m$ECAnorm_PC,
+                  `Intra (%)` = m$PC_intra, `Direct (%)` = m$PC_direct,
+                  `Stepping stones (%)` = m$PC_step, ProtConn = m$ProtConn, check.names = FALSE), 1)
+```
+

@@ -23,7 +23,9 @@ LazyData: false
 Reference: ...
 Suggests:
     lconnect (>= 0.1.2),
+    future,
     future.apply,
+    gganimate,
     osmextract,
     arrow,
     patchwork,

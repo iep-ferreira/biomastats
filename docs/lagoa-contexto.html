@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Capítulo 13 Efeito de borda e contexto ampliado | Bioma Stats</title>
+<meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
+<meta name="description" content="O limite da fazenda corta fragmentos e esconde os trampolins que ficam do lado de fora. Por isso, a conectividade medida só dentro da área de estudo pode estar subestimada perto da borda, e a...">
+<meta name="generator" content="bookdown 0.48 with bs4_book()">
+<meta property="og:title" content="Capítulo 13 Efeito de borda e contexto ampliado | Bioma Stats">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/imagens/capa.jpg">
+<meta property="og:description" content="O limite da fazenda corta fragmentos e esconde os trampolins que ficam do lado de fora. Por isso, a conectividade medida só dentro da área de estudo pode estar subestimada perto da borda, e a...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Capítulo 13 Efeito de borda e contexto ampliado | Bioma Stats">
+<meta name="twitter:description" content="O limite da fazenda corta fragmentos e esconde os trampolins que ficam do lado de fora. Por isso, a conectividade medida só dentro da área de estudo pode estar subestimada perto da borda, e a...">
+<meta name="twitter:image" content="/imagens/capa.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
+    /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
+    document.addEventListener("DOMContentLoaded", function () {
+      var pares = {
+        "index.html": "index.html",
+        "instalacao.html": "installation.html",
+        "funcoes.html": "functions.html",
+        "dados.html": "data-sources.html",
+        "aquisicao.html": "acquisition.html",
+        "lagoa-areas.html": "lagoa-areas.html",
+        "lagoa-diversidade.html": "lagoa-diversity.html",
+        "lagoa-series.html": "lagoa-time-series.html",
+        "lagoa-mudancas.html": "lagoa-change.html",
+        "lagoa-paisagem.html": "lagoa-landscape.html",
+        "lagoa-conectividade.html": "lagoa-connectivity.html",
+        "camadas.html": "external-layers.html",
+        "sobre.html": "about.html"
+      };
+      var arquivo = window.location.pathname.split("/").pop() || "index.html";
+      var ingles = (document.documentElement.lang || "").indexOf("en") === 0;
+      var destino, rotulo;
+      if (ingles) {
+        destino = "index.html";
+        for (var pt in pares) { if (pares[pt] === arquivo) { destino = pt; } }
+        destino = "../" + destino; rotulo = "Português";
+      } else {
+        destino = "en/" + (pares[arquivo] || "index.html"); rotulo = "English";
+      }
+      var link = document.createElement("a");
+      link.className = "idioma"; link.href = destino; link.textContent = rotulo;
+      link.setAttribute("hreflang", ingles ? "pt-BR" : "en");
+      var alvo = document.querySelector(".sidebar-book .book-toc") || document.querySelector(".sidebar-book");
+      if (alvo) { alvo.parentNode.insertBefore(link, alvo); }
+    });
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Uso e cobertura da terra em R: guia do usuário">Bioma Stats</a>:
+        <small class="text-muted">Uso e cobertura da terra em R: guia do usuário</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Apresentação</a></li>
+<li class="book-part">Primeiros passos</li>
+<li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
+<li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
+<li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
+<li><a class="" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
+<li class="book-part">Fluxo completo: Lagoa do Sino</li>
+<li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
+<li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
+<li><a class="" href="lagoa-series.html"><span class="header-section-number">7</span> Séries temporais</a></li>
+<li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
+<li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
+<li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li><a class="" href="lagoa-resistencia.html"><span class="header-section-number">11</span> Resistência e ligações</a></li>
+<li><a class="" href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></li>
+<li><a class="active" href="lagoa-contexto.html"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
+<li class="book-part">Além do MapBiomas</li>
+<li><a class="" href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></li>
+<li class="book-part">Apêndice</li>
+<li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/iep-ferreira/biomastats">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="lagoa-contexto" class="section level1" number="13">
+<h1>
+<span class="header-section-number">Capítulo 13</span> Efeito de borda e contexto ampliado<a class="anchor" aria-label="anchor" href="#lagoa-contexto"><i class="fas fa-link"></i></a>
+</h1>
+<p>O limite da fazenda corta fragmentos e esconde os trampolins que ficam do lado
+de fora. Por isso, a conectividade medida só dentro da área de estudo pode estar
+subestimada perto da borda, e a ordem dos fragmentos prioritários pode depender
+do recorte. Este capítulo mede esse efeito na Lagoa do Sino, com o entorno de até
+10 km como contexto.</p>
+<div id="área-focal-e-contexto" class="section level2 unnumbered">
+<h2>Área focal e contexto<a class="anchor" aria-label="anchor" href="#%C3%A1rea-focal-e-contexto"><i class="fas fa-link"></i></a>
+</h2>
+<p>Com uma área focal, <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> mede a conectividade do habitat da
+área de estudo usando o entorno como trampolim: cada fragmento entra com a sua
+área dentro da área focal, os de fora valem só como ligação e o denominador
+continua sendo a área de estudo. Assim, os índices calculados com contextos de
+tamanhos diferentes são comparáveis.</p>
+<p><code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_context.html">connectivity_context()</a></code> repete a análise para vários raios. A partir dos mapas e
+das classes de habitat, ela amplia a área com o maior raio, recarrega os mapas
+pela mesma via de aquisição (aqui, a leitura por HTTP), reclassifica e vetoriza
+uma única vez e reaproveita as distâncias do maior contexto nos menores. O raio 0
+é a análise sem contexto, igual à do capítulo <a href="lagoa-conectividade.html#lagoa-conectividade">10</a>:</p>
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mapas_2024</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters</a></span><span class="op">(</span><span class="va">ufscar</span>, start <span class="op">=</span> <span class="fl">2024</span>, end <span class="op">=</span> <span class="fl">2024</span>, method <span class="op">=</span> <span class="st">"http"</span>,</span>
+<span>                           product <span class="op">=</span> <span class="st">"mapbiomas_brasil_c10"</span><span class="op">)</span></span>
+<span><span class="va">contexto</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/connectivity_context.html">connectivity_context</a></span><span class="op">(</span><span class="va">mapas_2024</span>, classes <span class="op">=</span> <span class="fl">3</span>, max_dist <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>  context <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1000</span>, <span class="fl">2500</span>, <span class="fl">5000</span>, <span class="fl">10000</span><span class="op">)</span>, metric_patch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"IIC"</span>, <span class="st">"PC"</span><span class="op">)</span>,</span>
+<span>  d_ref <span class="op">=</span> <span class="fl">150</span>, parallel <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-57"></span>
+<img src="imagens/contexto-mapa.png" alt="Fazenda Lagoa do Sino (contorno preto) e os raios de contexto (tracejado). Em verde, os fragmentos de floresta da fazenda; em cinza, os do entorno." width="85%"><p class="caption">
+Figura 13.1: Fazenda Lagoa do Sino (contorno preto) e os raios de contexto (tracejado). Em verde, os fragmentos de floresta da fazenda; em cinza, os do entorno.
+</p>
+</div>
+</div>
+<div id="sensibilidade-dos-índices" class="section level2 unnumbered">
+<h2>Sensibilidade dos índices<a class="anchor" aria-label="anchor" href="#sensibilidade-dos-%C3%ADndices"><i class="fas fa-link"></i></a>
+</h2>
+<p>Os índices só crescem com o raio, porque mais trampolins só encurtam caminhos.
+Quando a curva se estabiliza (<code>converged</code>), o contexto deixa de mudar o
+resultado; se ela ainda cresce no maior raio, o efeito de borda persiste.</p>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-58"></span>
+<img src="imagens/contexto-sensibilidade.png" alt="ECA de cada raio em relação à do maior contexto. A linha tracejada marca a distância máxima de 300 m." width="100%"><p class="caption">
+Figura 13.2: ECA de cada raio em relação à do maior contexto. A linha tracejada marca a distância máxima de 300 m.
+</p>
+</div>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th align="right">Raio (m)</th>
+<th align="left">Índice</th>
+<th align="right">Fragmentos</th>
+<th align="right">ECA (ha)</th>
+<th align="right">ProtConn</th>
+<th align="right">Variação (%)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="right">0</td>
+<td align="left">IIC</td>
+<td align="right">26</td>
+<td align="right">25,55</td>
+<td align="right">3,92</td>
+<td align="right">-2,48</td>
+</tr>
+<tr class="even">
+<td align="right">1000</td>
+<td align="left">IIC</td>
+<td align="right">73</td>
+<td align="right">25,91</td>
+<td align="right">3,97</td>
+<td align="right">-1,12</td>
+</tr>
+<tr class="odd">
+<td align="right">2500</td>
+<td align="left">IIC</td>
+<td align="right">166</td>
+<td align="right">25,91</td>
+<td align="right">3,97</td>
+<td align="right">-1,12</td>
+</tr>
+<tr class="even">
+<td align="right">5000</td>
+<td align="left">IIC</td>
+<td align="right">345</td>
+<td align="right">25,91</td>
+<td align="right">3,97</td>
+<td align="right">-1,12</td>
+</tr>
+<tr class="odd">
+<td align="right">10000</td>
+<td align="left">IIC</td>
+<td align="right">904</td>
+<td align="right">26,20</td>
+<td align="right">4,02</td>
+<td align="right">0,00</td>
+</tr>
+<tr class="even">
+<td align="right">0</td>
+<td align="left">PC</td>
+<td align="right">26</td>
+<td align="right">27,80</td>
+<td align="right">4,26</td>
+<td align="right">-1,82</td>
+</tr>
+<tr class="odd">
+<td align="right">1000</td>
+<td align="left">PC</td>
+<td align="right">73</td>
+<td align="right">28,31</td>
+<td align="right">4,34</td>
+<td align="right">0,00</td>
+</tr>
+<tr class="even">
+<td align="right">2500</td>
+<td align="left">PC</td>
+<td align="right">166</td>
+<td align="right">28,31</td>
+<td align="right">4,34</td>
+<td align="right">0,00</td>
+</tr>
+<tr class="odd">
+<td align="right">5000</td>
+<td align="left">PC</td>
+<td align="right">345</td>
+<td align="right">28,31</td>
+<td align="right">4,34</td>
+<td align="right">0,00</td>
+</tr>
+<tr class="even">
+<td align="right">10000</td>
+<td align="left">PC</td>
+<td align="right">904</td>
+<td align="right">28,31</td>
+<td align="right">4,34</td>
+<td align="right">0,00</td>
+</tr>
+</tbody>
+</table></div>
+<p>Na Lagoa do Sino, o entorno de 10 km soma
+878
+fragmentos aos 26 da fazenda, mas a
+ECA do PC sobe só 1,8% e se estabiliza a partir de
+1,0 km: o grande fragmento interno
+domina o índice. O IIC, que não decai com a distância, ainda varia entre os maiores
+raios. Em áreas pequenas, estreitas ou com floresta espalhada, o efeito costuma
+ser maior.</p>
+</div>
+<div id="estabilidade-da-priorização" class="section level2 unnumbered">
+<h2>Estabilidade da priorização<a class="anchor" aria-label="anchor" href="#estabilidade-da-prioriza%C3%A7%C3%A3o"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>rank_stability</code> compara, raio a raio, a ordem dos fragmentos da fazenda com a do
+maior contexto: correlação de Spearman e sobreposição dos 10 mais importantes.</p>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-61"></span>
+<img src="imagens/contexto-ranking.png" alt="Concordância da priorização dos fragmentos da fazenda com a do maior contexto." width="100%"><p class="caption">
+Figura 13.3: Concordância da priorização dos fragmentos da fazenda com a do maior contexto.
+</p>
+</div>
+</div>
+<div id="efeito-de-borda-por-fragmento" class="section level2 unnumbered">
+<h2>Efeito de borda por fragmento<a class="anchor" aria-label="anchor" href="#efeito-de-borda-por-fragmento"><i class="fas fa-link"></i></a>
+</h2>
+<p>Os fragmentos que cruzam o limite da fazenda são os que mais mudam com o
+contexto: sem ele, entram cortados, e o contexto devolve a sua forma inteira e
+os vizinhos de fora. Alguns ganham importância e outros perdem, porque a
+importância é relativa ao índice, que também cresce. Os fragmentos internos
+quase não mudam:</p>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-62"></span>
+<img src="imagens/contexto-borda.png" alt="Ganho de importância de cada fragmento da fazenda entre a análise sem contexto e a de 10 km, em função da distância ao limite." width="100%"><p class="caption">
+Figura 13.4: Ganho de importância de cada fragmento da fazenda entre a análise sem contexto e a de 10 km, em função da distância ao limite.
+</p>
+</div>
+</div>
+<div id="trampolins-fora-da-fazenda" class="section level2 unnumbered">
+<h2>Trampolins fora da fazenda<a class="anchor" aria-label="anchor" href="#trampolins-fora-da-fazenda"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>stepping_stones</code> lista os fragmentos do entorno que sustentam a conectividade
+da fazenda. Eles têm área zero na análise focal, então sua importância é só de
+conector. Com floresta a 300 m, só o IIC encontra trampolins externos: pelo
+número de passos, uma cadeia de fragmentos de fora liga a fazenda ao grande
+fragmento vizinho. No PC, a probabilidade decai com a distância, e o ganho vem
+de contar inteiros os fragmentos que cruzam o limite, não de trampolins:</p>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th align="left">Índice</th>
+<th align="right">Fragmento</th>
+<th align="right">Área (ha)</th>
+<th align="right">Conector (%)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">IIC</td>
+<td align="right">203</td>
+<td align="right">113,41</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="even">
+<td align="left">IIC</td>
+<td align="right">254</td>
+<td align="right">1,07</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="odd">
+<td align="left">IIC</td>
+<td align="right">272</td>
+<td align="right">2,79</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="even">
+<td align="left">IIC</td>
+<td align="right">284</td>
+<td align="right">2,30</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="odd">
+<td align="left">IIC</td>
+<td align="right">323</td>
+<td align="right">6,98</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="even">
+<td align="left">IIC</td>
+<td align="right">341</td>
+<td align="right">50,53</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="odd">
+<td align="left">IIC</td>
+<td align="right">349</td>
+<td align="right">7,48</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="even">
+<td align="left">IIC</td>
+<td align="right">374</td>
+<td align="right">22,51</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="odd">
+<td align="left">IIC</td>
+<td align="right">577</td>
+<td align="right">2408,97</td>
+<td align="right">2,23</td>
+</tr>
+<tr class="even">
+<td align="left">IIC</td>
+<td align="right">760</td>
+<td align="right">150,95</td>
+<td align="right">2,23</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="fragmentos-alvo" class="section level2 unnumbered">
+<h2>Fragmentos-alvo<a class="anchor" aria-label="anchor" href="#fragmentos-alvo"><i class="fas fa-link"></i></a>
+</h2>
+<p>Com <code>targets</code>, a análise mede a importância de um fragmento ou de um conjunto
+deles removidos de uma vez, raio a raio. A diferença para a soma das importâncias
+individuais (<code>interaction</code>) mostra se os fragmentos se substituem (positiva) ou
+dividem a mesma contribuição (negativa). Os alvos podem ser <code>fragment_id</code>, listas
+nomeadas de ids ou geometrias <code>sf</code>, inclusive fora da área de estudo:</p>
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ps</span> <span class="op">&lt;-</span> <span class="va">contexto</span><span class="op">$</span><span class="va">patch_sensitivity</span></span>
+<span><span class="va">top</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">ps</span><span class="op">$</span><span class="va">fragment_id</span><span class="op">[</span><span class="va">ps</span><span class="op">$</span><span class="va">metric</span> <span class="op">==</span> <span class="st">"PC"</span> <span class="op">&amp;</span> <span class="va">ps</span><span class="op">$</span><span class="va">radius_m</span> <span class="op">==</span> <span class="fl">10000</span> <span class="op">&amp;</span> <span class="va">ps</span><span class="op">$</span><span class="va">rank</span> <span class="op">&lt;=</span> <span class="fl">3</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">alvos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/connectivity_context.html">connectivity_context</a></span><span class="op">(</span><span class="va">mapas_2024</span>, classes <span class="op">=</span> <span class="fl">3</span>, max_dist <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>  context <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1000</span>, <span class="fl">2500</span>, <span class="fl">5000</span>, <span class="fl">10000</span><span class="op">)</span>, metric_patch <span class="op">=</span> <span class="st">"PC"</span>, d_ref <span class="op">=</span> <span class="fl">150</span>,</span>
+<span>  targets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>conjunto <span class="op">=</span> <span class="va">top</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">as.list</a></span><span class="op">(</span><span class="va">top</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"f"</span>, <span class="va">top</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">alvos</span><span class="op">$</span><span class="va">target_sensitivity</span></span>
+<span><span class="va">alvos</span><span class="op">$</span><span class="va">target_plot</span></span></code></pre></div>
+<p>Na Lagoa do Sino, os três fragmentos mais importantes dividem contribuições: a
+importância conjunta fica abaixo da soma das individuais (interação negativa),
+porque os pares entre eles entram duas vezes na soma.</p>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-65"></span>
+<img src="imagens/contexto-alvos.png" alt="Importância conjunta dos três fragmentos mais importantes da fazenda e de cada um deles; em pontilhado, a soma das importâncias individuais." width="100%"><p class="caption">
+Figura 13.5: Importância conjunta dos três fragmentos mais importantes da fazenda e de cada um deles; em pontilhado, a soma das importâncias individuais.
+</p>
+</div>
+</div>
+<div id="um-único-contexto" class="section level2 unnumbered">
+<h2>Um único contexto<a class="anchor" aria-label="anchor" href="#um-%C3%BAnico-contexto"><i class="fas fa-link"></i></a>
+</h2>
+<p>Sem a curva de sensibilidade, basta ler os mapas com <code>context_m</code> (capítulo
+<a href="aquisicao.html#aquisicao">4</a>): os polígonos herdam a área focal, e <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> a
+usa sozinha. A análise funciona com qualquer via de aquisição: MapBiomas por
+recortes ou por HTTP, ESA WorldCover (<code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code>) e pastas locais
+(<code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code>), de qualquer país.</p>
+<div class="nota">
+<p>As figuras e tabelas deste capítulo foram geradas uma vez, neste mesmo fluxo,
+por <code>development/gerar_figuras_contexto.R</code> (cerca de 3 min com internet) e ficam
+em <code>imagens/</code>; o livro só as exibe.</p>
+</div>
+
+</div>
+</div>
+
+
+
+  <div class="chapter-nav">
+<div class="prev"><a href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></div>
+<div class="next"><a href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#lagoa-contexto"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
+<li><a class="nav-link" href="#%C3%A1rea-focal-e-contexto">Área focal e contexto</a></li>
+<li><a class="nav-link" href="#sensibilidade-dos-%C3%ADndices">Sensibilidade dos índices</a></li>
+<li><a class="nav-link" href="#estabilidade-da-prioriza%C3%A7%C3%A3o">Estabilidade da priorização</a></li>
+<li><a class="nav-link" href="#efeito-de-borda-por-fragmento">Efeito de borda por fragmento</a></li>
+<li><a class="nav-link" href="#trampolins-fora-da-fazenda">Trampolins fora da fazenda</a></li>
+<li><a class="nav-link" href="#fragmentos-alvo">Fragmentos-alvo</a></li>
+<li><a class="nav-link" href="#um-%C3%BAnico-contexto">Um único contexto</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/iep-ferreira/biomastats/blob/main/tutorial/13-lagoa-contexto.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/iep-ferreira/biomastats/edit/main/tutorial/13-lagoa-contexto.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 29/10/2026.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

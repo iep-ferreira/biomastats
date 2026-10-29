@@ -35,6 +35,201 @@
   `connector_plot` (mapa da fração de conector). `patch_imp_fast()` devolve
   `fractions` e os atributos `index`, `k`, `method` e `iic_rule`.
 
+## Integração com o Makurhini e análise temporal
+
+* `land_connectivity(distance = )` aceita distâncias externas: matriz (com
+  nomes iguais a `fragment_id` ou na ordem dos fragmentos), `dist` ou tabela
+  `From`/`To`/`Distance`, como a de `Makurhini::distancefile()`. `NA` e `Inf`
+  são barreiras. Unidade e origem ficam em `metadata`.
+* **ECA** nativa em `metrics`: `ECA_IIC` e `ECA_PC` (m²), `ECAnorm_IIC` e
+  `ECAnorm_PC` (% do habitat), e as **frações da paisagem** do Makurhini,
+  `X_intra`, `X_direct` e `X_step` (% do numerador, para IIC e PC). Com o PC,
+  `metrics` traz `Prot`, `ProtConn`, `ProtUnconn` e `RelConn` (Saura et al.
+  2017), tomando o habitat como área protegida e o limite como região.
+  ECA, frações, dPC e dIIC coincidem com `MK_dPCIIC(overall = TRUE)`, e os
+  indicadores, com `MK_ProtConn()`, nos mesmos dados.
+* **Importância das ligações** (`link_importance = TRUE`): `link_metrics` dá a
+  queda do IIC e do PC quando cada ligação é removida, recalculando só os pares
+  que passam por ela, em blocos paralelizáveis; `link_plot` a mapeia. Na Lagoa
+  do Sino (461 fragmentos, 300 m), IIC e PC com ligações levam 47 s.
+* `resistance_surface()`: superfície de custo a partir do uso do solo de um
+  ano, com custo por classe, custo padrão e barreiras `sf` (intransponíveis ou
+  com custo próprio). Devolve um `RasterLayer` serializável, aceito pelo
+  Makurhini e pelo gdistance.
+* `cost_distance()`: distância de menor custo **de borda a borda** em grafo de
+  células com vizinhança de 8, sem atalhos por fragmentos nem por cantos de
+  barreiras; com custo 1, reproduz a distância entre bordas na grade.
+  `method = "makurhini"` delega a `Makurhini::distancefile()` (centroides). Na
+  Lagoa do Sino (315 mil células, 461 fragmentos), 64 s, ou 42 s com 4
+  processos.
+* `connectivity_change()`: série temporal de habitat, ECA, dA, dECA, rECA e
+  tipo de mudança (classes do `MK_dECA()`), frações da paisagem por ano,
+  resumo da participação das ligações e os gráficos `eca_plot`, `change_plot`,
+  `fractions_plot`, `map_plot` e `link_plot`. Com `animate = TRUE`, devolve uma
+  animação gganimate do mapa de importância ano a ano. `gganimate` entra em
+  Suggests.
+* `as_makurhini()`: argumentos prontos para `MK_dPCIIC()`, `MK_dECA()` e
+  `MK_ProtConn()` (nós com área em m², limite como `LA` ou região, matriz de
+  distâncias, `probability` e `distance_thresholds` equivalentes ao k,
+  `pij_min = 0`) e, com `run = TRUE`, os resultados. O Makurhini, instalado do
+  GitHub, continua opcional e fora de Suggests.
+* `metadata$schema_version` passa a 1.3.
+
+## Contexto espacial ampliado e sensibilidade ao efeito de borda
+
+* `load_rasters()` aceita a área de estudo como `sf`/`sfc`, além do caminho
+  do shapefile, e ganha `context_m`: um buffer (em metros, na UTM local) que
+  amplia recortes, corte e máscara. A área original fica em `focal`, e `source`
+  registra método, pastas, tipo e coleção. `compare_shapefiles()` também
+  aceita `sf`. `biomastats_metrics()` e `reclass_to_polygons()` repassam
+  `focal` junto com `boundary`.
+* `land_connectivity(focal = )` (ou o atributo `focal` herdado): conectividade
+  do habitat da área focal com o contexto como trampolim, como as áreas
+  transfronteiriças do ProtConn. Cada fragmento entra com sua área dentro da
+  área focal (`focal_area_m2`; zero fora dela), as distâncias usam o fragmento
+  inteiro e A_L passa a ser a área focal. `patch_metrics$focal_role` separa
+  fragmentos focais, de borda e de contexto; os do contexto só têm importância
+  de conector. Sem `focal`, nada muda. `schema_version` 1.4.
+* `connectivity_context()`: sensibilidade dos índices e da importância ao raio
+  do contexto. A partir dos mapas da área de estudo e das classes, aplica o
+  buffer do maior raio, recarrega o território maior com a mesma origem (ou o
+  recorta de `source`, ou reaproveita mapas já carregados com contexto),
+  reclassifica e vetoriza uma única vez, sem gravar arquivos, e reaproveita a
+  matriz de distâncias (ou a de menor custo) do maior contexto nos menores.
+  O raio 0 reproduz a análise sem contexto. Devolve `sensitivity` (ECA,
+  ProtConn focal e variação em relação ao maior raio, com indicador de
+  convergência), `patch_sensitivity`, `rank_stability` (Spearman e
+  sobreposição dos 10 maiores), `stepping_stones` (trampolins de fora da área)
+  e os gráficos `sensitivity_plot`, `rank_plot` e `map_plot`. O fluxo é
+  opcional.
+* `connectivity_context(targets = )`: importância de um fragmento-alvo ou de
+  um conjunto frente ao contexto, por **remoção conjunta**. Alvos são
+  `fragment_id`, listas nomeadas de ids ou geometrias `sf` (agrupadas pela
+  coluna `target`), inclusive fora da área focal, para medir trampolins
+  externos. `target_sensitivity` traz, por raio, a importância conjunta, a soma
+  das importâncias individuais e a interação (positiva quando os fragmentos se
+  substituem, negativa quando dividem a mesma contribuição), com
+  `target_plot`. `stepping_stones` passa a ser relatado por raio.
+* O contexto funciona com **qualquer coleção portada**, inclusive fora do
+  Brasil: `load_lulc()` (ESA WorldCover) ganha `context_m`, `focal` e `source`,
+  e a recarga automática usa o carregador registrado. `source` também aceita
+  uma função `function(area, years)` que devolve mapas no formato de
+  `load_rasters()`, para outras fontes. Coleções sem dicionário em
+  `dict_build()` funcionam com seus códigos numéricos, também em
+  `resistance_surface()`.
+* Testes com mapas sintéticos (`tests/testthat/test-connectivity-context.R`)
+  cobrem o buffer de `load_rasters()` (modo `library`, sem download), a
+  herança de `focal`, os pesos focais conferidos à mão, o ganho de um
+  trampolim fora da área, a monotonia dos índices, a igualdade entre
+  distâncias reaproveitadas e análise direta, a recarga automática e a
+  distância de menor custo.
+
+## Tutorial e rótulos
+
+* Tutorial (português e inglês) reorganizado em quatro vias de aquisição
+  (recortes, coleção nacional, leitura por HTTP com o catálogo e pasta local),
+  com área de estudo em `.gpkg` ou `.shp`, dicionário de classes, contexto
+  ampliado na aquisição e, no capítulo de conectividade, a análise de
+  sensibilidade ao contexto na Lagoa do Sino até 10 km.
+* `biomastats_metrics()` ganha `language` ("pt", padrão, ou "en"): os seis
+  gráficos tinham rótulos fixos em inglês. Os nomes das colunas de
+  `metrics_table` continuam em inglês.
+* Tutorial: conectividade dividida em quatro capítulos (vetorização e índices;
+  resistência e ligações; conectividade ao longo do tempo; efeito de borda e
+  contexto ampliado, com figuras pré-calculadas por
+  `development/gerar_figuras_contexto.R`). Capítulos de diversidade, mudanças e
+  paisagem passam a mostrar números de Hill e dominância, saldo por classe e
+  trajetórias, matriz de adjacências, interfaces entre classes, métricas da
+  rede e das classes, grafo interativo, os gráficos de área e borda de
+  `biomastats_metrics()`, distribuição de tamanhos, curva posição-tamanho,
+  forma e tendências dos fragmentos e as métricas do `landscapemetrics`.
+* `land_connectivity()` não falha mais ao construir os gráficos quando nenhum
+  par de fragmentos está ligado. Em `range_plot`, os painéis de componentes e
+  fragmentos isolados têm títulos em português e inglês.
+
+## Aquisição seletiva por HTTP e catálogo de mapas rasterizados
+
+* `load_rasters(method = "http")`: lê, pelo sistema de arquivos virtual do
+  GDAL (`/vsicurl/`), apenas a janela da área de estudo em GeoTIFFs públicos,
+  sem login, a partir de um produto de `raster_catalog()` (`product`) ou de
+  qualquer modelo de URL com `{year}` (`url`). Usa a mesma rotina de
+  `load_local_rasters()` (conferência, harmonização, recorte e máscara) e, com
+  `export_folder_path`, grava as janelas como `<produto>_<ano>.tif` e a área
+  como `area.gpkg`, prontas para `load_local_rasters()`. A recarga do contexto
+  em `connectivity_context()` usa a mesma origem.
+* `raster_catalog()`: 18 coleções anuais de uso do solo do bucket público do
+  MapBiomas, verificadas em 29/10/2026: Brasil (Coleções 9, 10 e 11, 30 m, e
+  10 m Coleção 4 beta), Argentina, Bolívia, Chile, Colômbia, Equador,
+  Paraguai, Peru, Uruguai, Venezuela, Indonésia, Amazônia, Chaco, Pampa e
+  Bosque Atlântico, com resolução, anos, modelo de URL e dicionário
+  compatível. Todos os arquivos são divididos em blocos (256 ou 512 pixels).
+* A área de estudo é detectada como GeoPackage, shapefile ou GeoJSON, com ou
+  sem extensão, ou pela pasta (um único arquivo de área); com `.gpkg` e `.shp`
+  de mesmo nome, vale o `.gpkg`. Um shapefile sem `.prj` gera erro explícito,
+  em vez de CRS ausente. Vale para `load_rasters()`, `load_lulc()`,
+  `load_local_rasters()` e `compare_shapefiles()`.
+* `load_local_rasters()` (e a via HTTP) recusam mapas que cubram menos de
+  99% da área de estudo, como janelas baixadas para outra área; o buffer de
+  contexto pode ultrapassar o limite dos dados.
+* Novo teste manual `testes-manuais/teste-manual-http.Rmd` (HTML): aquisição
+  por HTTP para Itapetininga - SP, conferida célula a célula com o recorte
+  direto do GeoTIFF nacional, e portabilidade para Campina do Monte Alegre -
+  SP (recusa da janela parcial, gravação, releitura local e coincidência com
+  as janelas antigas na sobreposição).
+
+## Coleções locais de qualquer origem
+
+* `load_local_rasters()`: carrega GeoTIFFs anuais de uma pasta de caminho
+  conhecido, nomeados como `prefixo_ano.tif`, de qualquer coleção ou país.
+  Confere compatibilidade (uma camada, CRS, códigos inteiros, cobertura da
+  área, anos consecutivos), harmoniza todos os anos pela grade do primeiro (ou
+  por `crs` e `resolution`) com o vizinho mais próximo, recorta só a janela da
+  área, mascara pelo centro das células, trata `nodata` (0 por padrão) e
+  devolve o objeto de `load_rasters()`, com a ação de harmonização de cada ano
+  em `metadata$harmonization`. Aceita `context_m` e registra a origem, de modo
+  que `connectivity_context()` recarrega a área ampliada da mesma pasta.
+* `class_dictionary()`: assistente opcional do dicionário de classes. Sem
+  arquivo, devolve um modelo com os códigos presentes nos mapas (ou a base de
+  uma coleção conhecida) para preencher; com CSV ou data.frame, reconhece
+  colunas em português ou inglês, completa nomes e cores, converte cores para
+  hexadecimal e avisa sobre códigos sem entrada.
+* O dicionário viaja no objeto de mapas (`class_dictionary`) e é usado por
+  `get_area()`, `land_vis()`, `land_dist()`, `land_change()`,
+  `land_to_graph()`, `fragment_metrics()`, `biomastats_metrics()`,
+  `resistance_surface()` e `connectivity_context()`. Coleções sem dicionário
+  recebem nomes genéricos ("Classe 3") em vez de erro. `land_vis()` aceita os
+  anos do próprio objeto, não só 1985–2024.
+* Dados sintéticos leves para testes em `inst/extdata/local_maps` (cerca de
+  4 KB: três anos com grades diferentes, área e legenda), gerados por
+  `development/make_local_fixtures.R`. Um teste local,
+  `tests/testthat/test-local-mapbiomas-10m.R` (fora do pacote construído), usa
+  uma coleção MapBiomas 10 m em `~/Documents/mapbiomas_10m_col4`: janelas da
+  Coleção 4 beta (2017–2025) lidas por `/vsicurl` do bucket público, sem login.
+
+## Desempenho
+
+* **Poda opcional do PC** (`prune = "auto"`, `TRUE` ou `FALSE`) em
+  `patch_imp_fast()` e `land_connectivity()`. `"auto"` poda redes densas
+  (ao menos 50 fragmentos e 25% dos pares com ligação finita); o resultado é o
+  mesmo com ou sem poda. PC com 200 fragmentos: 2,8 s com poda e 12,3 s sem.
+* **Paralelismo por blocos** (`parallel = FALSE`, `TRUE` ou número de
+  processos): o teste de candidatos, o conector e a poda são divididos entre
+  processos `future`. Um número abre um plano temporário e restaura o do
+  usuário; `land_connectivity()` o abre uma vez para todos os limiares. PC com
+  8 processos: Lagoa do Sino (461 fragmentos) de 26,8 para 5,8 s e grade de
+  400 fragmentos de 21,2 para 4,8 s, com resultados idênticos. Em paisagens
+  pequenas e no IIC, abrir os processos custa mais que o ganho, por isso o
+  padrão continua sequencial.
+* `method = "removal"` monta o grafo, podado ou não, uma única vez e apaga um
+  vértice por remoção: o PC com 200 fragmentos caiu de 41 para 3 s.
+* `metrics` ganha `pc_pruned` e `pc_edges`; `metadata`, `pc_prune` e
+  `parallel_workers` (`schema_version` 1.2). Os objetos `pimp` ganham os
+  atributos `pruned` e `edges`. `future` entra em Suggests.
+* Testes de `tests/testthat/test-connectivity-engine.R` cobrem a poda
+  (exata, opcional e automática) e o paralelismo (igual ao sequencial, plano
+  do usuário restaurado, `land_connectivity()` em paralelo), com no máximo 2
+  processos, e rodam no `R CMD check`.
+
 # biomastats 2.1.0
 
 Versão de funcionalidades: 18 funções exportadas novas, todas compatíveis com o

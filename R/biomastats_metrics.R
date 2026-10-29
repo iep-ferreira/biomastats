@@ -18,6 +18,8 @@
 #' @param line_color Color of the lines in the generated plots. Default is \code{"blue"}.
 #' @param point_shape Shape of the points in the plots. Default is 16.
 #' @param point_size Size of the points in the plots. Default is 3.
+#' @param language Labels of the plots: "pt" (default) or "en". The column
+#'   names of `metrics_table` stay in English.
 #' @param export.raster If `TRUE` (default), keeps the reclassified raster of
 #'   each year in `rec_map`, used by `reclass_map()` and `reclass_to_polygons()`.
 #'
@@ -35,6 +37,8 @@
 #'   dictionary entries, and source CRS/resolution by year for downstream reuse.}
 #'   \item{boundary}{The inherited study-area shape, when present in the maps
 #'   object, for downstream landscape-area denominators.}
+#'   \item{focal}{The original study area when the maps were loaded with a
+#'   context buffer (`load_rasters(context_m = )`), or `NULL`.}
 #'
 #' @details This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
 #'   It checks for valid metric types and generates summary plots for selected metrics.
@@ -56,7 +60,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
                                                          "class_area", "edge_density", "edge_length", "frag_area"), 
                          start = NULL, end = NULL, zone = NULL, classes = NULL, hemisphere = NULL,
                          line_color = "blue", point_shape = 16, 
-                         point_size = 3, export.raster = TRUE) {
+                         point_size = 3, export.raster = TRUE, language = c("pt", "en")) {
+  language <- match.arg(language)
    
   time_range <- rasters_biomastats$time_range
   if (is.null(start)) start <- time_range[1L]
@@ -79,7 +84,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     classes <- selector_classes$codes
   }
   
-  class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes) else NULL
+  class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes,
+    rasters_biomastats$class_dictionary) else NULL
   source_rasters <- rasters_biomastats$raster[seq.int(start, end) - time_range[1L] + 1L]
   source_metadata <- lapply(source_rasters, function(r) list(
     crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r), utm = .utm_from_raster(r)))
@@ -126,7 +132,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
     p_frag_avg_area <- ggplot2::ggplot(data, aes(x = Year, y = Avg_frag_area)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Frag. Avg. Area (ha)") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "\u00c1rea m\u00e9dia dos fragmentos (ha)", "Mean fragment area (ha)")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -162,7 +168,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
    
     p_edge_length <- ggplot2::ggplot(data, aes(x = Year, y = Edge_length))  +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Edge length (m)") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "Comprimento de borda (m)", "Edge length (m)")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -197,7 +203,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
     p_edge_density <- ggplot2::ggplot(data, aes(x = Year, y = Edge_density)) + 
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Edge density (m/ha)") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "Densidade de borda (m/ha)", "Edge density (m/ha)")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -233,7 +239,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
     p_area <- ggplot2::ggplot(data, aes(x = Year, y = Class_area)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Total Reclassified Area (ha)") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "\u00c1rea da classe (ha)", "Class area (ha)")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -269,7 +275,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
     p_ia <- ggplot2::ggplot(data, aes(x = Year, y = Aggregation_Index)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "Plot of Aggregation Index", x = "Year", y = "Aggregation Index (%)") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "\u00cdndice de agrega\u00e7\u00e3o (%)", "Aggregation index (%)")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -306,7 +312,7 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     
     p_number <- ggplot2::ggplot(data, aes(x = Year, y = Number_of_fragments)) +
       geom_point(shape = point_shape, size = point_size, color = line_color) +
-      labs(title = "", x = "Year", y = "Number of fragments") +
+      labs(title = "", x = .tr(language, "Ano", "Year"), y = .tr(language, "N\u00famero de fragmentos", "Number of fragments")) +
       ggplot2::geom_line(linewidth = 0.7) +  # Aumenta a espessura da linha para melhor visualização
       ggplot2::geom_point(size = 1.3) +  # Aumenta o tamanho dos pontos para melhor destaque
       
@@ -332,5 +338,5 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
                "frag_avg_area" = p_frag_avg_area, 
                "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end,
                collection = collection, class_dictionary = class_dictionary, metadata = metadata,
-               boundary = rasters_biomastats$shape) )
+               boundary = rasters_biomastats$shape, focal = rasters_biomastats$focal) )
 }

@@ -1,0 +1,45 @@
+# Conectividade ao longo do tempo {#lagoa-conectividade-tempo}
+
+`connectivity_change()` repete a análise em vários anos e compara a perda de
+habitat (dA) com a perda de área conectada (dECA), como o `MK_dECA()` do
+Makurhini. Quando dECA cai mais que dA, a conectividade se perde mais depressa
+que o habitat:
+
+```{r mudanca, fig.height=5}
+poligonos_serie <- reclass_to_polygons(metricas, years = c(1985, 2004, 2024), save_shp = FALSE)
+mudanca <- connectivity_change(poligonos_serie, max_dist = 300, metric_patch = c("IIC", "PC"),
+  p_ref = 0.05, d_ref = 300)
+mudanca$change_plot
+```
+
+```{r echo=FALSE}
+s <- mudanca$series[mudanca$series$metric == "PC", ]
+tabela(data.frame(Ano = s$year, `Habitat (ha)` = s$habitat_ha, `ECA (ha)` = s$ECA_ha,
+                  `dA (%)` = s$dA, `dECA (%)` = s$dECA, rECA = s$rECA, Mudança = s$change,
+                  check.names = FALSE), 2)
+```
+
+`fractions_plot` mostra como intra, ligações diretas e trampolins mudam ao longo
+dos anos, e `map_plot`, a importância dos fragmentos em cada ano. Com
+`animate = TRUE` e o pacote gganimate, `animation` mostra o mesmo mapa ano a ano:
+
+```{r eval=FALSE}
+mudanca <- connectivity_change(poligonos_serie, max_dist = 300, metric_patch = "PC",
+  link_importance = TRUE, animate = TRUE)
+gganimate::animate(mudanca$animation, fps = 1)
+```
+
+
+## Integração com o Makurhini {-}
+
+`as_makurhini()` prepara os argumentos de `MK_dPCIIC()`, `MK_dECA()` e
+`MK_ProtConn()` com os mesmos fragmentos, áreas, limite, distâncias e
+calibração de k, e com `run = TRUE` executa o Makurhini, quando instalado:
+
+```{r eval=FALSE}
+mk <- as_makurhini(conectividade_pc, "dPCIIC", run = TRUE)
+protconn <- as_makurhini(conectividade_pc, "ProtConn", protected = unidades_conservacao,
+                         run = TRUE)
+deca <- as_makurhini(mudanca, "dECA", run = TRUE)
+```
+

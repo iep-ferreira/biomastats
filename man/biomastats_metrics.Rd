@@ -16,7 +16,8 @@ biomastats_metrics(
   line_color = "blue",
   point_shape = 16,
   point_size = 3,
-  export.raster = TRUE
+  export.raster = TRUE,
+  language = c("pt", "en")
 )
 }
 \arguments{
@@ -45,6 +46,9 @@ from each raster and recorded in \code{metadata$source}.}
 
 \item{export.raster}{If \code{TRUE} (default), keeps the reclassified raster of
 each year in \code{rec_map}, used by \code{reclass_map()} and \code{reclass_to_polygons()}.}
+
+\item{language}{Labels of the plots: "pt" (default) or "en". The column
+names of \code{metrics_table} stay in English.}
 }
 \value{
 A list containing:
@@ -61,6 +65,8 @@ A list containing:
 dictionary entries, and source CRS/resolution by year for downstream reuse.}
 \item{boundary}{The inherited study-area shape, when present in the maps
 object, for downstream landscape-area denominators.}
+\item{focal}{The original study area when the maps were loaded with a
+context buffer (\code{load_rasters(context_m = )}), or \code{NULL}.}
 }
 \description{
 This function computes a variety of landscape metrics for a set of raster data over a defined time period.

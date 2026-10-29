@@ -6,15 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Chapter 2 Package functions | Bioma Stats</title>
 <meta name="author" content="Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino">
-<meta name="description" content="The package has 41 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (or by load_lulc() outside Brazil). Because each result feeds the next...">
+<meta name="description" content="The package has 49 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (by tiles, national collection or HTTP reading), by load_local_rasters()...">
 <meta name="generator" content="bookdown 0.48 with bs4_book()">
 <meta property="og:title" content="Chapter 2 Package functions | Bioma Stats">
 <meta property="og:type" content="book">
 <meta property="og:image" content="/../imagens/capa.jpg">
-<meta property="og:description" content="The package has 41 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (or by load_lulc() outside Brazil). Because each result feeds the next...">
+<meta property="og:description" content="The package has 49 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (by tiles, national collection or HTTP reading), by load_local_rasters()...">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Chapter 2 Package functions | Bioma Stats">
-<meta name="twitter:description" content="The package has 41 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (or by load_lulc() outside Brazil). Because each result feeds the next...">
+<meta name="twitter:description" content="The package has 49 functions, and nearly all of them start from the same place: the maps object created by load_rasters() (by tiles, national collection or HTTP reading), by load_local_rasters()...">
 <meta name="twitter:image" content="/../imagens/capa.jpg">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="installation.html"><span class="header-section-number">1</span> Installation</a></li>
 <li><a class="active" href="functions.html"><span class="header-section-number">2</span> Package functions</a></li>
 <li><a class="" href="data-sources.html"><span class="header-section-number">3</span> Data sources and connections</a></li>
-<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring MapBiomas maps</a></li>
+<li><a class="" href="acquisition.html"><span class="header-section-number">4</span> Acquiring maps</a></li>
 <li class="book-part">Complete workflow: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Data, areas and maps</a></li>
 <li><a class="" href="lagoa-diversity.html"><span class="header-section-number">6</span> Composition and diversity</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-change.html"><span class="header-section-number">8</span> Change and adjacency</a></li>
 <li><a class="" href="lagoa-landscape.html"><span class="header-section-number">9</span> Landscape metrics and fragments</a></li>
 <li><a class="" href="lagoa-connectivity.html"><span class="header-section-number">10</span> Vectorization and connectivity</a></li>
+<li><a class="" href="lagoa-resistance.html"><span class="header-section-number">11</span> Resistance and links</a></li>
+<li><a class="" href="lagoa-connectivity-time.html"><span class="header-section-number">12</span> Connectivity over time</a></li>
+<li><a class="" href="lagoa-context.html"><span class="header-section-number">13</span> Edge effects and an extended context</a></li>
 <li class="book-part">Beyond MapBiomas</li>
-<li><a class="" href="external-layers.html"><span class="header-section-number">11</span> External layers</a></li>
+<li><a class="" href="external-layers.html"><span class="header-section-number">14</span> External layers</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="about.html"><span class="header-section-number">A</span> About the project</a></li>
 </ul>
@@ -111,14 +119,17 @@
 <h1>
 <span class="header-section-number">2</span> Package functions<a class="anchor" aria-label="anchor" href="#functions"><i class="fas fa-link"></i></a>
 </h1>
-<p>The package has 41 functions, and
+<p>The package has 49 functions, and
 nearly all of them start from the same place: the maps object created by
-<code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> (or by <code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code> outside Brazil). Because each result feeds
+<code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> (by tiles, national collection or HTTP reading), by
+<code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code> (local folders of any collection) or by <code><a href="https://rdrr.io/pkg/biomastats/man/load_lulc.html">load_lulc()</a></code>
+(ESA WorldCover). Because each result feeds
 the next step, the analyses chain together naturally:</p>
 <pre><code>study area ─► load_rasters() ─► maps ─┬─► get_area() ─┬─► class_diversity()
                                        │               └─► land_time_series() ─► series_*()
                                        ├─► land_change() · land_to_graph() · fragment_metrics()
-                                       └─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()</code></pre>
+                                       ├─► biomastats_metrics() ─► reclass_to_polygons() ─► land_connectivity()
+                                       └─► connectivity_context()  (extended context)</code></pre>
 <p>In the tables below, the <strong>Takes</strong> column shows each function’s usual input.
 For full documentation, run <code>?function_name</code> in R.</p>
 <div id="study-area-and-acquisition" class="section level2 unnumbered">
@@ -148,30 +159,48 @@ For full documentation, run <code>?function_name</code> in R.</p>
 </tr>
 <tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code></td>
-<td align="left">Loads, crops and masks the annual maps, by selective download or from a local collection</td>
-<td align="left">shapefile</td>
+<td align="left">Loads, crops and masks the annual maps, by selective download, local national collection or selective HTTP reading</td>
+<td align="left">
+<code>.gpkg</code>, <code>.shp</code> or <code>sf</code>
+</td>
 </tr>
 <tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code></td>
+<td align="left">Loads annual GeoTIFFs from a local folder, of any collection, harmonized and clipped</td>
+<td align="left">study area and folder</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/raster_catalog.html">raster_catalog()</a></code></td>
+<td align="left">MapBiomas collections (Brazil, 10 m and other countries) for selective reading over HTTP in <code>load_rasters(method = "http")</code>
+</td>
+<td align="left">—</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/class_dictionary.html">class_dictionary()</a></code></td>
+<td align="left">Builds and checks the class dictionary (codes, names and colours)</td>
+<td align="left">maps or CSV</td>
+</tr>
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_mapbiomas.html">download_mapbiomas()</a></code></td>
 <td align="left">Downloads the national collection, one file per year</td>
 <td align="left">destination folder</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters_from_folder.html">load_rasters_from_folder()</a></code></td>
 <td align="left">Opens the national maps stored in a folder</td>
 <td align="left">collection folder</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/check_maps.html">check_maps()</a></code></td>
 <td align="left">Checks, downloads and merges the required tiles for each year</td>
 <td align="left">tiles and years</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/download_maps.html">download_maps()</a></code></td>
 <td align="left">Downloads one tile for one or more years</td>
 <td align="left">tile and years</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/fetch_tile_manifest.html">fetch_tile_manifest()</a></code></td>
 <td align="left">Retrieves the file list of a tile from the Bioma Stats API</td>
 <td align="left">tile</td>
@@ -327,8 +356,40 @@ For full documentation, run <code>?function_name</code> in R.</p>
 </tr>
 <tr class="odd">
 <td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/patch_imp_fast.html">patch_imp_fast()</a></code></td>
-<td align="left">Importance of each fragment for connectivity</td>
+<td align="left">Importance of each fragment (IIC, PC or AWF) and its intra, flux and connector fractions</td>
 <td align="left">a <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> scenario</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface()</a></code></td>
+<td align="left">Cost surface from land use, with barriers</td>
+<td align="left">maps</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/cost_distance.html">cost_distance()</a></code></td>
+<td align="left">Least-cost distance between fragments, from edge to edge</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code> and <code><a href="https://rdrr.io/pkg/biomastats/man/resistance_surface.html">resistance_surface()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_change.html">connectivity_change()</a></code></td>
+<td align="left">ECA, dECA, fractions and link importance over the years, with plots and animation</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/reclass_to_polygons.html">reclass_to_polygons()</a></code> or <code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_context.html">connectivity_context()</a></code></td>
+<td align="left">Sensitivity of indices and importance to the size of the context around the study area</td>
+<td align="left">maps and classes</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="https://rdrr.io/pkg/biomastats/man/as_makurhini.html">as_makurhini()</a></code></td>
+<td align="left">Arguments (and results) of Makurhini’s <code>MK_dPCIIC()</code>, <code>MK_dECA()</code> and <code>MK_ProtConn()</code>
+</td>
+<td align="left">
+<code><a href="https://rdrr.io/pkg/biomastats/man/land_connectivity.html">land_connectivity()</a></code> or <code><a href="https://rdrr.io/pkg/biomastats/man/connectivity_change.html">connectivity_change()</a></code>
+</td>
 </tr>
 </tbody>
 </table></div>
@@ -424,7 +485,7 @@ files used during acquisition.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-18.</p>
+    <p>"<strong>Bioma Stats</strong>: Land use and land cover in R: user guide" was written by Prof. Dr. Iuri E. P. Ferreira and the CeMECA team – UFSCar Lagoa do Sino. It was last built on 2026-10-29.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

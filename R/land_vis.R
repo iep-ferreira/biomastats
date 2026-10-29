@@ -21,17 +21,14 @@
 # This function generates a map visualization for land classes in a specified year.
 land_vis <- function(data = NULL, year = 1985){
 
-  #Dictionary
-  dic <- dict_build(data$collection)
-
   # Check if data is NULL
   if(is.null(data)) {
     print("Error. Data is NULL!")
     return(NULL)
   }
 
-  # Check if year is within allowed range
-  if(year < 1985 || year > 2024){
+  # Check if year is within the years of the maps
+  if(year < data$time_range[1] || year > data$time_range[2]){
     print("Year out of bounds!")
     return(NULL)
   }
@@ -40,6 +37,11 @@ land_vis <- function(data = NULL, year = 1985){
   raster <- data$raster[[year - (data$time_range[1] - 1)]]
   dd <- data.frame(table(raster::getValues(raster)))
   colnames(dd) <- c("class", "area")
+
+  # Dictionary: the maps' own (local collections) or dict_build(); codes
+  # without an entry get generic names
+  dic <- .biomastats_dictionary(data$collection, as.numeric(as.character(dd$class)),
+                                data$class_dictionary)
 
   names_classes <- NULL
   cores_classes <- NULL

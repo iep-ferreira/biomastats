@@ -4,17 +4,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Capítulo 4 Aquisição dos mapas do MapBiomas | Bioma Stats</title>
+<title>Capítulo 4 Aquisição dos mapas | Bioma Stats</title>
 <meta name="author" content="Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino">
-<meta name="description" content="Toda análise começa com uma área de estudo e com o objeto de mapas produzido por load_rasters(). Há duas maneiras de chegar a ele, e ambas levam ao mesmo resultado. Área de estudo A área é um...">
+<meta name="description" content="Toda análise começa com uma área de estudo e com um objeto de mapas. Há quatro vias para chegar a ele: o download seletivo dos recortes do MapBiomas, a coleção nacional gravada no computador, a...">
 <meta name="generator" content="bookdown 0.48 with bs4_book()">
-<meta property="og:title" content="Capítulo 4 Aquisição dos mapas do MapBiomas | Bioma Stats">
+<meta property="og:title" content="Capítulo 4 Aquisição dos mapas | Bioma Stats">
 <meta property="og:type" content="book">
 <meta property="og:image" content="/imagens/capa.jpg">
-<meta property="og:description" content="Toda análise começa com uma área de estudo e com o objeto de mapas produzido por load_rasters(). Há duas maneiras de chegar a ele, e ambas levam ao mesmo resultado. Área de estudo A área é um...">
+<meta property="og:description" content="Toda análise começa com uma área de estudo e com um objeto de mapas. Há quatro vias para chegar a ele: o download seletivo dos recortes do MapBiomas, a coleção nacional gravada no computador, a...">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Capítulo 4 Aquisição dos mapas do MapBiomas | Bioma Stats">
-<meta name="twitter:description" content="Toda análise começa com uma área de estudo e com o objeto de mapas produzido por load_rasters(). Há duas maneiras de chegar a ele, e ambas levam ao mesmo resultado. Área de estudo A área é um...">
+<meta name="twitter:title" content="Capítulo 4 Aquisição dos mapas | Bioma Stats">
+<meta name="twitter:description" content="Toda análise começa com uma área de estudo e com um objeto de mapas. Há quatro vias para chegar a ele: o download seletivo dos recortes do MapBiomas, a coleção nacional gravada no computador, a...">
 <meta name="twitter:image" content="/imagens/capa.jpg">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
@@ -22,7 +22,12 @@
 <link href="libs/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="libs/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.12.0/transition.js"></script><script src="libs/bs3compat-0.12.0/tabs.js"></script><script src="libs/bs3compat-0.12.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script>
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><link href="libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="libs/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="libs/ggiraphjs-0.9.4/girafe.css" rel="stylesheet">
+<script src="libs/ggiraphjs-0.9.4/girafe.js"></script><script src="libs/girafe-binding-0.9.6/girafe.js"></script><link href="libs/liberation-sans-0.5.2/css/liberation-sans.css" rel="stylesheet">
+<link href="libs/liberation-serif-0.5.2/css/liberation-serif.css" rel="stylesheet">
+<link href="libs/liberation-mono-0.5.2/css/liberation-mono.css" rel="stylesheet">
+<script>
     /* Botão de idioma: leva à página correspondente do outro livro (português em docs/, inglês em docs/en/). */
     document.addEventListener("DOMContentLoaded", function () {
       var pares = {
@@ -88,7 +93,7 @@
 <li><a class="" href="instalacao.html"><span class="header-section-number">1</span> Instalação</a></li>
 <li><a class="" href="funcoes.html"><span class="header-section-number">2</span> Funções do pacote</a></li>
 <li><a class="" href="dados.html"><span class="header-section-number">3</span> Bases de dados e conexões</a></li>
-<li><a class="active" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li><a class="active" href="aquisicao.html"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
 <li class="book-part">Fluxo completo: Lagoa do Sino</li>
 <li><a class="" href="lagoa-areas.html"><span class="header-section-number">5</span> Dados, áreas e mapas</a></li>
 <li><a class="" href="lagoa-diversidade.html"><span class="header-section-number">6</span> Composição e diversidade</a></li>
@@ -96,8 +101,11 @@
 <li><a class="" href="lagoa-mudancas.html"><span class="header-section-number">8</span> Mudanças e adjacências</a></li>
 <li><a class="" href="lagoa-paisagem.html"><span class="header-section-number">9</span> Métricas da paisagem e fragmentos</a></li>
 <li><a class="" href="lagoa-conectividade.html"><span class="header-section-number">10</span> Vetorização e conectividade</a></li>
+<li><a class="" href="lagoa-resistencia.html"><span class="header-section-number">11</span> Resistência e ligações</a></li>
+<li><a class="" href="lagoa-conectividade-tempo.html"><span class="header-section-number">12</span> Conectividade ao longo do tempo</a></li>
+<li><a class="" href="lagoa-contexto.html"><span class="header-section-number">13</span> Efeito de borda e contexto ampliado</a></li>
 <li class="book-part">Além do MapBiomas</li>
-<li><a class="" href="camadas.html"><span class="header-section-number">11</span> Camadas externas</a></li>
+<li><a class="" href="camadas.html"><span class="header-section-number">14</span> Camadas externas</a></li>
 <li class="book-part">Apêndice</li>
 <li><a class="" href="sobre.html"><span class="header-section-number">A</span> Sobre o projeto</a></li>
 </ul>
@@ -109,19 +117,31 @@
 </div>
   </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="aquisicao" class="section level1" number="4">
 <h1>
-<span class="header-section-number">Capítulo 4</span> Aquisição dos mapas do MapBiomas<a class="anchor" aria-label="anchor" href="#aquisicao"><i class="fas fa-link"></i></a>
+<span class="header-section-number">Capítulo 4</span> Aquisição dos mapas<a class="anchor" aria-label="anchor" href="#aquisicao"><i class="fas fa-link"></i></a>
 </h1>
-<p>Toda análise começa com uma área de estudo e com o objeto de mapas produzido
-por <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code>. Há duas maneiras de chegar a ele, e ambas levam ao mesmo
-resultado.</p>
+<p>Toda análise começa com uma área de estudo e com um objeto de mapas. Há quatro
+vias para chegar a ele: o download seletivo dos recortes do MapBiomas, a coleção
+nacional gravada no computador, a leitura seletiva por HTTP e uma pasta local
+com mapas de qualquer coleção. Todas levam ao mesmo objeto, usado pelas demais
+funções do pacote.</p>
 <div id="área-de-estudo" class="section level2 unnumbered">
 <h2>Área de estudo<a class="anchor" aria-label="anchor" href="#%C3%A1rea-de-estudo"><i class="fas fa-link"></i></a>
 </h2>
-<p>A área é um shapefile de polígono, em qualquer sistema de coordenadas. O pacote
-já traz o limite do campus Lagoa do Sino da UFSCar, usado neste capítulo:</p>
+<p>A área é um polígono em qualquer sistema de coordenadas, gravado como
+GeoPackage (<code>.gpkg</code>), shapefile (<code>.shp</code>, com o <code>.prj</code>) ou GeoJSON, ou já
+carregado como objeto <code>sf</code>. O caminho pode vir com ou sem extensão, ou ser a
+pasta que contém um único arquivo de área; com <code>.gpkg</code> e <code>.shp</code> de mesmo nome,
+vale o <code>.gpkg</code>. O pacote já traz o limite do campus Lagoa do Sino da UFSCar,
+usado neste capítulo:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ufscar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"shp"</span>, <span class="st">"UFSCar.shp"</span>, package <span class="op">=</span> <span class="st">"biomastats"</span><span class="op">)</span></span></code></pre></div>
-<p>Quando não há um shapefile à mão, <code><a href="https://rdrr.io/pkg/biomastats/man/make_polygon.html">make_polygon()</a></code> desenha a área a partir de
+<div class="atencao">
+<p>Um shapefile é um conjunto de arquivos. Sem o <code>.prj</code>, ele perde o sistema de
+coordenadas, e o carregamento para com um aviso. Ao copiar ou enviar uma área,
+inclua todos os arquivos de mesmo nome ou prefira o GeoPackage, que é um
+arquivo só.</p>
+</div>
+<p>Quando não há uma área à mão, <code><a href="https://rdrr.io/pkg/biomastats/man/make_polygon.html">make_polygon()</a></code> desenha a área a partir de
 um ponto central, de uma forma (<code>"circle"</code>, <code>"square"</code> ou <code>"hexagon"</code>) e da
 largura total em km (<code>size</code>), que corresponde ao diâmetro do círculo, ao lado do
 quadrado ou à distância entre vértices opostos do hexágono. Um hexágono de
@@ -170,48 +190,260 @@ indicada para muitas áreas ou para áreas grandes.</p>
 <span></span>
 <span><span class="va">mapas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters</a></span><span class="op">(</span><span class="va">ufscar</span>, start <span class="op">=</span> <span class="fl">1985</span>, end <span class="op">=</span> <span class="fl">2024</span>, method <span class="op">=</span> <span class="st">"library"</span>,</span>
 <span>                      import_folder_path <span class="op">=</span> <span class="st">"collection_10"</span><span class="op">)</span></span></code></pre></div>
-<div class="inline-table"><table class="table table-sm">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="left">Download seletivo</th>
-<th align="left">Coleção nacional</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">Transferência</td>
-<td align="left">só os recortes da área</td>
-<td align="left">~28 GB para 1985–2024, uma única vez</td>
-</tr>
-<tr class="even">
-<td align="left">Internet durante a análise</td>
-<td align="left">sim, na primeira execução</td>
-<td align="left">não</td>
-</tr>
-<tr class="odd">
-<td align="left">Mais indicada para</td>
-<td align="left">poucas áreas, de até 2 ou 3 recortes</td>
-<td align="left">muitas áreas, áreas grandes, uso offline</td>
-</tr>
-</tbody>
-</table></div>
 <div class="nota">
 <p>As duas vias produzem o mesmo objeto: para a área de exemplo da Lagoa do Sino,
 os 40 mapas recortados da coleção nacional são idênticos, célula a célula, aos
 obtidos pelo download seletivo.</p>
 </div>
 </div>
+<div id="via-3-leitura-seletiva-por-http" class="section level2 unnumbered">
+<h2>Via 3: leitura seletiva por HTTP<a class="anchor" aria-label="anchor" href="#via-3-leitura-seletiva-por-http"><i class="fas fa-link"></i></a>
+</h2>
+<p>Os mapas anuais do MapBiomas ficam num repositório público, em GeoTIFFs
+divididos em blocos. Com <code>method = "http"</code>, <code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> lê só os blocos que
+cobrem a área, sem login e sem baixar o arquivo nacional inteiro. O catálogo
+reúne as coleções disponíveis, do Brasil (30 m e 10 m) e de outros países e
+regiões:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">catalogo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/raster_catalog.html">raster_catalog</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">colunas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>Produto <span class="op">=</span> <span class="st">"id"</span>, `Resolução (m)` <span class="op">=</span> <span class="st">"resolution_m"</span>,</span>
+<span>             `Primeiro ano` <span class="op">=</span> <span class="st">"first_year"</span>, `Último ano` <span class="op">=</span> <span class="st">"last_year"</span><span class="op">)</span></span>
+<span><span class="fu">tabela</span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html">setNames</a></span><span class="op">(</span><span class="va">catalogo</span><span class="op">[</span>, <span class="va">colunas</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">colunas</span><span class="op">)</span><span class="op">)</span>, <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+<div class="inline-table"><table style="width:100%;" class="table table-sm">
+<colgroup>
+<col width="44%">
+<col width="20%">
+<col width="19%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Produto</th>
+<th align="right">Resolução (m)</th>
+<th align="right">Primeiro ano</th>
+<th align="right">Último ano</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">mapbiomas_brasil_c11</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2025</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_brasil_c10</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2024</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_brasil_c9</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2023</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_brasil_10m_c4</td>
+<td align="right">10</td>
+<td align="right">2017</td>
+<td align="right">2025</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_argentina_c3</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2025</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_bolivia_c4</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2025</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_chile_c1</td>
+<td align="right">30</td>
+<td align="right">2000</td>
+<td align="right">2022</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_colombia_c3</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2024</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_ecuador_c4</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2025</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_paraguay_c1</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2022</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_peru_c4</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2025</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_uruguay_c1</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2022</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_venezuela_c3</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2024</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_indonesia_c5</td>
+<td align="right">30</td>
+<td align="right">1990</td>
+<td align="right">2025</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_amazonia_c5</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2022</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_chaco_c4</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2022</td>
+</tr>
+<tr class="odd">
+<td align="left">mapbiomas_pampa_c5</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2024</td>
+</tr>
+<tr class="even">
+<td align="left">mapbiomas_bosque_atlantico_c3</td>
+<td align="right">30</td>
+<td align="right">1985</td>
+<td align="right">2022</td>
+</tr>
+</tbody>
+</table></div>
+<p>O produto é escolhido pelo <code>id</code>. Com <code>export_folder_path</code>, as janelas lidas ficam
+gravadas como <code>produto_ano.tif</code>, junto com a área (<code>area.gpkg</code>):</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mapas_http</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters</a></span><span class="op">(</span><span class="va">ufscar</span>, start <span class="op">=</span> <span class="fl">2023</span>, end <span class="op">=</span> <span class="fl">2024</span>, method <span class="op">=</span> <span class="st">"http"</span>,</span>
+<span>                           product <span class="op">=</span> <span class="st">"mapbiomas_brasil_c10"</span>,</span>
+<span>                           export_folder_path <span class="op">=</span> <span class="st">"mapas-lagoa"</span><span class="op">)</span></span></code></pre></div>
+<p>Qualquer outro GeoTIFF anual em blocos também pode ser lido, com <code>url</code> e
+<code>{year}</code> no lugar do ano. As coleções do Brasil usam a legenda do MapBiomas; as
+de outros países têm legendas próprias, que entram pelo dicionário (próxima
+seção).</p>
+</div>
+<div id="via-4-pasta-local-de-qualquer-coleção" class="section level2 unnumbered">
+<h2>Via 4: pasta local, de qualquer coleção<a class="anchor" aria-label="anchor" href="#via-4-pasta-local-de-qualquer-cole%C3%A7%C3%A3o"><i class="fas fa-link"></i></a>
+</h2>
+<p>Mapas de outras origens (janelas gravadas pela via 3, MapBiomas de 10 m, mapas
+estaduais, classificações próprias) entram por uma pasta com um GeoTIFF por ano,
+nomeados como <code>prefixo_ano.tif</code>. <code><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters()</a></code>:</p>
+<ol style="list-style-type: decimal">
+<li>confere cada arquivo: uma camada, sistema de coordenadas, códigos inteiros e
+cobertura da área;</li>
+<li>harmoniza todos os anos pela grade do primeiro, com o vizinho mais próximo,
+que não mistura códigos de classe;</li>
+<li>recorta e mascara pela área e trata os pixels sem dado (<code>nodata</code>, 0 por
+padrão).</li>
+</ol>
+<p>A área pode estar na própria pasta. Mapas que cubram só parte da área, como
+janelas gravadas para outra região, são recusados:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mapas_relidos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters</a></span><span class="op">(</span>folder <span class="op">=</span> <span class="st">"mapas-lagoa"</span>, collection <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
+<p>Quando a coleção usa a legenda do MapBiomas, <code>collection = 10</code> traz nomes e
+cores. Para outra legenda, <code><a href="https://rdrr.io/pkg/biomastats/man/class_dictionary.html">class_dictionary()</a></code> monta um modelo com os códigos
+presentes e depois lê o dicionário preenchido (código, nome e cor, em português
+ou inglês):</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">modelo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/class_dictionary.html">class_dictionary</a></span><span class="op">(</span><span class="va">mapas_relidos</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.csv</a></span><span class="op">(</span><span class="va">modelo</span>, <span class="st">"legenda.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">dicionario</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/class_dictionary.html">class_dictionary</a></span><span class="op">(</span><span class="va">mapas_relidos</span>, file <span class="op">=</span> <span class="st">"legenda.csv"</span><span class="op">)</span></span>
+<span><span class="va">mapas_relidos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_local_rasters.html">load_local_rasters</a></span><span class="op">(</span>folder <span class="op">=</span> <span class="st">"mapas-lagoa"</span>, dictionary <span class="op">=</span> <span class="va">dicionario</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div id="qual-via-usar" class="section level2 unnumbered">
+<h2>Qual via usar<a class="anchor" aria-label="anchor" href="#qual-via-usar"><i class="fas fa-link"></i></a>
+</h2>
+<div class="inline-table"><table class="table table-sm">
+<colgroup>
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">Download seletivo</th>
+<th align="left">Coleção nacional</th>
+<th align="left">Leitura por HTTP</th>
+<th align="left">Pasta local</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Coleções</td>
+<td align="left">MapBiomas Brasil</td>
+<td align="left">MapBiomas Brasil</td>
+<td align="left">catálogo ou URL</td>
+<td align="left">qualquer uma</td>
+</tr>
+<tr class="even">
+<td align="left">Transferência</td>
+<td align="left">recortes da área</td>
+<td align="left">~28 GB, uma vez</td>
+<td align="left">só a janela da área</td>
+<td align="left">nenhuma</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet</td>
+<td align="left">na primeira execução</td>
+<td align="left">só no download</td>
+<td align="left">sim</td>
+<td align="left">não</td>
+</tr>
+<tr class="even">
+<td align="left">Mais indicada para</td>
+<td align="left">poucas áreas</td>
+<td align="left">muitas áreas, uso offline</td>
+<td align="left">10 m, outros países, poucos anos</td>
+<td align="left">mapas próprios e já gravados</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div id="contexto-ampliado" class="section level2 unnumbered">
+<h2>Contexto ampliado<a class="anchor" aria-label="anchor" href="#contexto-ampliado"><i class="fas fa-link"></i></a>
+</h2>
+<p>Índices de conectividade sofrem efeito de borda: o limite da área corta
+fragmentos e esconde trampolins do lado de fora. <code>context_m</code> amplia a leitura com
+uma faixa ao redor da área, em metros. O objeto guarda a área original em
+<code>focal</code>, usada pelas análises de conectividade (capítulo
+<a href="lagoa-contexto.html#lagoa-contexto">13</a>):</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mapas_contexto</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters</a></span><span class="op">(</span><span class="va">ufscar</span>, start <span class="op">=</span> <span class="fl">2024</span>, end <span class="op">=</span> <span class="fl">2024</span>, method <span class="op">=</span> <span class="st">"http"</span>,</span>
+<span>                               product <span class="op">=</span> <span class="st">"mapbiomas_brasil_c10"</span>, context_m <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div id="o-objeto-de-mapas" class="section level2 unnumbered">
 <h2>O objeto de mapas<a class="anchor" aria-label="anchor" href="#o-objeto-de-mapas"><i class="fas fa-link"></i></a>
 </h2>
-<p><code><a href="https://rdrr.io/pkg/biomastats/man/load_rasters.html">load_rasters()</a></code> devolve uma lista com o limite da área (<code>shape</code>), o período
-(<code>time_range</code>), um mapa por ano (<code>raster</code>) e a coleção (<code>collection</code>). Esse
-objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<p>As quatro vias devolvem uma lista com o limite da área (<code>shape</code>), o período
+(<code>time_range</code>), um mapa por ano (<code>raster</code>) e a coleção (<code>collection</code>). Ela também
+guarda a origem dos mapas (<code>source</code>), o que permite recarregar uma área maior
+pela mesma via; o dicionário de classes (<code>class_dictionary</code>), nas coleções locais;
+a área original (<code>focal</code>), com contexto; e os detalhes da leitura (<code>metadata</code>).
+Esse objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/save.html">save</a></span><span class="op">(</span><span class="va">mapas</span>, file <span class="op">=</span> <span class="st">"lagoa-do-sino.Rdata"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/load.html">load</a></span><span class="op">(</span><span class="st">"lagoa-do-sino.Rdata"</span><span class="op">)</span></span></code></pre></div>
 <p>O pacote já inclui o objeto de mapas da área de exemplo da Lagoa do Sino, de
@@ -228,10 +460,14 @@ objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:</p>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
-<li><a class="nav-link" href="#aquisicao"><span class="header-section-number">4</span> Aquisição dos mapas do MapBiomas</a></li>
+<li><a class="nav-link" href="#aquisicao"><span class="header-section-number">4</span> Aquisição dos mapas</a></li>
 <li><a class="nav-link" href="#%C3%A1rea-de-estudo">Área de estudo</a></li>
 <li><a class="nav-link" href="#via-1-download-seletivo">Via 1: download seletivo</a></li>
 <li><a class="nav-link" href="#via-2-cole%C3%A7%C3%A3o-nacional-local">Via 2: coleção nacional local</a></li>
+<li><a class="nav-link" href="#via-3-leitura-seletiva-por-http">Via 3: leitura seletiva por HTTP</a></li>
+<li><a class="nav-link" href="#via-4-pasta-local-de-qualquer-cole%C3%A7%C3%A3o">Via 4: pasta local, de qualquer coleção</a></li>
+<li><a class="nav-link" href="#qual-via-usar">Qual via usar</a></li>
+<li><a class="nav-link" href="#contexto-ampliado">Contexto ampliado</a></li>
 <li><a class="nav-link" href="#o-objeto-de-mapas">O objeto de mapas</a></li>
 </ul>
 
@@ -250,7 +486,7 @@ objeto pode ser salvo e compartilhado, o que dispensa repetir a aquisição:</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 18/10/2026.</p>
+    <p>"<strong>Bioma Stats</strong>: Uso e cobertura da terra em R: guia do usuário" was written by Prof. Dr. Iuri E. P. Ferreira e equipe CeMECA – UFSCar Lagoa do Sino. It was last built on 29/10/2026.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

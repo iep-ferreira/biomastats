@@ -16,6 +16,10 @@ land_connectivity(
   p_ref = 0.5,
   d_ref = NULL,
   parallel = FALSE,
+  prune = "auto",
+  distance = NULL,
+  link_importance = FALSE,
+  focal = NULL,
   language = c("pt", "en"),
   build_plot = TRUE
 )
@@ -49,7 +53,27 @@ AWF. O PC e o mais custoso (poda n^3 e caminhos ponderados).}
 \item{k, p_ref, d_ref}{Calibracao de k para PC e AWF, como em
 \code{\link[=patch_imp_fast]{patch_imp_fast()}}. Sem k nem d_ref, cada limiar usa p = 0,5 a max_dist / 2.}
 
-\item{parallel}{Paralelizar o conector com future.apply (FALSE por padrao).}
+\item{parallel}{FALSE (padrao), TRUE (plano future do usuario) ou numero de
+processos; ver \code{\link[=patch_imp_fast]{patch_imp_fast()}}. Com um numero, os processos sao abertos
+uma unica vez para todos os limiares e indices e fechados ao final.}
+
+\item{prune}{Poda das arestas do PC: "auto" (padrao), TRUE ou FALSE; ver
+\code{\link[=patch_imp_fast]{patch_imp_fast()}}.}
+
+\item{distance}{Distancias externas entre fragmentos; NULL (padrao) usa a
+distancia minima entre bordas, em metros. Aceita matriz quadrada (com
+nomes iguais a fragment_id ou na ordem dos fragmentos), objeto dist ou
+tabela com colunas From, To e Distance, como as de
+\code{Makurhini::distancefile()}, e o resultado de \code{\link[=cost_distance]{cost_distance()}}. NA e Inf
+significam ausencia de ligacao (barreira). max_dist, d_ref e as colunas
+terminadas em _m passam a usar a unidade dessas distancias.}
+
+\item{link_importance}{Calcular a importancia de cada ligacao para IIC e PC
+(FALSE por padrao); ver link_metrics em Value.}
+
+\item{focal}{Area focal sf/sfc opcional. NULL herda o atributo focal dos
+poligonos (de \code{load_rasters(context_m = )}); sem ele, a analise usa todo o
+habitat, como antes. Ver Details.}
 
 \item{language}{Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.}
 
@@ -57,15 +81,18 @@ AWF. O PC e o mais custoso (poda n^3 e caminhos ponderados).}
 }
 \value{
 Lista biomastats_connectivity com source_polygons, analysis_polygons,
-boundary, distance (matriz em metros), metrics (data.frame por limiar),
+boundary, distance (matriz em metros ou na unidade externa), metrics
+(data.frame por limiar, com ECA, fracoes da paisagem e indicadores no
+formato do ProtConn),
 patch_metrics (sf por fragmento/limiar, com dIIC, dPC, dAWF e suas fracoes
 dX_intra, dX_flux e dX_connector), fraction_metrics (data.frame longo das
 fracoes por fragmento, limiar e indice), edge_metrics (data.frame),
+link_metrics (importancia das ligacoes, ou NULL),
 scenarios (lista nomeada por limiar, cada item com land de classe lconnect,
 graph igraph com todos os fragmentos e patch_importance com objetos pimp),
 class_dictionary, metadata, plot (grafo espacial ggplot), cluster_plot,
-importance_plot, fractions_plot, connector_plot e range_plot. Todos sao
-reutilizaveis apos saveRDS/readRDS.
+importance_plot, fractions_plot, connector_plot, range_plot e link_plot
+(NULL sem link_importance). Todos sao reutilizaveis apos saveRDS/readRDS.
 }
 \description{
 Integra diretamente os poligonos sf de \code{\link[=reclass_to_polygons]{reclass_to_polygons()}} ao fluxo de
@@ -101,6 +128,35 @@ com status "undefined_baseline" no objeto pimp. Um fragmento nao tem ranking
 relativo e recebe o mesmo status. CPL sem pares conectados e NA. Nenhum
 indice prova conectividade funcional.
 
+A area conectada equivalente (Saura et al. 2011) e ECA_IIC = A_L sqrt(IIC)
+e ECA_PC = A_L sqrt(PC), em m2; ECAnorm_IIC e ECAnorm_PC a expressam em \%
+da area de habitat. As fracoes da paisagem seguem a saida overall do
+Makurhini, em \% do numerador: X_intra (soma de a_i^2), X_direct (pares
+ligados diretamente: um passo no IIC, probabilidade direta p_ij no PC) e
+X_step (ganho por trampolins). Com o PC, metrics traz tambem os indicadores
+do ProtConn (Saura et al. 2017) tomando o habitat como area protegida e o
+limite como regiao: Prot = 100 habitat / A_L, ProtConn = 100 ECA_PC / A_L,
+ProtUnconn = Prot - ProtConn e RelConn = 100 ProtConn / Prot. Para areas
+protegidas reais e fracoes Within, Contig, Trans e Unprot, use
+\code{\link[=as_makurhini]{as_makurhini()}} com target = "ProtConn".
+
+link_metrics traz, por limiar e indice (IIC, PC), a reducao percentual do
+numerador quando apenas aquela ligacao e removida. So uma ligacao que e
+ela propria o melhor caminho entre suas pontas pode importar; as demais
+(inclusive as podadas do PC) valem zero e nao sao listadas. Ligacoes com
+caminho alternativo de mesmo custo tambem valem zero. link_plot mapeia
+essas importancias.
+
+Com focal, a conectividade e a do habitat da area focal, e o restante da
+paisagem (o contexto) serve de trampolim, como nas areas transfronteiricas
+do ProtConn (Saura et al. 2017): cada fragmento entra com sua area dentro da
+area focal (focal_area_m2; zero fora dela), as distancias usam o fragmento
+inteiro e A_L passa a ser a area focal. Todos os indices, ECA, fracoes e
+importancias usam esse atributo; fragmentos do contexto so tem importancia
+de conector. patch_metrics ganha focal_area_m2 e focal_role ("focal",
+"edge" quando cruza o limite focal, "context"). Os indices crescem (ou se
+mantem) com o tamanho do contexto; ver \code{\link[=connectivity_context]{connectivity_context()}}.
+
 A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva
 desta analise metrica e registra CRS de origem/analise. IDs, ano, selecao,
@@ -135,5 +191,8 @@ lconnect::con_metric(conectividade$scenarios[[1]]$land, c("NC", "LNK", "IIC"))
 Pascual-Hortal, L. & Saura, S. (2006) Landscape Ecology 21:
 959-967. Saura, S. & Pascual-Hortal, L. (2007) Landscape and Urban
 Planning 83: 91-103. Saura, S. & Rubio, L. (2010) Ecography 33: 523-537.
+Saura, S. et al. (2011) Ecological Indicators 11: 407-416. Saura, S. et
+al. (2017) Ecological Indicators 76: 144-158. Godinez-Gomez, O. &
+Correa Ayram, C. A. (2020) Makurhini, \url{https://github.com/connectscape/Makurhini}.
 \href{https://cran.r-project.org/package=lconnect}{lconnect 0.1.2}.
 }

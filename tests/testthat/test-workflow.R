@@ -48,7 +48,7 @@ test_that("landscape metrics and reclassified maps use saved maps", {
     "classes", "ai_plot", "fragments_number", "area_plot",
     "edge_density_plot", "egde_lenght_plot", "frag_avg_area",
     "metrics", "metrics_table", "rec_map", "start", "end",
-    "collection", "class_dictionary", "metadata", "boundary"
+    "collection", "class_dictionary", "metadata", "boundary", "focal"
   ))
   expect_equal(metrics[["start"]], 1985)
   expect_equal(metrics[["end"]], 1986)
