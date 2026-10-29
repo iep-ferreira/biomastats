@@ -21,6 +21,9 @@ test_that("NAMESPACE exports exactly the public functions", {
     "land_change", "land_to_graph", "reclass_to_polygons", "land_connectivity", "patch_imp_fast",
     # resistance, least-cost distance, temporal connectivity and Makurhini
     "resistance_surface", "cost_distance", "connectivity_change", "as_makurhini",
+    "connectivity_context",
+    # local collections of any origin and their dictionaries
+    "load_local_rasters", "class_dictionary", "raster_catalog",
     # time series
     "land_time_series", "series_correlation", "series_fit_regime", "series_diagnostics",
     "series_forecast",

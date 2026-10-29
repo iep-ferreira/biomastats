@@ -3,7 +3,7 @@
 #' This function compares the provided shapefile of interest with the fragmented shapefile of Brazil
 #' and identifies which fragments are necessary for the analysis.
 #'
-#' @param shape_path Path to the shapefile of interest
+#' @param shape_path Path to the shapefile of interest, or an `sf`/`sfc` polygon
 #' @return Vector of fragment IDs required for the analysis
 #' @importFrom sf st_read
 #' @importFrom sf st_transform
@@ -21,7 +21,8 @@ compare_shapefiles <- function(shape_path) {
   sys_path <- system.file(package = "biomastats")
 
   # Read the shapefiles
-  s <- sf::st_read(shape_path, quiet = TRUE)
+  s <- .read_study_area(shape_path)
+  s <- sf::st_sf(geometry = sf::st_geometry(s))
   sf::st_agr(s) <- "constant"
   brasil_cortado_path <- paste0(sys_path, "/shp/brasil_cortado.shp" )
   s_brasil <- sf::st_read(brasil_cortado_path, quiet = TRUE)

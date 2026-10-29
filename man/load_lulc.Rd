@@ -8,7 +8,8 @@ load_lulc(
   shape_path = NULL,
   source = c("esa_worldcover"),
   years = c(2020, 2021),
-  timeout = NULL
+  timeout = NULL,
+  context_m = 0
 )
 }
 \arguments{
@@ -21,12 +22,18 @@ load_lulc(
 
 \item{timeout}{Seconds to wait for each remote response; default 5
 (option \code{biomastats.timeout}).}
+
+\item{context_m}{Width, in metres, of a buffer added around the study area
+(default 0), as in \code{\link[=load_rasters]{load_rasters()}}: tiles, crop and mask cover the
+context and the original area is kept as \code{focal}.}
 }
 \value{
-A maps object: \code{shape} (sf, EPSG:4326), \code{time_range}, \code{raster}
-(list of in-memory \code{RasterLayer}, one per year), \code{collection}
-(\code{"esa_worldcover"}) and \code{metadata} (product, version, catalogue year,
-tiles, status and time per year).
+A maps object: \code{shape} (sf, EPSG:4326; the context when
+\code{context_m > 0}), \code{time_range}, \code{raster} (list of in-memory \code{RasterLayer},
+one per year), \code{collection} (\code{"esa_worldcover"}), \code{metadata} (product,
+version, catalogue year, tiles, status and time per year), \code{focal} (only
+with a context) and \code{source} (loader, product, timeout and \code{context_m}, used
+by \code{\link[=connectivity_context]{connectivity_context()}} to reload a larger area).
 }
 \description{
 Portable counterpart of \code{\link[=load_rasters]{load_rasters()}} for land cover outside MapBiomas.

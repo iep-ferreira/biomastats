@@ -88,6 +88,54 @@ os 40 mapas recortados da coleção nacional são idênticos, célula a célula,
 obtidos pelo download seletivo.
 :::
 
+## Via 3: pasta local, de qualquer coleção {-}
+
+Mapas de outras coleções (MapBiomas de outros países ou de 10 m, mapas
+estaduais, classificações próprias) entram por uma pasta com um GeoTIFF por ano,
+nomeados como `prefixo_ano.tif`. `load_local_rasters()` confere cada arquivo
+(uma camada, CRS e códigos inteiros), harmoniza a grade de todos os anos pela do
+primeiro, com o vizinho mais próximo, recorta e mascara pela área e devolve o
+mesmo objeto das outras vias. Quando a coleção usa a legenda do MapBiomas,
+`collection = 10` traz nomes e cores; para outra legenda, `class_dictionary()`
+monta um modelo com os códigos presentes e lê o dicionário preenchido:
+
+```{r eval=FALSE}
+mapas10m <- load_local_rasters(ufscar, folder = "~/Documents/mapbiomas_10m_col4",
+                               collection = 10)
+
+modelo <- class_dictionary(mapas10m)        # códigos presentes, para preencher
+write.csv(modelo, "legenda.csv", row.names = FALSE)
+dicionario <- class_dictionary(mapas10m, file = "legenda.csv")
+mapas10m <- load_local_rasters(ufscar, folder = "~/Documents/mapbiomas_10m_col4",
+                               dictionary = dicionario)
+```
+
+A pasta fica registrada no objeto: `connectivity_context()` usa a mesma pasta
+para carregar a área ampliada.
+
+## Via 4: leitura seletiva por HTTP {-}
+
+Os mapas anuais do MapBiomas ficam num repositório público, em GeoTIFFs
+divididos em blocos. Com `method = "http"`, o `load_rasters()` lê só os blocos
+que cobrem a área, sem login e sem baixar o arquivo nacional inteiro, e entrega o
+mesmo objeto das outras vias. `raster_catalog()` lista as coleções disponíveis,
+do Brasil (30 m e 10 m) e de outros países; `url` aceita qualquer outro GeoTIFF
+anual, com `{year}` no lugar do ano. Com `export_folder_path`, as janelas ficam
+gravadas e podem ser relidas depois por `load_local_rasters()`, inclusive em
+outro computador:
+
+```{r eval=FALSE}
+raster_catalog(initiative = "brasil")
+mapas_http <- load_rasters(ufscar, start = 2023, end = 2024, method = "http",
+                           product = "mapbiomas_brasil_c10",
+                           export_folder_path = "mapas-lagoa")
+mapas_relidos <- load_local_rasters(folder = "mapas-lagoa", collection = 10)
+```
+
+A área de estudo pode ser um GeoPackage, um shapefile (com o `.prj`) ou a pasta
+que o contém; sem o `.prj`, o shapefile perde o sistema de coordenadas e o
+carregamento para com um aviso.
+
 ## O objeto de mapas {-}
 
 `load_rasters()` devolve uma lista com o limite da área (`shape`), o período

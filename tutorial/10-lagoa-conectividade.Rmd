@@ -199,6 +199,51 @@ mudanca <- connectivity_change(poligonos_serie, max_dist = 300, metric_patch = "
 gganimate::animate(mudanca$animation, fps = 1)
 ```
 
+## Efeito de borda e contexto ampliado {-}
+
+O limite da área de estudo corta fragmentos e esconde os trampolins que ficam
+do lado de fora, o que subestima a conectividade perto da borda. Com `focal`,
+`land_connectivity()` mede a conectividade do habitat da área de estudo usando
+o entorno como trampolim, e `connectivity_context()` faz isso para vários raios
+de contexto: amplia a área, recarrega os mapas com a mesma origem, reclassifica
+e vetoriza uma única vez e reaproveita as distâncias do maior contexto nos
+menores. Basta informar as classes de habitat. O raio 0 é a análise sem
+contexto:
+
+```{r eval=FALSE}
+contexto <- connectivity_context(mapas, classes = 3, max_dist = 300,
+  context = c(0, 300, 600, 1200, 2400), metric_patch = c("IIC", "PC"),
+  p_ref = 0.05, d_ref = 300)
+contexto$sensitivity_plot
+contexto$rank_stability
+contexto$stepping_stones
+```
+
+Quando a curva da ECA se estabiliza (`converged`), o contexto deixa de mudar
+o resultado; se ainda cresce no maior raio, o efeito de borda persiste e vale
+ampliar o contexto. `rank_stability` mostra se a ordem dos fragmentos
+prioritários depende do recorte, e `stepping_stones`, os fragmentos de fora
+da área que sustentam a conectividade dela. Para um único contexto, sem a
+análise de sensibilidade, use `load_rasters(context_m = 1000)`: os polígonos
+herdam a área focal, e `land_connectivity()` a usa sozinha.
+
+Com `targets`, a mesma análise mede a importância de um fragmento ou de um
+conjunto deles quando removidos de uma vez, raio a raio. A comparação com a
+soma das importâncias individuais mostra se os fragmentos se substituem ou
+dividem a mesma contribuição. Alvos podem ser `fragment_id`, listas nomeadas
+de ids ou geometrias `sf`, inclusive fora da área de estudo:
+
+```{r eval=FALSE}
+alvo <- connectivity_context(mapas, classes = 3, max_dist = 300,
+  targets = list(nucleo = c(12, 40), corredor = 7))
+alvo$target_sensitivity
+alvo$target_plot
+```
+
+A rotina não depende do MapBiomas: com `load_lulc()` (ESA WorldCover), ela
+funciona em qualquer país, e `source` aceita uma função que carregue mapas de
+outra fonte para a área ampliada.
+
 ## Integração com o Makurhini {-}
 
 `as_makurhini()` prepara os argumentos de `MK_dPCIIC()`, `MK_dECA()` e

@@ -8,39 +8,90 @@ load_rasters(
   shape_path = NULL,
   start = 1985,
   end = 2020,
-  method = c("download", "library"),
+  method = c("download", "library", "http"),
   export_folder_path = NULL,
   import_folder_path = NULL,
   type = "cover",
-  collection = "10"
+  collection = "10",
+  context_m = 0,
+  product = NULL,
+  url = NULL,
+  dictionary = NULL,
+  nodata = 0,
+  timeout = NULL
 )
 }
 \arguments{
-\item{shape_path}{A character string specifying the path to the shapefile.}
+\item{shape_path}{The study area: an \code{sf}/\code{sfc} polygon or a vector file
+(GeoPackage, shapefile or GeoJSON), with or without extension; with the same
+name, \code{.gpkg} is preferred to \code{.shp}. A shapefile needs its \code{.prj}.}
 
 \item{start}{A numeric value indicating the start year for raster data.}
 
 \item{end}{A numeric value indicating the end year for raster data.}
 
-\item{method}{Raster source: \code{"download"} or \code{"library"}.}
+\item{method}{Raster source: \code{"download"} (MapBiomas tiles from the
+Biomastats API), \code{"library"} (national maps in a local folder) or \code{"http"}
+(selective reading of the area's window from public GeoTIFFs; see
+\code{product} and \code{url}).}
 
-\item{export_folder_path}{Directory where downloaded raster files are stored.}
+\item{export_folder_path}{Directory where downloaded raster files are stored.
+With \code{method = "http"} (optional), the clipped windows are written there as
+\verb{<product>_<year>.tif}, with the area as \code{area.gpkg}, ready for
+\code{\link[=load_local_rasters]{load_local_rasters()}}.}
 
 \item{import_folder_path}{Directory containing an existing raster library.}
 
 \item{type}{Data type requested from the Biomastats API. Default is \code{"cover"}.}
 
-\item{collection}{Collection version. Default is \code{"10"}.}
+\item{collection}{Collection version. Default is \code{"10"}. With
+\code{method = "http"}, the default follows the catalogue: the MapBiomas legend
+for Brazilian products, the product id otherwise.}
+
+\item{context_m}{Width, in metres, of a buffer added around the study area
+(default 0). With a positive value, map tiles, crop and mask cover the
+study area plus the buffer (the analysis context), and the original area is
+kept as \code{focal}. See \code{\link[=connectivity_context]{connectivity_context()}}.}
+
+\item{product}{With \code{method = "http"}: a product id of \code{\link[=raster_catalog]{raster_catalog()}}
+(for example \code{"mapbiomas_brasil_c10"} or \code{"mapbiomas_brasil_10m_c4"}).}
+
+\item{url}{With \code{method = "http"}: instead of \code{product}, a URL (or GDAL path,
+such as \verb{/vsicurl/...} or a local file) with \code{{year}} in place of the year.}
+
+\item{dictionary, nodata}{With \code{method = "http"}: class dictionary and no-data
+codes, as in \code{\link[=load_local_rasters]{load_local_rasters()}}.}
+
+\item{timeout}{With \code{method = "http"}: seconds to wait for each HTTP response
+(default 30).}
 }
 \value{
-A list containing the shapefile, time range, and masked raster data.
+A list containing the shapefile (\code{shape}, the study area or its
+context), time range, masked raster data and collection. With
+\code{context_m > 0}, \code{focal} holds the original study area. \code{source} records
+how the maps were obtained (loader, method, folders, type, collection and
+\code{context_m}), so that \code{\link[=connectivity_context]{connectivity_context()}} can reload a larger area.
 }
 \description{
 This function loads raster data from either an online source, a local folder, or a library.
 It then crops and masks the raster data using a provided shapefile.
 }
+\details{
+The buffer is computed in the local UTM zone of the study area and
+returned in WGS84 (EPSG:4326), like the shape. Downstream,
+\code{\link[=biomastats_metrics]{biomastats_metrics()}} and \code{\link[=reclass_to_polygons]{reclass_to_polygons()}} carry \code{focal} along with
+\code{boundary}, and \code{\link[=land_connectivity]{land_connectivity()}} uses it to measure connectivity of the
+focal habitat with the context as stepping stones.
+}
 \examples{
 \dontrun{
 load_rasters("path/to/shapefile.shp", start = 1985, end = 2020, method = "download", export_folder_path = "./maps-personal-library/")
+# Study area plus a 2 km context
+load_rasters(area, start = 2024, end = 2024, method = "download",
+             export_folder_path = "./maps-personal-library/", context_m = 2000)
+# Selective reading over HTTP (window of the area only), saved for reuse
+raster_catalog(initiative = "brasil")
+load_rasters("itapetininga.gpkg", start = 2023, end = 2024, method = "http",
+             product = "mapbiomas_brasil_c10", export_folder_path = "mapas_itapetininga")
 }
 }

@@ -40,7 +40,7 @@ get_area <- function(data = NULL, dec_places = 3, plot_type = "areaplot") {
   }
   codes <- sort(unique(as.numeric(unlist(lapply(areas, names)))))
   if (!length(codes)) stop("Nenhuma classe observada nos rasters.")
-  dic <- .biomastats_dictionary(collection, codes)
+  dic <- .biomastats_dictionary(collection, codes, data$class_dictionary)
   df <- do.call(rbind, lapply(seq_along(years), function(i) {
     a <- as.numeric(areas[[i]][match(as.character(codes), names(areas[[i]]))])
     if (coverage[[i]]$valid_cells > 0) a[is.na(a)] <- 0

@@ -218,6 +218,43 @@ TRUE, chama o Makurhini por `.makurhini_fun()`, via nome em variavel, porque o
 pacote vem do GitHub e nao esta em Suggests. Testes comparam ECA, fracoes,
 dIIC/dPC e ProtConn com o Makurhini quando ele esta instalado (fora do CRAN).
 
+### Contexto espacial ampliado: focal e connectivity_context
+
+O efeito de borda e tratado separando a area focal (a de estudo) do contexto
+(a area focal mais um buffer). `load_rasters(context_m = )` amplia recortes,
+corte e mascara e guarda a area original em `focal`; o buffer e calculado na
+UTM local (`.context_buffer()`), e `source` registra a origem dos mapas para
+recargas. `focal` segue o mesmo caminho de `boundary` ate os poligonos.
+
+`land_connectivity(focal = )` nao cria motor novo: troca as areas dos
+fragmentos pelo atributo focal (area dentro da area focal, zero fora) e A_L pela
+area focal. O motor de decomposicao ja aceita atributos zero, entao fragmentos
+do contexto viram trampolins com importancia so de conector (definicao das
+areas transfronteiricas de Saura et al. 2017). As distancias continuam do
+fragmento inteiro.
+
+`connectivity_context()` (arquivo proprio) e um orquestrador sobre funcoes
+publicas: obtem os mapas do maior contexto (source, mapas que ja o cobrem ou
+`load_rasters()` com a origem registrada), reclassifica como `lulc_metrics()`
+e vetoriza com `reclass_to_polygons(save_shp = FALSE)` uma vez por ano, roda
+`land_connectivity()` no maior raio e reaproveita sua matriz (ou a de
+`cost_distance()`) recortada para os menores, com os fragmentos inteiros que
+tocam cada faixa. O raio 0 vetoriza o habitat mascarado pela area focal e
+reproduz a analise sem contexto. Com A_L fixo e o contexto como trampolim, os
+indices nao decrescem com o raio, o que torna a curva um diagnostico de
+convergencia. Nada e gravado em disco. Os testes usam mapas sinteticos,
+inclusive uma biblioteca local de GeoTIFF para o modo `library` de
+`load_rasters()` e uma raiz local de tiles para `load_lulc()`, sem download.
+
+A recarga nao depende de colecao: `source$loader` registra `load_rasters` ou
+`load_lulc`, e `source` pode ser uma funcao `function(area, years)` para
+qualquer outra fonte de mapas no mesmo formato. Colecoes sem dicionario em
+`dict_build()` seguem com codigos numericos (`.context_dictionary()` devolve
+NULL em vez de erro). Alvos (`targets`) sao convertidos em geometrias e, em
+cada raio, reunem os fragmentos cujo interior as intersecta; a remocao conjunta
+usa `.set_importance()` no grafo sem poda (a poda so e exata para remocoes
+unitarias) e e comparada a soma das importancias individuais.
+
 ### Mudancas temporais: land_change
 
 `land_change(data, years)` recebe diretamente o objeto de load_rasters e
@@ -537,3 +574,46 @@ interna compartilhada em `R/layer_sources.R`.
   compartilhada), em metros geodésicos.
 - Testes automatizados leves e offline (`test-external-layers.R`); teste manual
   com dados reais em `testes-manuais/teste-manual-camadas.Rmd`.
+
+### Colecoes locais: load_local_rasters e class_dictionary
+
+`load_local_rasters()` e o terceiro carregador, ao lado de `load_rasters()`
+(MapBiomas) e `load_lulc()` (ESA WorldCover), e devolve o mesmo objeto de mapas.
+Le GeoTIFFs `<prefixo>_<ano>.tif` de uma pasta, recorta apenas a janela da area
+(leitura parcial pelo GDAL), harmoniza cada ano pela grade de referencia com
+vizinho mais proximo (os codigos nao sao interpolados), mascara pelo centro das
+celulas e devolve RasterLayer em memoria. As acoes de harmonizacao ficam em
+`metadata$harmonization`; `source` registra pasta, prefixo, colecao, dicionario,
+nodata, grade e contexto para recargas.
+
+O dicionario de uma colecao local viaja no objeto (`class_dictionary`, formato de
+`dict_build()`). `.biomastats_dictionary(collection, codes, dictionary)` prefere
+esse dicionario, depois `dict_build()` e, para colecoes desconhecidas, nomes
+genericos; `.biomastats_collection()` aceita nomes de colecoes locais. Assim as
+funcoes de analise nao precisam saber a origem dos mapas. `class_dictionary()`
+monta modelos e confere CSVs (colunas por alias, cores em hexadecimal), sem
+gravar arquivos.
+
+Os testes usam uma colecao sintetica de poucos KB em `inst/extdata/local_maps`,
+com grades diferentes por ano, regenerada por `development/make_local_fixtures.R`.
+O teste com dados reais (`test-local-mapbiomas-10m.R`) segue a convencao
+`test-local-*`, fora do pacote construido e do CI.
+
+### Aquisicao seletiva por HTTP e catalogo
+
+`load_rasters(method = "http")` nao tem rotina propria de recorte: monta um
+caminho GDAL por ano (`/vsicurl/` + modelo com `{year}`, de `raster_catalog()` ou
+de `url`) e chama o mesmo nucleo de `load_local_rasters()`
+(`.load_raster_paths()`), de modo que conferencia, harmonizacao, mascara e
+dicionario sao identicos nas duas vias. A leitura parcial depende de GeoTIFFs em
+blocos e de servidores com range requests; `.with_gdal_network()` fixa tempo
+limite e desliga a listagem de diretorios remotos. `export_folder_path` grava as
+janelas no formato de pasta local, o que torna a portabilidade uma releitura
+pela via local. O catalogo (`.raster_registry()`) e uma tabela estatica,
+verificada contra o bucket do MapBiomas; mudancas de endereco exigem atualiza-la.
+
+A area de estudo passa sempre por `.read_study_area()` e `.study_area_file()`:
+deteccao de GeoPackage, shapefile ou GeoJSON por extensao, nome sem extensao ou
+pasta, preferencia pelo `.gpkg` e erro explicito para shapefile sem `.prj`. A
+cobertura minima (99% da area de estudo, nao do contexto) evita mascaras
+silenciosamente incompletas.

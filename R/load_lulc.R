@@ -20,26 +20,39 @@
 #' @param years Years to load (2020 and/or 2021).
 #' @param timeout Seconds to wait for each remote response; default 5
 #'   (option `biomastats.timeout`).
-#' @return A maps object: `shape` (sf, EPSG:4326), `time_range`, `raster`
-#'   (list of in-memory `RasterLayer`, one per year), `collection`
-#'   (`"esa_worldcover"`) and `metadata` (product, version, catalogue year,
-#'   tiles, status and time per year).
+#' @param context_m Width, in metres, of a buffer added around the study area
+#'   (default 0), as in [load_rasters()]: tiles, crop and mask cover the
+#'   context and the original area is kept as `focal`.
+#' @return A maps object: `shape` (sf, EPSG:4326; the context when
+#'   `context_m > 0`), `time_range`, `raster` (list of in-memory `RasterLayer`,
+#'   one per year), `collection` (`"esa_worldcover"`), `metadata` (product,
+#'   version, catalogue year, tiles, status and time per year), `focal` (only
+#'   with a context) and `source` (loader, product, timeout and `context_m`, used
+#'   by [connectivity_context()] to reload a larger area).
 #' @examples
 #' \dontrun{
 #' wc <- load_lulc(system.file("shp", "UFSCar.shp", package = "biomastats"))
 #' get_area(wc)$time_series
 #' }
 #' @export
-load_lulc <- function(shape_path = NULL, source = c("esa_worldcover"), years = c(2020, 2021), timeout = NULL) {
+load_lulc <- function(shape_path = NULL, source = c("esa_worldcover"), years = c(2020, 2021), timeout = NULL,
+                      context_m = 0) {
   source <- match.arg(source)
+  if (!is.numeric(context_m) || length(context_m) != 1L || !is.finite(context_m) || context_m < 0) {
+    stop("context_m deve ser uma distancia nao negativa em metros.")
+  }
   timeout <- .layer_timeout(timeout)
   if (is.null(shape_path)) shape_path <- system.file("shp", "polygon.shp", package = "biomastats")
   years <- sort(unique(as.integer(years)))
   versions <- c("2020" = "v100", "2021" = "v200")
   if (!length(years) || any(!as.character(years) %in% names(versions)))
     stop("ESA WorldCover est\u00e1 dispon\u00edvel para 2020 e 2021.")
-  shape <- if (inherits(shape_path, c("sf", "sfc"))) sf::st_transform(sf::st_as_sf(shape_path), 4326)
-    else sf::st_transform(sf::st_read(shape_path, quiet = TRUE), 4326)
+  shape <- .read_study_area(shape_path)  # .gpkg/.shp detection and .prj check
+  focal <- NULL
+  if (context_m > 0) {
+    focal <- shape
+    shape <- .context_buffer(shape, context_m)
+  }
   area <- .study_area(shape)
   tiles <- .worldcover_tiles(sf::st_bbox(area))
   blocks <- lapply(years, function(y) .layer_block(sprintf("ESA WorldCover %d", y),
@@ -56,10 +69,13 @@ load_lulc <- function(shape_path = NULL, source = c("esa_worldcover"), years = c
   kept <- years[ok]
   if (length(kept) > 1 && any(diff(kept) != 1)) kept <- kept[length(kept)]
   rasters <- lapply(blocks[match(kept, years)], `[[`, "value")
-  list(shape = shape, time_range = c(min(kept), max(kept)), raster = rasters, collection = source,
+  out <- list(shape = shape, time_range = c(min(kept), max(kept)), raster = rasters, collection = source,
        metadata = list(source = source, product = "ESA WorldCover 10 m", provider = "ESA",
                        license = "CC BY 4.0", catalog_years = kept, status = status,
                        method = "COG window read, crop per tile, merge, mask by cell centre"))
+  if (!is.null(focal)) out$focal <- focal
+  out$source <- list(loader = "load_lulc", product = source, timeout = timeout, context_m = context_m)
+  out
 }
 
 # 3 x 3 degree tiles named by their lower-left corner (e.g. S24W051).

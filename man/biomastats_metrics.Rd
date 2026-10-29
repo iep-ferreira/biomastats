@@ -61,6 +61,8 @@ A list containing:
 dictionary entries, and source CRS/resolution by year for downstream reuse.}
 \item{boundary}{The inherited study-area shape, when present in the maps
 object, for downstream landscape-area denominators.}
+\item{focal}{The original study area when the maps were loaded with a
+context buffer (\code{load_rasters(context_m = )}), or \code{NULL}.}
 }
 \description{
 This function computes a variety of landscape metrics for a set of raster data over a defined time period.

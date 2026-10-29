@@ -17,6 +17,7 @@ MapBiomas.
 | `teste-manual-aquisicao.Rmd` | `load_rasters()` com aquisição seletiva de tiles, sem cache: Lagoa do Sino (1 tile) e Itapetininga - SP (2 tiles) | sim | 3 a 5 min |
 | `teste-manual-biblioteca.Rmd` | `load_rasters(method = "library")`: recorte a partir da coleção nacional já gravada no computador (`collection_10`, 1985–2024), com o tempo de cada etapa, para a Lagoa do Sino; confere que o recorte coincide com o exemplo do pacote | não (exige a coleção local, ~28 GB) | menos de 1 min |
 | `teste-manual-camadas.Rmd` | Camadas externas gratuitas no mesmo limite das análises, no Brasil (Lagoa do Sino) e no mundo (Liechtenstein): ESA WorldCover por `load_lulc()`, feições OSM e Overture por `load_features()`, relevo e solos por `load_physical()`, superfícies por `feature_raster()`, distâncias por `distance_to_nearest()`, ano de catálogo de cada fonte e simulação de fontes fora do ar | sim | 2 a 3 min |
+| `teste-manual-http.Rmd` | `load_rasters(method = "http")` e `raster_catalog()`: aquisição seletiva da janela de Itapetininga - SP (Coleção 10, 30 m), conferida célula a célula com o recorte direto do GeoTIFF nacional; portabilidade para Campina do Monte Alegre - SP (recusa dos mapas de 10 m que não cobrem o município, gravação das janelas por HTTP, releitura por `load_local_rasters()` e coincidência com as janelas antigas na sobreposição); erro de shapefile sem `.prj` | sim | 1 a 2 min |
 
 ### Testes por módulo (`modulos/`)
 
@@ -59,6 +60,7 @@ rmarkdown::render("testes-manuais/teste-manual-integrado.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-biblioteca.Rmd")
 rmarkdown::render("testes-manuais/teste-manual-camadas.Rmd")
+rmarkdown::render("testes-manuais/teste-manual-http.Rmd")
 
 # todos os módulos
 for (f in list.files("testes-manuais/modulos", "[.]Rmd$", full.names = TRUE))
@@ -100,6 +102,8 @@ rmarkdown::render("testes-manuais/teste-manual-aquisicao.Rmd",
   `download_maps()`, `compare_shapefiles()` ou a API de tiles.
 - Camadas: depois de alterar `load_lulc()`, `load_features()`,
   `load_physical()`, `feature_raster()` ou `distance_to_nearest()`.
+- HTTP: depois de alterar `load_rasters(method = "http")`, `raster_catalog()`,
+  `load_local_rasters()` ou a leitura da área de estudo.
 - Módulos: depois de alterar a função do módulo correspondente.
 
 ## Problemas comuns
@@ -149,3 +153,18 @@ Parâmetros:
 rmarkdown::render("testes-manuais/teste-manual-camadas.Rmd",
                   params = list(cache_novo = FALSE, osm_brasil = TRUE))
 ```
+
+## Teste da via HTTP
+
+Usa a malha municipal do IBGE (sem login) e o bucket público do MapBiomas.
+A parte de portabilidade lê a pasta de 10 m em `~/Documents/mapbiomas_10m_col4`
+(janelas da Lagoa do Sino + 5 km). Para outra pasta, produto ou período:
+
+```r
+rmarkdown::render("testes-manuais/teste-manual-http.Rmd",
+  params = list(pasta_10m = "D:/mapas/mapbiomas_10m", anos_campina = 2023:2025))
+```
+
+A renderização para com erro se qualquer verificação falhar. Fora do RStudio, o
+`rmarkdown` precisa do pandoc: defina `RSTUDIO_PANDOC` com a pasta do pandoc
+(no Windows, `C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools`).

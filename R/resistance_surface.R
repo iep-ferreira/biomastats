@@ -95,7 +95,9 @@ resistance_surface <- function(data, year = NULL, resistance, barriers = NULL,
   out_raster <- raster::setValues(raster::raster(friction), cost)
   cell_ha <- prod(terra::res(friction)) / 10000
   present <- sort(unique(stats::na.omit(codes)))
-  dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, present)
+  # Maps of a collection without a dictionary keep their numeric codes.
+  dictionary <- .context_dictionary(collection, present,
+    if (is.list(data) && !inherits(data, c("Raster", "SpatRaster"))) data$class_dictionary)$dictionary
   classes <- data.frame(code = present,
     class = if (is.null(dictionary)) as.character(present)
       else .tr(language, dictionary$classe, dictionary$class),

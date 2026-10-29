@@ -225,6 +225,26 @@
              importance = 100 * delta / total)
 }
 
+# Joint importance of a set of patches (indices in `set`): the drop (%) of the
+# index numerator when all of them are removed at once. It differs from the sum
+# of single importances when the patches substitute or share contributions.
+# The unpruned graph is used, since pruning is exact only for single removals.
+.set_importance <- function(D, areas, max_dist, metric, k = NULL, set) {
+  if (!length(set)) return(0)
+  rest_idx <- setdiff(seq_along(areas), set)
+  if (metric == "AWF") {
+    full <- .awf_value(D, areas, k)
+    rest <- .awf_value(D[rest_idx, rest_idx, drop = FALSE], areas[rest_idx], k)
+  } else {
+    g <- .path_graph(D, metric, max_dist)
+    full <- .graph_index_sum(g, areas, metric, k)
+    rest <- if (!length(rest_idx)) 0 else
+      .graph_index_sum(igraph::delete_vertices(g, set), areas[rest_idx], metric, k)
+  }
+  if (!is.finite(full) || full <= 0) return(NaN)
+  100 * (full - rest) / full
+}
+
 # External distances aligned with the patch ids: a square matrix (reordered
 # by its dimnames when present), a dist object, or a From/To/Distance table
 # such as Makurhini's (missing pairs have no link). NA and Inf mean no link

@@ -7,7 +7,7 @@
 compare_shapefiles(shape_path)
 }
 \arguments{
-\item{shape_path}{Path to the shapefile of interest}
+\item{shape_path}{Path to the shapefile of interest, or an \code{sf}/\code{sfc} polygon}
 }
 \value{
 Vector of fragment IDs required for the analysis

@@ -94,7 +94,7 @@ test_that("ECA, landscape fractions and ProtConn indicators follow their definit
   expect_equal(m$RelConn, m$ECAnorm_PC)
   only_iic <- land_connectivity(p, max_dist = 30, build_plot = FALSE)$metrics
   expect_true(all(is.na(only_iic[c("ECA_PC", "PC_intra", "ProtConn")])))
-  expect_equal(out$metadata$schema_version, "1.3")
+  expect_equal(out$metadata$schema_version, "1.4")
 })
 
 test_that("link importance equals explicit removal of each link", {

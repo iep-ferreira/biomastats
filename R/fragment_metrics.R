@@ -97,7 +97,7 @@ fragment_metrics <- function(maps, classes = NULL, years = NULL, merge_classes =
   patches <- do.call(rbind, out_patches); rownames(patches) <- NULL
   summary <- do.call(rbind, out_summary); rownames(summary) <- NULL
   codes_all <- sort(unique(if (merge_classes) unlist(classes %||% patches$code) else patches$code))
-  dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, codes_all) else
+  dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, codes_all, input$class_dictionary) else
     data.frame(code = codes_all, classe = paste("Classe", codes_all), class = paste("Class", codes_all),
                grupo = NA_character_, group = NA_character_, color = "#777777", known = FALSE)
   polygons <- NULL
@@ -134,7 +134,8 @@ fragment_metrics <- function(maps, classes = NULL, years = NULL, merge_classes =
   if (any(!years %in% all_years)) stop("Anos fora do intervalo dispon\u00edvel.")
   collection <- if (!is.null(maps$collection)) .biomastats_collection(maps$collection) else NULL
   list(rasters = lapply(maps$raster[match(years, all_years)], .as_terra), years = years,
-       collection = collection, metadata = maps$metadata, boundary = maps$shape)
+       collection = collection, class_dictionary = maps$class_dictionary,
+       metadata = maps$metadata, boundary = maps$shape)
 }
 
 # Fragment geometry for one class (or merged class group) in one year.

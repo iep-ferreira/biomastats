@@ -133,7 +133,7 @@ land_change <- function(data, years = NULL, language = c("pt", "en"), build_plot
     valid_area_ha = colSums((!is.na(values)) * area), common_area_ha = sum(area[common]))
   selected <- values[common, , drop = FALSE]
   codes <- sort(unique(as.vector(selected)))
-  dictionary <- .biomastats_dictionary(collection, codes)
+  dictionary <- .biomastats_dictionary(collection, codes, data$class_dictionary)
   key <- apply(selected, 1, paste, collapse = ":")
   keys <- unique(key)
   first <- match(keys, key)

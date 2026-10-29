@@ -65,6 +65,7 @@ Para a documentação completa, use `?nome_da_função` no R.
 | `resistance_surface()` | Superfície de custo a partir do uso do solo, com barreiras | mapas |
 | `cost_distance()` | Distância de menor custo entre os fragmentos, de borda a borda | `reclass_to_polygons()` e `resistance_surface()` |
 | `connectivity_change()` | ECA, dECA, frações e importância das ligações ao longo dos anos, com gráficos e animação | `reclass_to_polygons()` ou `land_connectivity()` |
+| `connectivity_context()` | Sensibilidade dos índices e da importância ao tamanho do contexto ao redor da área de estudo | mapas e classes |
 | `as_makurhini()` | Argumentos (e resultados) de `MK_dPCIIC()`, `MK_dECA()` e `MK_ProtConn()` do Makurhini | `land_connectivity()` ou `connectivity_change()` |
 
 ## Camadas externas {-}
@@ -73,6 +74,9 @@ Para a documentação completa, use `?nome_da_função` no R.
 |:--|:--|:--|
 | `layer_catalog()` | Lista as fontes externas, suas versões e anos de referência | — |
 | `load_lulc()` | Cobertura ESA WorldCover 10 m, em qualquer lugar do mundo, no formato de `load_rasters()` | shapefile ou `sf` |
+| `load_local_rasters()` | Carrega GeoTIFFs anuais de uma pasta local, de qualquer coleção, harmonizados e recortados | área de estudo e pasta |
+| `raster_catalog()` | Coleções do MapBiomas (Brasil, 10 m e outros países) para leitura seletiva por HTTP em `load_rasters(method = "http")` | — |
+| `class_dictionary()` | Monta e confere o dicionário de classes (códigos, nomes e cores) | mapas ou CSV |
 | `load_features()` | Estradas, ferrovias, rios, corpos d'água, edificações e localidades (OpenStreetMap ou Overture) | mapas, `sf` ou shapefile |
 | `load_physical()` | Altitude, declividade, orientação e propriedades do solo na grade dos mapas | mapas |
 | `feature_raster()` | Superfícies de distância, contagem, comprimento, cobertura e densidade de feições | `load_features()` e mapas |

@@ -19,6 +19,7 @@ land_connectivity(
   prune = "auto",
   distance = NULL,
   link_importance = FALSE,
+  focal = NULL,
   language = c("pt", "en"),
   build_plot = TRUE
 )
@@ -69,6 +70,10 @@ terminadas em _m passam a usar a unidade dessas distancias.}
 
 \item{link_importance}{Calcular a importancia de cada ligacao para IIC e PC
 (FALSE por padrao); ver link_metrics em Value.}
+
+\item{focal}{Area focal sf/sfc opcional. NULL herda o atributo focal dos
+poligonos (de \code{load_rasters(context_m = )}); sem ele, a analise usa todo o
+habitat, como antes. Ver Details.}
 
 \item{language}{Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.}
 
@@ -141,6 +146,16 @@ ela propria o melhor caminho entre suas pontas pode importar; as demais
 (inclusive as podadas do PC) valem zero e nao sao listadas. Ligacoes com
 caminho alternativo de mesmo custo tambem valem zero. link_plot mapeia
 essas importancias.
+
+Com focal, a conectividade e a do habitat da area focal, e o restante da
+paisagem (o contexto) serve de trampolim, como nas areas transfronteiricas
+do ProtConn (Saura et al. 2017): cada fragmento entra com sua area dentro da
+area focal (focal_area_m2; zero fora dela), as distancias usam o fragmento
+inteiro e A_L passa a ser a area focal. Todos os indices, ECA, fracoes e
+importancias usam esse atributo; fragmentos do contexto so tem importancia
+de conector. patch_metrics ganha focal_area_m2 e focal_role ("focal",
+"edge" quando cruza o limite focal, "context"). Os indices crescem (ou se
+mantem) com o tamanho do contexto; ver \code{\link[=connectivity_context]{connectivity_context()}}.
 
 A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva

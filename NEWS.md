@@ -75,6 +75,114 @@
   GitHub, continua opcional e fora de Suggests.
 * `metadata$schema_version` passa a 1.3.
 
+## Contexto espacial ampliado e sensibilidade ao efeito de borda
+
+* `load_rasters()` aceita a área de estudo como `sf`/`sfc`, além do caminho
+  do shapefile, e ganha `context_m`: um buffer (em metros, na UTM local) que
+  amplia recortes, corte e máscara. A área original fica em `focal`, e `source`
+  registra método, pastas, tipo e coleção. `compare_shapefiles()` também
+  aceita `sf`. `biomastats_metrics()` e `reclass_to_polygons()` repassam
+  `focal` junto com `boundary`.
+* `land_connectivity(focal = )` (ou o atributo `focal` herdado): conectividade
+  do habitat da área focal com o contexto como trampolim, como as áreas
+  transfronteiriças do ProtConn. Cada fragmento entra com sua área dentro da
+  área focal (`focal_area_m2`; zero fora dela), as distâncias usam o fragmento
+  inteiro e A_L passa a ser a área focal. `patch_metrics$focal_role` separa
+  fragmentos focais, de borda e de contexto; os do contexto só têm importância
+  de conector. Sem `focal`, nada muda. `schema_version` 1.4.
+* `connectivity_context()`: sensibilidade dos índices e da importância ao raio
+  do contexto. A partir dos mapas da área de estudo e das classes, aplica o
+  buffer do maior raio, recarrega o território maior com a mesma origem (ou o
+  recorta de `source`, ou reaproveita mapas já carregados com contexto),
+  reclassifica e vetoriza uma única vez, sem gravar arquivos, e reaproveita a
+  matriz de distâncias (ou a de menor custo) do maior contexto nos menores.
+  O raio 0 reproduz a análise sem contexto. Devolve `sensitivity` (ECA,
+  ProtConn focal e variação em relação ao maior raio, com indicador de
+  convergência), `patch_sensitivity`, `rank_stability` (Spearman e
+  sobreposição dos 10 maiores), `stepping_stones` (trampolins de fora da área)
+  e os gráficos `sensitivity_plot`, `rank_plot` e `map_plot`. O fluxo é
+  opcional.
+* `connectivity_context(targets = )`: importância de um fragmento-alvo ou de
+  um conjunto frente ao contexto, por **remoção conjunta**. Alvos são
+  `fragment_id`, listas nomeadas de ids ou geometrias `sf` (agrupadas pela
+  coluna `target`), inclusive fora da área focal, para medir trampolins
+  externos. `target_sensitivity` traz, por raio, a importância conjunta, a soma
+  das importâncias individuais e a interação (positiva quando os fragmentos se
+  substituem, negativa quando dividem a mesma contribuição), com
+  `target_plot`. `stepping_stones` passa a ser relatado por raio.
+* O contexto funciona com **qualquer coleção portada**, inclusive fora do
+  Brasil: `load_lulc()` (ESA WorldCover) ganha `context_m`, `focal` e `source`,
+  e a recarga automática usa o carregador registrado. `source` também aceita
+  uma função `function(area, years)` que devolve mapas no formato de
+  `load_rasters()`, para outras fontes. Coleções sem dicionário em
+  `dict_build()` funcionam com seus códigos numéricos, também em
+  `resistance_surface()`.
+* Testes com mapas sintéticos (`tests/testthat/test-connectivity-context.R`)
+  cobrem o buffer de `load_rasters()` (modo `library`, sem download), a
+  herança de `focal`, os pesos focais conferidos à mão, o ganho de um
+  trampolim fora da área, a monotonia dos índices, a igualdade entre
+  distâncias reaproveitadas e análise direta, a recarga automática e a
+  distância de menor custo.
+
+## Aquisição seletiva por HTTP e catálogo de mapas rasterizados
+
+* `load_rasters(method = "http")`: lê, pelo sistema de arquivos virtual do
+  GDAL (`/vsicurl/`), apenas a janela da área de estudo em GeoTIFFs públicos,
+  sem login, a partir de um produto de `raster_catalog()` (`product`) ou de
+  qualquer modelo de URL com `{year}` (`url`). Usa a mesma rotina de
+  `load_local_rasters()` (conferência, harmonização, recorte e máscara) e, com
+  `export_folder_path`, grava as janelas como `<produto>_<ano>.tif` e a área
+  como `area.gpkg`, prontas para `load_local_rasters()`. A recarga do contexto
+  em `connectivity_context()` usa a mesma origem.
+* `raster_catalog()`: 18 coleções anuais de uso do solo do bucket público do
+  MapBiomas, verificadas em 29/10/2026: Brasil (Coleções 9, 10 e 11, 30 m, e
+  10 m Coleção 4 beta), Argentina, Bolívia, Chile, Colômbia, Equador,
+  Paraguai, Peru, Uruguai, Venezuela, Indonésia, Amazônia, Chaco, Pampa e
+  Bosque Atlântico, com resolução, anos, modelo de URL e dicionário
+  compatível. Todos os arquivos são divididos em blocos (256 ou 512 pixels).
+* A área de estudo é detectada como GeoPackage, shapefile ou GeoJSON, com ou
+  sem extensão, ou pela pasta (um único arquivo de área); com `.gpkg` e `.shp`
+  de mesmo nome, vale o `.gpkg`. Um shapefile sem `.prj` gera erro explícito,
+  em vez de CRS ausente. Vale para `load_rasters()`, `load_lulc()`,
+  `load_local_rasters()` e `compare_shapefiles()`.
+* `load_local_rasters()` (e a via HTTP) recusam mapas que cubram menos de
+  99% da área de estudo, como janelas baixadas para outra área; o buffer de
+  contexto pode ultrapassar o limite dos dados.
+* Novo teste manual `testes-manuais/teste-manual-http.Rmd` (HTML): aquisição
+  por HTTP para Itapetininga - SP, conferida célula a célula com o recorte
+  direto do GeoTIFF nacional, e portabilidade para Campina do Monte Alegre -
+  SP (recusa da janela parcial, gravação, releitura local e coincidência com
+  as janelas antigas na sobreposição).
+
+## Coleções locais de qualquer origem
+
+* `load_local_rasters()`: carrega GeoTIFFs anuais de uma pasta de caminho
+  conhecido, nomeados como `prefixo_ano.tif`, de qualquer coleção ou país.
+  Confere compatibilidade (uma camada, CRS, códigos inteiros, cobertura da
+  área, anos consecutivos), harmoniza todos os anos pela grade do primeiro (ou
+  por `crs` e `resolution`) com o vizinho mais próximo, recorta só a janela da
+  área, mascara pelo centro das células, trata `nodata` (0 por padrão) e
+  devolve o objeto de `load_rasters()`, com a ação de harmonização de cada ano
+  em `metadata$harmonization`. Aceita `context_m` e registra a origem, de modo
+  que `connectivity_context()` recarrega a área ampliada da mesma pasta.
+* `class_dictionary()`: assistente opcional do dicionário de classes. Sem
+  arquivo, devolve um modelo com os códigos presentes nos mapas (ou a base de
+  uma coleção conhecida) para preencher; com CSV ou data.frame, reconhece
+  colunas em português ou inglês, completa nomes e cores, converte cores para
+  hexadecimal e avisa sobre códigos sem entrada.
+* O dicionário viaja no objeto de mapas (`class_dictionary`) e é usado por
+  `get_area()`, `land_vis()`, `land_dist()`, `land_change()`,
+  `land_to_graph()`, `fragment_metrics()`, `biomastats_metrics()`,
+  `resistance_surface()` e `connectivity_context()`. Coleções sem dicionário
+  recebem nomes genéricos ("Classe 3") em vez de erro. `land_vis()` aceita os
+  anos do próprio objeto, não só 1985–2024.
+* Dados sintéticos leves para testes em `inst/extdata/local_maps` (cerca de
+  4 KB: três anos com grades diferentes, área e legenda), gerados por
+  `development/make_local_fixtures.R`. Um teste local,
+  `tests/testthat/test-local-mapbiomas-10m.R` (fora do pacote construído), usa
+  uma coleção MapBiomas 10 m em `~/Documents/mapbiomas_10m_col4`: janelas da
+  Coleção 4 beta (2017–2025) lidas por `/vsicurl` do bucket público, sem login.
+
 ## Desempenho
 
 * **Poda opcional do PC** (`prune = "auto"`, `TRUE` ou `FALSE`) em

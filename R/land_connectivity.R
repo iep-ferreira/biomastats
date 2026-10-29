@@ -37,6 +37,9 @@
 #'   terminadas em _m passam a usar a unidade dessas distancias.
 #' @param link_importance Calcular a importancia de cada ligacao para IIC e PC
 #'   (FALSE por padrao); ver link_metrics em Value.
+#' @param focal Area focal sf/sfc opcional. NULL herda o atributo focal dos
+#'   poligonos (de `load_rasters(context_m = )`); sem ele, a analise usa todo o
+#'   habitat, como antes. Ver Details.
 #' @param language Idioma dos rotulos: pt (padrao) ou en; dicionario preserva ambos.
 #' @param build_plot Construir ggplots (TRUE por padrao).
 #' @return Lista biomastats_connectivity com source_polygons, analysis_polygons,
@@ -99,6 +102,16 @@
 #'   caminho alternativo de mesmo custo tambem valem zero. link_plot mapeia
 #'   essas importancias.
 #'
+#'   Com focal, a conectividade e a do habitat da area focal, e o restante da
+#'   paisagem (o contexto) serve de trampolim, como nas areas transfronteiricas
+#'   do ProtConn (Saura et al. 2017): cada fragmento entra com sua area dentro da
+#'   area focal (focal_area_m2; zero fora dela), as distancias usam o fragmento
+#'   inteiro e A_L passa a ser a area focal. Todos os indices, ECA, fracoes e
+#'   importancias usam esse atributo; fragmentos do contexto so tem importancia
+#'   de conector. patch_metrics ganha focal_area_m2 e focal_role ("focal",
+#'   "edge" quando cruza o limite focal, "context"). Os indices crescem (ou se
+#'   mantem) com o tamanho do contexto; ver [connectivity_context()].
+#'
 #'   A normalizacao utiliza o limite herdado ou informado; sem limite, o fecho
 #'   convexo e apenas uma aproximacao da paisagem. Reprojecao local e exclusiva
 #'   desta analise metrica e registra CRS de origem/analise. IDs, ano, selecao,
@@ -141,7 +154,7 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
                               iic_rule = c("definition", "lconnect"),
                               k = NULL, p_ref = 0.5, d_ref = NULL, parallel = FALSE,
                               prune = "auto", distance = NULL, link_importance = FALSE,
-                              language = c("pt", "en"), build_plot = TRUE) {
+                              focal = NULL, language = c("pt", "en"), build_plot = TRUE) {
   language <- match.arg(language)
   iic_rule <- match.arg(iic_rule)
   .connectivity_check_flag(build_plot, "build_plot")
@@ -216,7 +229,21 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
   if (any(sf::st_is_empty(bound)) || any(!sf::st_is_valid(bound)) ||
       !all(as.character(sf::st_geometry_type(bound)) %in% c("POLYGON", "MULTIPOLYGON"))) stop("boundary deve ser poligonal e valido.")
   area_l <- as.numeric(units::set_units(sf::st_area(bound), "m^2"))
-  if (!is.finite(area_l) || area_l <= 0 || area_l + max(1, area_l) * 1e-8 < sum(areas)) {
+  # Focal analysis: each patch weighs its habitat inside the focal area; patches
+  # wholly in the context weigh zero and act only as stepping stones.
+  weights <- areas
+  focal_zone <- NULL
+  if (is.null(focal)) focal <- attr(polygons, "focal")
+  if (!is.null(focal)) {
+    focal_zone <- .connectivity_focal_zone(focal, analysis_crs)
+    weights <- .connectivity_focal_area(p, focal_zone)
+    if (sum(weights) <= 0) stop("Nenhum habitat dentro da area focal.")
+    area_l <- as.numeric(units::set_units(sf::st_area(focal_zone), "m^2"))
+    p$focal_area_m2 <- weights
+    p$focal_role <- ifelse(weights <= 0, "context",
+      ifelse(weights >= areas * (1 - 1e-9), "focal", "edge"))
+  }
+  if (!is.finite(area_l) || area_l <= 0 || area_l + max(1, area_l) * 1e-8 < sum(weights)) {
     stop("Area do limite deve ser positiva e nao inferior a area de habitat.")
   }
   if (is.null(external)) {
@@ -262,7 +289,7 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
       distance = stats::as.dist(distance), boundary = bound,
       area_l = units::set_units(area_l, "m^2")), class = "lconnect")
     importance <- lapply(metric_patch, function(metric) {
-      res <- .patch_imp_engine(unname(distance), areas, md, area_l, metric, !isFALSE(parallel),
+      res <- .patch_imp_engine(unname(distance), weights, md, area_l, metric, !isFALSE(parallel),
         "decomposition", iic_rule, if (metric == "IIC") NULL else k_md, prune)
       .as_pimp(list(landscape = pp), res, metric, iic_rule)
     })
@@ -291,12 +318,12 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     graph <- igraph::set_graph_attr(graph, "edge_rule", "distance < max_dist; isolates retained")
     pc <- if ("PC" %in% metric_patch) attr(importance$PC, "index") else NA_real_
     pc_landscape <- if ("PC" %in% metric_patch) attr(importance$PC, "landscape_fractions")
-    metrics <- as.data.frame(as.list(.connectivity_indices(unname(distance), areas, md, area_l,
+    metrics <- as.data.frame(as.list(.connectivity_indices(unname(distance), weights, md, area_l,
       k = k_md, pc = pc, pc_landscape = pc_landscape)))
     links <- if (link_importance) {
       do.call(rbind, lapply(intersect(metric_patch, c("IIC", "PC")), function(metric) {
         D <- unname(distance)
-        out <- .link_importance(D, areas, md, metric, if (metric == "IIC") NULL else k_md,
+        out <- .link_importance(D, weights, md, metric, if (metric == "IIC") NULL else k_md,
           !isFALSE(parallel), .resolve_prune(prune, metric, D))
         data.frame(from = as.character(pp$fragment_id[out$from]),
           to = as.character(pp$fragment_id[out$to]), distance_m = D[cbind(out$from, out$to)],
@@ -333,16 +360,16 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     "distance < max_dist, zero-distance contacts linked; fixed landscape denominator")
   iic_lconnect <- paste("lconnect 0.1.2: 0 < distance < max_dist; isolated vertices omitted;",
     "fixed landscape denominator")
-  # Schema 1.3: external distances, ECA, landscape fractions, ProtConn
-  # indicators and link importance (1.2: optional PC pruning and parallel
-  # blocks; 1.1: IIC by definition, PC, fractions and k calibration; 1.0:
-  # lconnect IIC).
-  metadata <- list(schema_version = "1.3",
+  # Schema 1.4: focal area with the context as stepping stones (1.3: external
+  # distances, ECA, landscape fractions, ProtConn indicators and link
+  # importance; 1.2: optional PC pruning and parallel blocks; 1.1: IIC by
+  # definition, PC, fractions and k calibration; 1.0: lconnect IIC).
+  metadata <- list(schema_version = "1.4",
     package_version = as.character(utils::packageVersion("biomastats")),
     collection = collection, classes = classes, year = if ("year" %in% names(p)) unique(p$year) else year,
     max_dist_m = max_dist, metric_patch = metric_patch, source_crs_wkt = original_crs$wkt,
     analysis_crs_wkt = analysis_crs$wkt, reprojected = !isTRUE(original_crs == analysis_crs),
-    boundary_method = boundary_method, landscape_area_m2 = area_l, habitat_area_m2 = sum(areas),
+    boundary_method = boundary_method, landscape_area_m2 = area_l, habitat_area_m2 = sum(weights),
     area_unit = "m2", distance_unit = distance_unit, distance_source = distance_source,
     awf_unit = "m4", eca_unit = "m2",
     landscape_fractions = paste("Saura et al. 2011 / Makurhini overall: intra, direct",
@@ -350,6 +377,9 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     protconn_rule = paste("Saura et al. 2017 with habitat as protected area and boundary",
       "as region: ProtConn = 100 ECA_PC / A_L"),
     link_importance = link_importance,
+    focal = if (is.null(focal_zone)) NULL else list(focal_area_m2 = area_l,
+      patches = c(table(factor(p$focal_role, c("focal", "edge", "context")))),
+      rule = "attribute = habitat inside the focal area; context patches weigh zero (stepping stones)"),
     compatibility = "lconnect 0.1.2: NC, LNK, SLC, MSC, CCP, LCP, CPL, ECS, AWF and IIC_lconnect",
     graph_rule = "distance < max_dist; zero-distance links and isolated vertices retained",
     components_rule = "lconnect NC and area components: distance <= max_dist",
@@ -365,10 +395,33 @@ land_connectivity <- function(polygons, max_dist = 300, year = NULL, boundary = 
     zero_baseline = "priority NaN; pimp status undefined_baseline; CPL NA without connected pairs",
     upstream = inherited)
   structure(c(list(source_polygons = source, analysis_polygons = p, boundary = bound,
-    distance = distance, metrics = metrics, patch_metrics = patches,
+    focal = focal_zone, distance = distance, metrics = metrics, patch_metrics = patches,
     fraction_metrics = fractions, edge_metrics = edges, link_metrics = links,
     scenarios = scenarios, class_dictionary = dictionary, metadata = metadata), plots),
     class = c("biomastats_connectivity", "list"))
+}
+
+.connectivity_focal_zone <- function(focal, crs) {
+  if (!inherits(focal, c("sf", "sfc")) || is.na(sf::st_crs(focal))) stop("focal deve ser sf/sfc com CRS.")
+  zone <- sf::st_union(sf::st_geometry(sf::st_transform(focal, crs)))
+  if (any(sf::st_is_empty(zone)) || any(!sf::st_is_valid(zone)) ||
+      !all(as.character(sf::st_geometry_type(zone)) %in% c("POLYGON", "MULTIPOLYGON"))) {
+    stop("focal deve ser poligonal e valido.")
+  }
+  zone
+}
+
+# Habitat area (m2) of each patch inside the focal zone; zero outside.
+.connectivity_focal_area <- function(p, zone) {
+  out <- numeric(nrow(p))
+  hit <- which(lengths(sf::st_intersects(p, zone)) > 0L)
+  if (length(hit)) {
+    pieces <- sf::st_intersection(sf::st_geometry(p)[hit], zone)
+    idx <- attr(pieces, "idx")[, 1]
+    area <- as.numeric(units::set_units(sf::st_area(pieces), "m^2"))
+    out[hit] <- as.numeric(tapply(area, factor(idx, seq_along(hit)), sum, default = 0))
+  }
+  out
 }
 
 .connectivity_select_year <- function(polygons, year) {

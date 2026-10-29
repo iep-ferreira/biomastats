@@ -201,6 +201,51 @@ change <- connectivity_change(polygon_series, max_dist = 300, metric_patch = "PC
 gganimate::animate(change$animation, fps = 1)
 ```
 
+## Edge effects and an extended context {-}
+
+The study-area boundary cuts fragments and hides the stepping stones outside
+it, which underestimates connectivity near the edge. With `focal`,
+`land_connectivity()` measures the connectivity of the study area's habitat
+using its surroundings as stepping stones, and `connectivity_context()` does so
+for several context radii: it extends the area, reloads the maps from the same
+source, reclassifies and vectorizes once and reuses the distances of the largest
+context for the smaller ones. Only the habitat classes are needed. Radius 0 is
+the analysis without context:
+
+```{r eval=FALSE}
+context <- connectivity_context(maps, classes = 3, max_dist = 300,
+  context = c(0, 300, 600, 1200, 2400), metric_patch = c("IIC", "PC"),
+  p_ref = 0.05, d_ref = 300, language = "en")
+context$sensitivity_plot
+context$rank_stability
+context$stepping_stones
+```
+
+When the ECA curve levels off (`converged`), the context no longer changes the
+result; if it still grows at the largest radius, the edge effect persists and
+the context should be widened. `rank_stability` shows whether the order of
+priority fragments depends on the clip, and `stepping_stones` lists fragments
+outside the area that sustain its connectivity. For a single context, without
+the sensitivity analysis, use `load_rasters(context_m = 1000)`: the polygons
+inherit the focal area and `land_connectivity()` uses it on its own.
+
+With `targets`, the same analysis measures the importance of a fragment or of a
+set of fragments removed at once, radius by radius. Comparing it with the sum
+of single importances shows whether the fragments substitute for each other or
+share the same contribution. Targets can be `fragment_id`, named lists of ids or
+`sf` geometries, including outside the study area:
+
+```{r eval=FALSE}
+target <- connectivity_context(maps, classes = 3, max_dist = 300,
+  targets = list(core = c(12, 40), corridor = 7), language = "en")
+target$target_sensitivity
+target$target_plot
+```
+
+The routine does not depend on MapBiomas: with `load_lulc()` (ESA WorldCover) it
+works in any country, and `source` accepts a function that loads maps from
+another source for the extended area.
+
 ## Integration with Makurhini {-}
 
 `as_makurhini()` prepares the arguments of `MK_dPCIIC()`, `MK_dECA()` and

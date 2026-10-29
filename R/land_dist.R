@@ -29,13 +29,13 @@
 
 land_dist <- function(data = NULL, year = NULL, type = "barplot" ){
 
-  # Dictionary
-  dic <- dict_build(data$collection)
-
   #
   aux <- year
 
   df <- data$aggregate_data
+  # Dictionary inherited from get_area(), or built for the observed codes
+  dic <- attr(data, "class_dictionary") %||%
+    .biomastats_dictionary(data$collection, as.numeric(as.character(df$land_class)))
   dat <- df %>% dplyr::filter(year == aux)
 
   names_classes <- NULL

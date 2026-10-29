@@ -35,6 +35,8 @@
 #'   dictionary entries, and source CRS/resolution by year for downstream reuse.}
 #'   \item{boundary}{The inherited study-area shape, when present in the maps
 #'   object, for downstream landscape-area denominators.}
+#'   \item{focal}{The original study area when the maps were loaded with a
+#'   context buffer (`load_rasters(context_m = )`), or `NULL`.}
 #'
 #' @details This function iterates over a time range, calculating landscape metrics for each raster in the input list. 
 #'   It checks for valid metric types and generates summary plots for selected metrics.
@@ -79,7 +81,8 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
     classes <- selector_classes$codes
   }
   
-  class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes) else NULL
+  class_dictionary <- if (!is.null(collection)) .biomastats_dictionary(collection, classes,
+    rasters_biomastats$class_dictionary) else NULL
   source_rasters <- rasters_biomastats$raster[seq.int(start, end) - time_range[1L] + 1L]
   source_metadata <- lapply(source_rasters, function(r) list(
     crs_wkt = sf::st_crs(r)$wkt, resolution = raster::res(r), utm = .utm_from_raster(r)))
@@ -332,5 +335,5 @@ biomastats_metrics <- function(rasters_biomastats, metrics = c("keep.all", "aggr
                "frag_avg_area" = p_frag_avg_area, 
                "metrics" = metrics, "metrics_table" = table_m, rec_map = rec_map, start = start, end = end,
                collection = collection, class_dictionary = class_dictionary, metadata = metadata,
-               boundary = rasters_biomastats$shape) )
+               boundary = rasters_biomastats$shape, focal = rasters_biomastats$focal) )
 }

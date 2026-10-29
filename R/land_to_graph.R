@@ -124,7 +124,7 @@ land_to_graph <- function(data, year = NULL, connectivity = 4, include_self = FA
   m <- raster::as.matrix(r)
   codes <- sort(unique(as.vector(m[!is.na(m)])))
   if (!integer_vector(codes)) stop("O mapa deve conter codigos inteiros e pixels validos.")
-  dictionary <- .biomastats_dictionary(collection, codes)
+  dictionary <- .biomastats_dictionary(collection, codes, data$class_dictionary)
   labels <- if (language == "pt") dictionary$classe else dictionary$class
   colors <- dictionary$color
   nr <- nrow(m)
