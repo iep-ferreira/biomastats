@@ -1,0 +1,140 @@
+---
+title: "biomastats — conectividade com sensibilidade ao contexto (Lagoa do Sino, até 10 km)"
+params:
+  ano: 2024
+  produto: "mapbiomas_brasil_c10"
+  raios: !r c(0, 1000, 2500, 5000, 10000)
+  max_dist: 300
+  processos: 4
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: true
+    code_folding: show
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 9, fig.height = 5.5,
+                      fig.align = "center", dpi = 110)
+root <- normalizePath(getwd(), winslash = "/")
+while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
+execucao <- tempfile("biomastats-contexto-"); dir.create(execucao)
+biblioteca <- file.path(execucao, "library"); dir.create(biblioteca)
+Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
+stopifnot(system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", shQuote(root),
+  paste0("--library=", shQuote(biblioteca)), "--no-test-load"), stdout = FALSE, stderr = FALSE) == 0)
+library(biomastats, lib.loc = biblioteca)
+tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, format.args = list(decimal.mark = ","))
+inicio <- Sys.time()
+```
+
+Fluxo completo da análise de conectividade da floresta da Fazenda Lagoa do Sino
+(UFSCar), com o entorno até `r max(params$raios) / 1000` km como trampolim. O
+mapa é lido por HTTP (`r params$produto`, `r params$ano`); o contexto é
+recarregado automaticamente pela mesma origem.
+
+# Área de estudo e mapas
+
+```{r mapas}
+ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
+mapas <- load_rasters(ufscar, start = params$ano, end = params$ano, method = "http",
+                      product = params$produto)
+land_vis(mapas, year = params$ano)
+```
+
+# Conectividade sem contexto
+
+A análise tradicional: só a floresta dentro do limite da fazenda.
+
+```{r sem-contexto}
+metricas <- biomastats_metrics(mapas, classes = 3, metrics = "aggregation_index")
+poligonos <- reclass_to_polygons(metricas, save_shp = FALSE)
+conectividade <- land_connectivity(poligonos, max_dist = params$max_dist,
+  metric_patch = c("IIC", "PC"), d_ref = params$max_dist / 2)
+tabela(conectividade$metrics[, c("NC", "IIC", "PC", "ECA_PC", "ProtConn", "PC_intra",
+                                 "PC_direct", "PC_step")], 4)
+conectividade$importance_plot
+```
+
+# Sensibilidade ao contexto
+
+Os raios crescem até `r max(params$raios) / 1000` km. O território maior é
+recarregado, reclassificado e vetorizado uma única vez.
+
+```{r contexto}
+tempo <- system.time(
+  contexto <- connectivity_context(mapas, classes = 3, max_dist = params$max_dist,
+    context = params$raios, metric_patch = c("IIC", "PC"), d_ref = params$max_dist / 2,
+    parallel = params$processos)
+)[["elapsed"]]
+s <- contexto$sensitivity
+tabela(s[, c("radius_m", "metric", "patches", "context_patches", "ECA_ha", "ProtConn",
+             "ECA_change", "converged")])
+```
+
+```{r contexto-graficos, fig.height=4.5}
+contexto$sensitivity_plot
+contexto$rank_plot
+```
+
+```{r contexto-mapa, fig.height=7}
+contexto$map_plot
+```
+
+## Estabilidade da priorização
+
+```{r estabilidade}
+tabela(contexto$rank_stability[, c("metric", "radius_m", "spearman", "top10_overlap",
+                                   "max_change")], 3)
+```
+
+## Trampolins fora da fazenda
+
+Fragmentos externos com papel de conector, no maior raio:
+
+```{r trampolins}
+trampolins <- contexto$stepping_stones
+maior <- trampolins[trampolins$radius_m == max(params$raios), ]
+tabela(utils::head(maior[order(-maior$connector), c("metric", "fragment_id", "area_ha",
+                                                    "connector")], 10), 3)
+```
+
+# Fragmentos-alvo
+
+Os três fragmentos mais importantes da fazenda (PC, maior raio), juntos e isolados.
+
+```{r alvos}
+ps <- contexto$patch_sensitivity
+ref <- ps[ps$metric == "PC" & ps$radius_m == max(params$raios), ]
+top <- utils::head(ref$fragment_id[order(ref$rank)], 3)
+alvos <- connectivity_context(mapas, classes = 3, max_dist = params$max_dist,
+  context = params$raios, metric_patch = "PC", d_ref = params$max_dist / 2,
+  targets = c(list(conjunto = top), stats::setNames(as.list(top), paste0("f", top))),
+  parallel = params$processos, build_plot = TRUE)
+t <- alvos$target_sensitivity
+tabela(t[, c("target", "radius_m", "patches", "importance", "individual_sum",
+             "interaction", "converged")])
+alvos$target_plot
+```
+
+# Resumo
+
+```{r resumo}
+pc <- s[s$metric == "PC", ]
+tabela(data.frame(
+  indicador = c("Fragmentos na fazenda", "Fragmentos no maior contexto",
+                "ECA sem contexto (ha)", "ECA no maior contexto (ha)",
+                "Ganho de ECA pelo contexto (%)", "Curva estabilizada",
+                "Tempo da sensibilidade (s)", "Tempo total (s)"),
+  valor = c(pc$patches[1], max(pc$patches), pc$ECA_ha[1], max(pc$ECA_ha),
+            100 * (max(pc$ECA_ha) / pc$ECA_ha[1] - 1), all(pc$converged),
+            tempo, as.numeric(difftime(Sys.time(), inicio, units = "secs")))), 2)
+stopifnot(all(diff(pc$ECA_ha) >= -1e-9), nrow(contexto$rank_stability) > 0)
+```
+
+```{r limpeza, include=FALSE}
+unlink(execucao, recursive = TRUE)
+```
