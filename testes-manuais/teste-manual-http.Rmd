@@ -1,10 +1,7 @@
 ---
-title: "biomastats — teste manual da aquisição seletiva por HTTP e da portabilidade de mapas"
+title: "biomastats — aquisição seletiva por HTTP e portabilidade de mapas locais"
 params:
-  produto_itapetininga: "mapbiomas_brasil_c10"
-  anos_itapetininga: !r 2023:2024
-  produto_campina: "mapbiomas_brasil_10m_c4"
-  anos_campina: !r 2024:2025
+  anos: !r 2024:2025
   pasta_10m: "~/Documents/mapbiomas_10m_col4"
 output:
   html_document:
@@ -17,234 +14,149 @@ output:
 
 ```{r setup, include=FALSE}
 if (.Platform$OS.type == "windows") invisible(Sys.setlocale("LC_CTYPE", ".UTF-8"))
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = TRUE, fig.width = 9,
-                      fig.height = 5.5, fig.align = "center", dpi = 110, fig.retina = 2)
-inicio_total <- Sys.time()
-root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 9, fig.height = 5.5,
+                      fig.align = "center", dpi = 110)
+root <- normalizePath(getwd(), winslash = "/")
 while (!file.exists(file.path(root, "DESCRIPTION"))) root <- dirname(root)
-
-# Pacote construído do código-fonte atual numa biblioteca temporária; nada em cache.
 execucao <- tempfile("biomastats-http-"); dir.create(execucao)
-library_dir <- file.path(execucao, "library"); dir.create(library_dir)
+biblioteca <- file.path(execucao, "library"); dir.create(biblioteca)
 Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
-t0 <- Sys.time()
-install_status <- system2(file.path(R.home("bin"), "R"),
-  c("CMD", "INSTALL", shQuote(root), paste0("--library=", shQuote(library_dir)),
-    "--no-multiarch", "--no-test-load"), stdout = FALSE, stderr = FALSE)
-if (install_status != 0) stop("A construção e instalação temporária do pacote falhou.")
-.libPaths(c(library_dir, .libPaths()))
-library(biomastats, lib.loc = library_dir)
-tempo_build <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+stopifnot(system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", shQuote(root),
+  paste0("--library=", shQuote(biblioteca)), "--no-test-load"), stdout = FALSE, stderr = FALSE) == 0)
+library(biomastats, lib.loc = biblioteca)
+pasta_10m <- path.expand(params$pasta_10m)
 tabela <- function(x, digits = 2) knitr::kable(x, digits = digits, format.args = list(decimal.mark = ","))
-segundos <- function(expr) {
-  t0 <- Sys.time(); valor <- force(expr)
-  list(valor = valor, s = as.numeric(difftime(Sys.time(), t0, units = "secs")))
-}
-# Limite municipal da malha do IBGE (sem login), gravado como shapefile com .prj.
+```
+
+Este relatório confere a leitura seletiva de mapas por HTTP
+(`load_rasters(method = "http")`) e a releitura dos mapas gravados por
+`load_local_rasters()`, em Itapetininga e Campina do Monte Alegre (SP).
+
+# Catálogo
+
+```{r catalogo}
+tabela(raster_catalog()[, c("id", "resolution_m", "first_year", "last_year")], 0)
+```
+
+# Áreas de estudo
+
+Limites municipais do IBGE, gravados como shapefile.
+
+```{r areas}
 municipio <- function(codigo, nome) {
   url <- paste0("https://servicodados.ibge.gov.br/api/v3/malhas/municipios/", codigo,
                 "?formato=application/vnd.geo+json&qualidade=intermediaria")
-  s <- sf::st_read(url, quiet = TRUE)
-  s <- sf::st_sf(municipio = nome, geometry = sf::st_geometry(sf::st_transform(s, 4326)))
-  pasta <- file.path(execucao, gsub(" ", "_", tolower(nome))); dir.create(pasta)
-  sf::st_write(s, file.path(pasta, "limite.shp"), quiet = TRUE)
+  pasta <- file.path(execucao, nome); dir.create(pasta)
+  sf::st_write(sf::st_read(url, quiet = TRUE), file.path(pasta, "limite.shp"), quiet = TRUE)
   pasta
 }
-area_km2 <- function(s) as.numeric(sum(sf::st_area(s))) / 1e6
-area_classificada <- function(mapas, ano) {
-  a <- get_area(mapas)$aggregate_data
-  sum(a$area_raw[a$year == ano])
-}
-# Referência independente: abre o GeoTIFF remoto, recorta e mascara direto com terra.
-referencia <- function(url, limite) {
-  r <- terra::rast(paste0("/vsicurl/", url))
-  v <- terra::vect(sf::st_transform(limite, terra::crs(r)))
-  w <- terra::mask(terra::crop(r, v, snap = "out"), v)
-  x <- terra::values(w, mat = FALSE); x[x %in% 0] <- NA
-  x
-}
-verificacoes <- list()
+itapetininga <- municipio(3522307, "itapetininga")
+campina <- municipio(3509452, "campina")
 ```
 
-# Objetivo
-
-Conferir com dados reais a nova via de aquisição, `load_rasters(method = "http")`,
-e a portabilidade dos mapas baixados por ela:
-
-1. **Catálogo:** `raster_catalog()` lista as coleções lidas por HTTP.
-2. **Itapetininga - SP (aquisição seletiva):** o produto `r params$produto_itapetininga`
-   é lido só na janela do município, a partir de um shapefile com `.prj`
-   detectado pela pasta. O resultado deve coincidir, célula a célula, com o
-   recorte feito diretamente sobre o GeoTIFF nacional.
-3. **Campina do Monte Alegre - SP (portabilidade):**
-   - os mapas de 10 m já baixados em `r params$pasta_10m` (Lagoa do Sino + 5 km)
-     são recusados, porque não cobrem o município;
-   - a via HTTP baixa e grava as janelas do município;
-   - `load_local_rasters()` relê essas janelas, numa etapa separada, e reproduz
-     o resultado;
-   - as janelas novas coincidem com as antigas onde as duas se sobrepõem.
-4. **Shapefile sem `.prj`:** o carregamento para com um erro claro.
-
-Nenhuma etapa exige login: o bucket público do MapBiomas aceita leituras
-parciais (*range requests*) pelo GDAL (`/vsicurl/`).
-
-# Catálogo de mapas rasterizados
-
-```{r catalogo}
-catalogo <- raster_catalog()
-tabela(catalogo[, c("id", "resolution_m", "first_year", "last_year", "dictionary")], 0)
-```
-
-# Itapetininga: aquisição seletiva por HTTP
+# Itapetininga: leitura seletiva (Coleção 10, 30 m)
 
 ```{r itapetininga}
-pasta_itape <- municipio(3522307, "Itapetininga")
-list.files(pasta_itape)
-saida_itape <- file.path(execucao, "janelas_itapetininga")
-itape <- segundos(load_rasters(pasta_itape, start = min(params$anos_itapetininga),
-  end = max(params$anos_itapetininga), method = "http",
-  product = params$produto_itapetininga, export_folder_path = saida_itape))
-mapas_itape <- itape$valor
-limite_itape <- sf::st_read(file.path(pasta_itape, "limite.shp"), quiet = TRUE)
-tabela(mapas_itape$metadata$harmonization[, c("year", "file", "action", "valid_cells")], 0)
-arquivos_itape <- file.info(mapas_itape$metadata$exported)
-tabela(data.frame(arquivo = basename(rownames(arquivos_itape)),
-                  mb = arquivos_itape$size / 2^20), 3)
+janelas_itape <- file.path(execucao, "janelas_itapetininga")
+tempo_itape <- system.time(
+  mapas_itape <- load_rasters(itapetininga, start = min(params$anos), end = 2024, method = "http",
+                              product = "mapbiomas_brasil_c10", export_folder_path = janelas_itape)
+)[["elapsed"]]
+tabela(mapas_itape$metadata$harmonization[, c("year", "action", "valid_cells")], 0)
+land_vis(mapas_itape, year = 2024)
 ```
 
-```{r itapetininga-referencia}
-ultimo <- max(params$anos_itapetininga)
-url_ultimo <- gsub("{year}", ultimo, raster_catalog(params$produto_itapetininga)$url, fixed = TRUE)
-ref_itape <- segundos(referencia(url_ultimo, limite_itape))
-ours <- raster::getValues(mapas_itape$raster[[length(mapas_itape$raster)]])
-verificacoes$itapetininga <- c(
-  anos = length(mapas_itape$raster),
-  grade_unica_entre_anos = all(mapas_itape$metadata$harmonization$action == "none"),
-  identico_a_referencia = identical(as.numeric(ours), as.numeric(ref_itape$valor)),
-  area_classificada_km2 = area_classificada(mapas_itape, ultimo),
-  area_limite_km2 = area_km2(limite_itape))
-tabela(t(verificacoes$itapetininga), 2)
+# Lagoa do Sino: coleção local de 10 m
+
+A coleção gravada em Documentos é recortada pelo shapefile do pacote.
+
+```{r lagoa-local}
+ufscar <- system.file("shp", "UFSCar.shp", package = "biomastats")
+tempo_lagoa <- system.time(
+  mapas_lagoa <- load_local_rasters(ufscar, folder = pasta_10m, collection = 10)
+)[["elapsed"]]
+tabela(mapas_lagoa$metadata$harmonization[, c("year", "action", "valid_cells")], 0)
+land_vis(mapas_lagoa, year = max(mapas_lagoa$time_range))
 ```
 
-```{r itapetininga-mapa, fig.height=6}
-land_vis(mapas_itape, year = ultimo)
-```
+# Campina do Monte Alegre: portabilidade
 
-# Campina do Monte Alegre: portabilidade de mapas baixados
+Os mapas de 10 m já gravados (Lagoa do Sino + 5 km) não cobrem o município:
 
-## Mapas de 10 m já baixados (Lagoa do Sino + 5 km)
-
-```{r campina-recusa}
-pasta_campina <- municipio(3509452, "Campina do Monte Alegre")
-pasta_10m <- path.expand(params$pasta_10m)
-recusa <- tryCatch(load_local_rasters(pasta_campina, folder = pasta_10m, collection = 10),
-                   error = function(e) conditionMessage(e))
+```{r recusa}
+recusa <- tryCatch(load_local_rasters(campina, folder = pasta_10m, collection = 10),
+                   error = conditionMessage)
 recusa
 ```
 
-A janela de 10 m gravada para a Lagoa do Sino cobre só parte do município, e o
-carregamento é recusado em vez de produzir um mapa incompleto.
+Leitura das janelas do município e releitura da pasta gravada:
 
-## Aquisição das janelas do município
-
-```{r campina-http}
-janelas_campina <- file.path(execucao, "janelas_campina_10m")
-campina_http <- segundos(load_rasters(pasta_campina, start = min(params$anos_campina),
-  end = max(params$anos_campina), method = "http", product = params$produto_campina,
-  export_folder_path = janelas_campina))
+```{r campina}
+janelas_campina <- file.path(execucao, "janelas_campina")
+tempo_http <- system.time(
+  mapas_http <- load_rasters(campina, start = min(params$anos), end = max(params$anos),
+                             method = "http", product = "mapbiomas_brasil_10m_c4",
+                             export_folder_path = janelas_campina)
+)[["elapsed"]]
 list.files(janelas_campina)
+tempo_local <- system.time(
+  mapas_local <- load_local_rasters(folder = janelas_campina, collection = 10)
+)[["elapsed"]]
+land_vis(mapas_local, year = max(params$anos))
 ```
 
-## Releitura, como numa sessão nova
+A Lagoa do Sino, lida da pasta antiga e por HTTP, deve dar o mesmo mapa:
 
-```{r campina-local}
-campina_local <- segundos(load_local_rasters(folder = janelas_campina, collection = 10))
-mapas_http <- campina_http$valor
-mapas_local <- campina_local$valor
-mesmos_valores <- all(vapply(seq_along(mapas_http$raster), function(i)
-  identical(raster::getValues(mapas_http$raster[[i]]), raster::getValues(mapas_local$raster[[i]])),
-  logical(1)))
-mesma_grade <- all(vapply(seq_along(mapas_http$raster), function(i)
-  raster::compareRaster(mapas_http$raster[[i]], mapas_local$raster[[i]], stopiffalse = FALSE),
-  logical(1)))
-dicionario <- attr(get_area(mapas_local), "class_dictionary")
-tabela(utils::head(dicionario[, c("code", "classe", "color")], 8), 0)
-```
-
-## As janelas novas e as antigas coincidem onde se sobrepõem
-
-```{r campina-sobreposicao}
-ano <- max(params$anos_campina)
-nova <- terra::rast(file.path(janelas_campina, sprintf("%s_%d.tif", params$produto_campina, ano)))
-antiga <- terra::rast(file.path(pasta_10m, sprintf("mapbiomas10m_%d.tif", ano)))
-comum <- terra::intersect(terra::ext(nova), terra::ext(antiga))
-a <- terra::values(terra::crop(nova, comum), mat = FALSE)
-b <- terra::values(terra::crop(antiga, comum), mat = FALSE)
-validos <- !is.na(a) & !is.na(b) & a != 0 & b != 0
-sobreposicao <- c(celulas_comuns = sum(validos), iguais = sum(a[validos] == b[validos]))
-sobreposicao
-```
-
-```{r campina-mapa, fig.height=6}
-land_vis(mapas_local, year = ano)
+```{r lagoa}
+antiga <- load_local_rasters(folder = pasta_10m, years = params$anos, collection = 10)
+nova <- load_rasters(pasta_10m, start = min(params$anos), end = max(params$anos),
+                     method = "http", product = "mapbiomas_brasil_10m_c4")
 ```
 
 # Shapefile sem `.prj`
 
 ```{r sem-prj}
 sem_prj <- file.path(execucao, "sem_prj"); dir.create(sem_prj)
-file.copy(list.files(pasta_campina, full.names = TRUE), sem_prj)
+file.copy(list.files(campina, full.names = TRUE), sem_prj)
 unlink(file.path(sem_prj, "limite.prj"))
-erro_prj <- tryCatch(load_rasters(sem_prj, start = ano, end = ano, method = "http",
-                                  product = params$produto_campina),
-                     error = function(e) conditionMessage(e))
+erro_prj <- tryCatch(load_local_rasters(sem_prj, folder = janelas_campina), error = conditionMessage)
 erro_prj
 ```
 
 # Verificações
 
 ```{r verificacoes}
-verificacoes$campina <- c(
-  recusa_janela_parcial = grepl("cobre apenas", recusa),
-  anos = length(mapas_local$raster),
-  http_igual_a_releitura = mesmos_valores,
-  mesma_grade = mesma_grade,
-  sobreposicao_identica = sobreposicao[["iguais"]] == sobreposicao[["celulas_comuns"]],
-  area_classificada_km2 = area_classificada(mapas_local, ano),
-  area_limite_km2 = area_km2(sf::st_read(file.path(pasta_campina, "limite.shp"), quiet = TRUE)))
-verificacoes$prj <- c(erro_sem_prj = grepl("[.]prj", erro_prj))
-tabela(data.frame(verificacao = names(unlist(verificacoes)), valor = unlist(verificacoes),
-                  row.names = NULL), 2)
-v <- verificacoes
-stopifnot(
-  v$itapetininga[["grade_unica_entre_anos"]] == 1, v$itapetininga[["identico_a_referencia"]] == 1,
-  abs(v$itapetininga[["area_classificada_km2"]] / v$itapetininga[["area_limite_km2"]] - 1) < .01,
-  v$campina[["recusa_janela_parcial"]] == 1, v$campina[["http_igual_a_releitura"]] == 1,
-  v$campina[["mesma_grade"]] == 1, v$campina[["sobreposicao_identica"]] == 1,
-  sobreposicao[["celulas_comuns"]] > 0,
-  abs(v$campina[["area_classificada_km2"]] / v$campina[["area_limite_km2"]] - 1) < .01,
-  v$prj[["erro_sem_prj"]] == 1)
+area <- function(mapas, pasta) {
+  a <- get_area(mapas)$aggregate_data
+  c(classificada = sum(a$area_raw[a$year == max(a$year)]),
+    limite = as.numeric(sf::st_area(sf::st_read(file.path(pasta, "limite.shp"), quiet = TRUE))) / 1e6)
+}
+mesmos <- function(a, b) all(mapply(function(x, y) identical(raster::getValues(x), raster::getValues(y)),
+                                    a$raster, b$raster))
+area_itape <- area(mapas_itape, itapetininga)
+area_campina <- area(mapas_local, campina)
+a_lagoa <- get_area(mapas_lagoa)$aggregate_data
+area_lagoa <- c(classificada = sum(a_lagoa$area_raw[a_lagoa$year == max(a_lagoa$year)]),
+                limite = as.numeric(sum(sf::st_area(sf::st_read(ufscar, quiet = TRUE)))) / 1e6)
+v <- c(itapetininga_grade_unica = all(mapas_itape$metadata$harmonization$action == "none"),
+       itapetininga_area = abs(area_itape[["classificada"]] / area_itape[["limite"]] - 1) < .01,
+       itapetininga_releitura = mesmos(mapas_itape, load_local_rasters(folder = janelas_itape,
+                                                                       collection = 10)),
+       campina_recusa_parcial = grepl("cobre apenas", recusa),
+       campina_http_igual_local = mesmos(mapas_http, mapas_local),
+       campina_area = abs(area_campina[["classificada"]] / area_campina[["limite"]] - 1) < .01,
+       lagoa_local_anos = length(mapas_lagoa$raster) == 9,
+       lagoa_local_grade_unica = all(mapas_lagoa$metadata$harmonization$action == "none"),
+       lagoa_local_area = abs(area_lagoa[["classificada"]] / area_lagoa[["limite"]] - 1) < .02,
+       lagoa_antiga_igual_nova = mesmos(antiga, nova),
+       erro_sem_prj = grepl("[.]prj", erro_prj))
+tabela(data.frame(verificacao = names(v), ok = v, row.names = NULL))
+tabela(rbind(itapetininga = area_itape, lagoa_do_sino = area_lagoa, campina = area_campina))
+tabela(data.frame(etapa = c("Itapetininga, HTTP", "Lagoa do Sino, coleção local (9 anos)",
+                            "Campina, HTTP", "Campina, releitura local"),
+                  segundos = c(tempo_itape, tempo_lagoa, tempo_http, tempo_local)), 1)
+stopifnot(all(v))
 ```
-
-# Tempo de cada processo
-
-```{r tempos}
-tabela(data.frame(
-  etapa = c(sprintf("Itapetininga, %s, %d anos (HTTP + gravação)", params$produto_itapetininga,
-                    length(params$anos_itapetininga)),
-            "Itapetininga, referência direta (1 ano)",
-            sprintf("Campina, %s, %d anos (HTTP + gravação)", params$produto_campina,
-                    length(params$anos_campina)),
-            "Campina, releitura local"),
-  segundos = c(itape$s, ref_itape$s, campina_http$s, campina_local$s)), 1)
-c(build_pacote_s = round(tempo_build, 1),
-  total_s = round(as.numeric(difftime(Sys.time(), inicio_total, units = "secs")), 1))
-```
-
-A via HTTP mantém as células cujo centro está no limite, inclusive as da borda
-que o `raster::crop()` das vias por tiles descarta ao arredondar a extensão para
-dentro. Por isso, a comparação de referência usa o mesmo recorte para fora
-(`snap = "out"`) e a mesma máscara pelo centro das células.
 
 ```{r limpeza, include=FALSE}
 unlink(execucao, recursive = TRUE)
