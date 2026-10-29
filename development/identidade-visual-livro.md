@@ -2,7 +2,7 @@
 
 Referência para o livro em `tutorial/` (bookdown, formato `bs4_book`) e para
 materiais derivados (apresentações, cartazes, páginas do projeto). Evolui a
-identidade do tutorial anterior (`arquivo/tutorial-2.0/`): mantém o azul
+identidade do tutorial anterior (`tutorial.Rmd`, preservado na tag `v2.0.0`): mantém o azul
 institucional e adota o fundo, o verde e a água da arte da capa.
 
 ## Princípios
